@@ -2,9 +2,10 @@
   "name": "@skyplay/api",
   "private": true,
   "scripts": {
+    "prisma:generate": "prisma generate --schema ../../database/prisma/schema.prisma",
+    "build": "pnpm prisma:generate && nest build",
     "start:dev": "nest start --watch",
-    "build": "nest build",
-    "start": "node dist/main"
+    "start": "node dist/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
