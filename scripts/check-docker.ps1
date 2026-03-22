@@ -7,7 +7,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Invalid docker-compose.yml" -ForegroundColor Red
     exit 1
 }
-Write-Host "✓ YAML is valid" -ForegroundColor Green
+Write-Host "OK YAML is valid" -ForegroundColor Green
 
 Write-Host "`n[2/5] Starting services..." -ForegroundColor Yellow
 docker compose up -d
@@ -15,7 +15,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Failed to start services" -ForegroundColor Red
     exit 1
 }
-Write-Host "✓ Services started" -ForegroundColor Green
+Write-Host "OK Services started" -ForegroundColor Green
 
 Write-Host "`n[3/5] Waiting 5 seconds..." -ForegroundColor Yellow
 Start-Sleep -Seconds 5
@@ -28,10 +28,10 @@ $postgres = docker ps --filter "name=skyplay_postgres" --filter "status=running"
 $redis = docker ps --filter "name=skyplay_redis" --filter "status=running" --quiet
 
 if ($postgres -and $redis) {
-    Write-Host "`n✓ OK - All services running" -ForegroundColor Green
+    Write-Host "`nOK - All services running" -ForegroundColor Green
     exit 0
 } else {
-    Write-Host "`n✗ ERROR - Some services not running" -ForegroundColor Red
+    Write-Host "`nERROR - Some services not running" -ForegroundColor Red
     if (-not $postgres) { Write-Host "  - postgres: NOT RUNNING" -ForegroundColor Red }
     if (-not $redis) { Write-Host "  - redis: NOT RUNNING" -ForegroundColor Red }
     exit 1
