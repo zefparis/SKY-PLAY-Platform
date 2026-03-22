@@ -2,10 +2,10 @@
 nixPkgs = ["nodejs-20_x"]
 
 [phases.install]
-cmds = ["npm install --prefix services/api"]
+cmds = ["npm install --prefix api-deploy"]
 
 [phases.build]
-cmds = ["npm run build --prefix services/api"]
+cmds = ["npx --prefix api-deploy prisma generate", "npm run build --prefix api-deploy"]
 
 [start]
-cmd = "cd services/api && node dist/main.js"
+cmd = "cd api-deploy && node dist/main.js"
