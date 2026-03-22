@@ -1,0 +1,8 @@
+﻿{
+  "name": "@skyplay/api",
+  "private": true,
+  "scripts": {
+    "start:dev": "nest start --watch",
+    "build": "nest build"
+  }
+}

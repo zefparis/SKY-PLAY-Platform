@@ -1,0 +1,7 @@
+﻿{
+  "name": "@skyplay/realtime-gateway",
+  "private": true,
+  "scripts": {
+    "dev": "node src/index.js"
+  }
+}
