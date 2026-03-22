@@ -1,42 +1,39 @@
 # -------- BUILD STAGE --------
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# install deps
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY package*.json ./
 RUN npm install
 
-# copy code
 COPY tsconfig*.json nest-cli.json ./
 COPY prisma ./prisma
 COPY src ./src
 
-# prisma
 RUN npx prisma generate --schema ./prisma/schema.prisma
-
-# build
 RUN npm run build
 
-
 # -------- PRODUCTION STAGE --------
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 
 WORKDIR /app
-
 ENV NODE_ENV=production
 
-# deps runtime seulement
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# copy build
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# port Railway (important)
 EXPOSE 3000
 
-# start
 CMD ["node", "dist/main.js"]
