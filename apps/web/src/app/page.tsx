@@ -1,6 +1,9 @@
-﻿export default function HomePage() {
+﻿import Hero from '@/components/home/Hero'
+
+export default function Home() {
   return (
     <main style={{ padding: 24, fontFamily: 'Montserrat, sans-serif' }}>
+      <Hero />
       <h1>SKY PLAY</h1>
       <p>Gaming challenges, tournaments, wallet, leaderboard, chat, PWA.</p>
       <ul>

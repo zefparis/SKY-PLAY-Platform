@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #0A0F2A;
+  color: #FFFFFF;
+  font-family: 'Montserrat', sans-serif;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(0, 151, 252, 0.5);
+  }
+  
+  .glow-red {
+    box-shadow: 0 0 20px rgba(253, 46, 95, 0.5);
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, #00165F 0%, #0097FC 100%);
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, #FD2E5F 0%, #0097FC 100%);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #0097FC 0%, #FD2E5F 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
