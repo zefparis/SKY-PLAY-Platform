@@ -1,4 +1,4 @@
-﻿import { NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
@@ -17,9 +17,7 @@ async function bootstrap() {
     }),
   );
 
-  const port = Number(process.env.PORT) || 4000;
-  await app.listen(port);
-  console.log(`🚀 API running on port ${port}`);
+  await app.listen(process.env.PORT || 4000);
 }
 
 bootstrap();
