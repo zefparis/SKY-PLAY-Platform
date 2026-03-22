@@ -2,8 +2,8 @@
   "name": "@skyplay/api",
   "private": true,
   "scripts": {
-    "prisma:generate": "prisma generate --schema ../../database/prisma/schema.prisma",
-    "build": "pnpm prisma:generate && nest build",
+    "postinstall": "npx prisma generate --schema ../../database/prisma/schema.prisma",
+    "build": "nest build",
     "start:dev": "nest start --watch",
     "start": "node dist/main.js"
   },

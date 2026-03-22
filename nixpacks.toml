@@ -1,14 +1,13 @@
 [phases.setup]
-nixPkgs = ["nodejs-20_x", "pnpm"]
+nixPkgs = ["nodejs-20_x"]
 
 [phases.install]
-cmds = ["pnpm install --frozen-lockfile"]
+cmds = ["cd services/api && npm install"]
 
 [phases.build]
 cmds = [
   "cd services/api",
-  "pnpm prisma:generate",
-  "pnpm build"
+  "npm run build"
 ]
 
 [start]
