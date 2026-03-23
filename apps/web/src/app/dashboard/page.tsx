@@ -1,11 +1,16 @@
+"use client"
+
 import WalletCard from '@/components/wallet/WalletCard'
 import ChallengeCard from '@/components/challenges/ChallengeCard'
 import Card from '@/components/ui/Card'
 import { Trophy, Gamepad2, TrendingUp } from 'lucide-react'
 import Container from '@/components/ui/Container'
 import Badge from '@/components/ui/Badge'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 export default function DashboardPage() {
+  const { t } = useI18n()
+
   const mockChallenges = [
     {
       id: '1',
@@ -30,16 +35,16 @@ export default function DashboardPage() {
   ]
 
   const mockStats = [
-    { label: 'Total Wins', value: '12', icon: Trophy, color: 'text-secondary' },
-    { label: 'Active Challenges', value: '3', icon: Gamepad2, color: 'text-secondary' },
-    { label: 'Win Rate', value: '68%', icon: TrendingUp, color: 'text-secondary' },
+    { label: t('dashboard.stats.totalWins'), value: '12', icon: Trophy, color: 'text-secondary' },
+    { label: t('dashboard.stats.activeChallenges'), value: '3', icon: Gamepad2, color: 'text-secondary' },
+    { label: t('dashboard.stats.winRate'), value: '68%', icon: TrendingUp, color: 'text-secondary' },
   ]
 
   return (
     <div className="min-h-screen">
       <main className="pb-12">
         <Container>
-        <h1 className="text-4xl font-bold text-white mb-8 title-tech">Dashboard</h1>
+        <h1 className="text-4xl font-bold text-white mb-8 title-tech">{t('dashboard.title')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
@@ -62,7 +67,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Active Challenges</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.section.activeChallenges')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mockChallenges.map((challenge) => (
               <ChallengeCard key={challenge.id} challenge={challenge} />
@@ -71,7 +76,7 @@ export default function DashboardPage() {
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold text-white mb-4">Recent Matches</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.section.recentMatches')}</h2>
           <Card>
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -82,10 +87,10 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-white font-semibold">FIFA 24 1v1</p>
-                      <p className="text-sm text-white/60">2 hours ago</p>
+                      <p className="text-sm text-white/60">{t('dashboard.match.ago')}</p>
                     </div>
                   </div>
-                  <Badge variant="success">Won</Badge>
+                  <Badge variant="success">{t('dashboard.match.won')}</Badge>
                 </div>
               ))}
             </div>

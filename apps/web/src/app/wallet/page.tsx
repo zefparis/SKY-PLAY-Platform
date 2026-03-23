@@ -1,11 +1,16 @@
+"use client"
+
 import WalletCard from '@/components/wallet/WalletCard'
 import Card from '@/components/ui/Card'
 import { ArrowUpRight, ArrowDownLeft, Clock } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Container from '@/components/ui/Container'
 import Badge from '@/components/ui/Badge'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 export default function WalletPage() {
+  const { t } = useI18n()
+
   const mockTransactions = [
     {
       id: '1',
@@ -67,7 +72,7 @@ export default function WalletPage() {
     <div className="min-h-screen">
       <main className="pb-12">
         <Container>
-        <h1 className="text-4xl font-bold text-white mb-8 title-tech">Wallet</h1>
+        <h1 className="text-4xl font-bold text-white mb-8 title-tech">{t('wallet.title')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">

@@ -4,8 +4,11 @@ import { motion } from 'framer-motion'
 import { Gamepad2, Trophy, Zap } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 const Hero = () => {
+  const { t } = useI18n()
+
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -52,33 +55,33 @@ const Hero = () => {
           </h1>
           
           <p className="text-xl md:text-2xl text-white/75 mb-4 max-w-3xl mx-auto">
-            The Ultimate Competitive Gaming Platform
+            {t('hero.tagline')}
           </p>
           
           <p className="text-lg text-white/65 mb-12 max-w-2xl mx-auto">
-            Join challenges, compete with the best players, and win real prizes
+            {t('hero.subtitle')}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Link href="/challenges">
               <Button variant="primary" size="lg" className="min-w-[200px]">
                 <Trophy className="w-5 h-5 mr-2" />
-                Join a Challenge
+                {t('hero.cta.joinChallenge')}
               </Button>
             </Link>
             <Link href="/dashboard">
               <Button variant="outline" size="lg" className="min-w-[200px]">
                 <Zap className="w-5 h-5 mr-2" />
-                View Dashboard
+                {t('hero.cta.viewDashboard')}
               </Button>
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { icon: Trophy, title: 'Compete', desc: 'Join competitive challenges' },
-              { icon: Gamepad2, title: 'Play', desc: 'Multiple games supported' },
-              { icon: Zap, title: 'Win', desc: 'Earn real prizes' },
+              { icon: Trophy, title: t('hero.feature.compete.title'), desc: t('hero.feature.compete.desc') },
+              { icon: Gamepad2, title: t('hero.feature.play.title'), desc: t('hero.feature.play.desc') },
+              { icon: Zap, title: t('hero.feature.win.title'), desc: t('hero.feature.win.desc') },
             ].map((feature, i) => (
               <motion.div
                 key={i}

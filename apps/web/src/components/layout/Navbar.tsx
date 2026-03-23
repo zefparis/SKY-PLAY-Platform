@@ -7,17 +7,20 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
 import Container from '@/components/ui/Container'
+import LanguageSwitch from '@/components/i18n/LanguageSwitch'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 const Navbar = () => {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { t } = useI18n()
 
   const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: Gamepad2 },
-    { href: '/challenges', label: 'Challenges', icon: Trophy },
-    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    { href: '/chat', label: 'Chat', icon: MessageCircle },
-    { href: '/wallet', label: 'Wallet', icon: Wallet },
+    { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
+    { href: '/challenges', label: t('nav.challenges'), icon: Trophy },
+    { href: '/leaderboard', label: t('nav.leaderboard'), icon: Trophy },
+    { href: '/chat', label: t('nav.chat'), icon: MessageCircle },
+    { href: '/wallet', label: t('nav.wallet'), icon: Wallet },
   ]
 
   return (
@@ -56,10 +59,11 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <LanguageSwitch />
             <Link href="/profile">
               <Button variant="outline" size="sm">
                 <User className="w-4 h-4 mr-2" />
-                Profile
+                {t('nav.profile')}
               </Button>
             </Link>
           </div>
@@ -74,6 +78,9 @@ const Navbar = () => {
 
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2">
+            <div className="px-4 pb-2">
+              <LanguageSwitch className="w-full justify-center" />
+            </div>
             {navLinks.map((link) => {
               const Icon = link.icon
               const isActive = pathname === link.href
@@ -97,7 +104,7 @@ const Navbar = () => {
             <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="outline" size="sm" className="w-full">
                 <User className="w-4 h-4 mr-2" />
-                Profile
+                {t('nav.profile')}
               </Button>
             </Link>
           </div>

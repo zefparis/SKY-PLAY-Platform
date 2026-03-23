@@ -1,9 +1,14 @@
+"use client"
+
 import Hero from '@/components/home/Hero'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 import { Gamepad2, Trophy, Wallet } from 'lucide-react'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 export default function Home() {
+  const { t } = useI18n()
+
   return (
     <main>
       <Hero />
@@ -14,18 +19,18 @@ export default function Home() {
             {[
               {
                 icon: Trophy,
-                title: 'Challenges',
-                desc: 'Crée et rejoins des défis compétitifs.',
+                title: t('home.card.challenges.title'),
+                desc: t('home.card.challenges.desc'),
               },
               {
                 icon: Wallet,
-                title: 'Wallet',
-                desc: 'Gère tes dépôts, gains et retraits.',
+                title: t('home.card.wallet.title'),
+                desc: t('home.card.wallet.desc'),
               },
               {
                 icon: Gamepad2,
-                title: 'Dashboard',
-                desc: 'Suis tes matchs, stats et performances.',
+                title: t('home.card.dashboard.title'),
+                desc: t('home.card.dashboard.desc'),
               },
             ].map((item) => (
               <Card
