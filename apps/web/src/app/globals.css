@@ -11,33 +11,53 @@
 }
 
 body {
-  background-color: #0A0F2A;
+  /* Backgrounds: dark blue gradients / Text: white on dark */
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(0, 151, 252, 0.20) 0%, rgba(0, 22, 95, 0.0) 55%),
+    linear-gradient(135deg, #00165F 0%, #000000 65%);
   color: #FFFFFF;
   font-family: 'Montserrat', sans-serif;
   overflow-x: hidden;
 }
 
+/* Subtle pattern overlay (triangles/play shapes) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(135deg, rgba(0, 151, 252, 0.10) 0%, rgba(253, 46, 95, 0.06) 100%),
+    repeating-linear-gradient(60deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 18px);
+  mask-image: radial-gradient(900px 600px at 60% 20%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%);
+}
+
+/* Keep app content above overlay */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
 @layer utilities {
-  .glow-blue {
-    box-shadow: 0 0 20px rgba(0, 151, 252, 0.5);
-  }
-  
-  .glow-red {
-    box-shadow: 0 0 20px rgba(253, 46, 95, 0.5);
-  }
+  /* Glow + gradients derived strictly from brand colors */
+  .glow-blue { box-shadow: 0 0 24px rgba(0, 151, 252, 0.45); }
+  .glow-red { box-shadow: 0 0 24px rgba(253, 46, 95, 0.40); }
 
-  .gradient-primary {
-    background: linear-gradient(135deg, #00165F 0%, #0097FC 100%);
-  }
-
-  .gradient-accent {
-    background: linear-gradient(135deg, #FD2E5F 0%, #0097FC 100%);
-  }
+  .gradient-primary { background: linear-gradient(135deg, #00165F 0%, #0097FC 100%); }
+  .gradient-accent { background: linear-gradient(135deg, #FD2E5F 0%, #0097FC 100%); }
 
   .text-gradient {
     background: linear-gradient(135deg, #0097FC 0%, #FD2E5F 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Structured geometry feel */
+  .title-tech {
+    font-family: var(--font-display), 'Montserrat', sans-serif;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
   }
 }

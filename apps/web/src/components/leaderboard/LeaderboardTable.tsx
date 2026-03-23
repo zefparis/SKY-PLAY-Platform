@@ -15,17 +15,18 @@ interface LeaderboardTableProps {
 
 const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-400" />
-    if (rank === 2) return <Medal className="w-6 h-6 text-gray-300" />
-    if (rank === 3) return <Medal className="w-6 h-6 text-orange-400" />
-    return <span className="text-gray-400 font-bold">#{rank}</span>
+    // Strict palette: use electric blue for top ranks and accent red for #1 highlight
+    if (rank === 1) return <Trophy className="w-6 h-6 text-accent" />
+    if (rank === 2) return <Medal className="w-6 h-6 text-secondary" />
+    if (rank === 3) return <Medal className="w-6 h-6 text-secondary" />
+    return <span className="text-white/65 font-bold">#{rank}</span>
   }
 
   const getRankBg = (rank: number) => {
-    if (rank === 1) return 'bg-gradient-to-r from-yellow-500/20 to-transparent border-yellow-500/30'
-    if (rank === 2) return 'bg-gradient-to-r from-gray-300/20 to-transparent border-gray-300/30'
-    if (rank === 3) return 'bg-gradient-to-r from-orange-500/20 to-transparent border-orange-500/30'
-    return 'bg-dark-100 border-dark-200'
+    if (rank === 1) return 'bg-gradient-to-r from-accent/18 to-transparent border-accent/25'
+    if (rank === 2) return 'bg-gradient-to-r from-secondary/18 to-transparent border-secondary/25'
+    if (rank === 3) return 'bg-gradient-to-r from-secondary/12 to-transparent border-secondary/20'
+    return 'bg-white/5 border-white/10'
   }
 
   return (
@@ -46,7 +47,7 @@ const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
             
             <div>
               <h3 className="text-white font-semibold">{entry.username}</h3>
-              <p className="text-sm text-gray-400">{entry.wins} wins</p>
+              <p className="text-sm text-white/65">{entry.wins} wins</p>
             </div>
           </div>
 
@@ -54,7 +55,7 @@ const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
             <p className="text-secondary font-bold text-lg">
               {formatCurrency(entry.earnings)}
             </p>
-            <p className="text-xs text-gray-400">Total Earnings</p>
+            <p className="text-xs text-white/60">Total Earnings</p>
           </div>
         </div>
       ))}

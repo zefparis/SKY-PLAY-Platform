@@ -1,0 +1,16 @@
+import { HTMLAttributes } from 'react'
+import { cn } from '@/lib/utils'
+
+type ContainerProps = HTMLAttributes<HTMLDivElement>
+
+/**
+ * Layout container: enforces consistent spacing scale.
+ */
+export default function Container({ className, ...props }: ContainerProps) {
+  return (
+    <div
+      className={cn('mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8', className)}
+      {...props}
+    />
+  )
+}

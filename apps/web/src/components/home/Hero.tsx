@@ -51,11 +51,11 @@ const Hero = () => {
             <span className="text-gradient">SKY PLAY</span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-300 mb-4 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-white/75 mb-4 max-w-3xl mx-auto">
             The Ultimate Competitive Gaming Platform
           </p>
           
-          <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
+          <p className="text-lg text-white/65 mb-12 max-w-2xl mx-auto">
             Join challenges, compete with the best players, and win real prizes
           </p>
 
@@ -85,11 +85,11 @@ const Hero = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 + i * 0.1 }}
-                className="bg-dark-100 rounded-xl p-6 border border-dark-200 hover:border-secondary transition-all duration-300 hover:glow-blue"
+                className="bg-white/5 rounded-lg p-6 border border-white/10 hover:border-secondary/40 transition-all duration-300 hover:shadow-glow-blue"
               >
                 <feature.icon className="w-8 h-8 text-secondary mb-4 mx-auto" />
                 <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-gray-400">{feature.desc}</p>
+                <p className="text-white/65">{feature.desc}</p>
               </motion.div>
             ))}
           </div>

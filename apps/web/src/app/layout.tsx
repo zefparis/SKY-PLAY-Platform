@@ -1,5 +1,6 @@
-﻿import './globals.css'
+import './globals.css'
 import type { Metadata } from 'next'
+import Navbar from '@/components/layout/Navbar'
 
 export const metadata: Metadata = {
   title: 'SKY PLAY - Competitive Gaming Platform',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Navbar />
+        <div className="pt-20">{children}</div>
+      </body>
     </html>
   )
 }

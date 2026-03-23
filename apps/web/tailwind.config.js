@@ -8,22 +8,39 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // SKY PLAY palette (source of truth)
+        brand: {
+          primary: '#00165F', // Dark Blue
+          secondary: '#0097FC', // Electric Blue (CTA)
+          accent: '#FD2E5F', // Red (alerts/accent)
+          white: '#FFFFFF',
+          black: '#000000',
+        },
+        // Alias tokens used by the app (keep names explicit & brand-bound)
         primary: '#00165F',
         secondary: '#0097FC',
         accent: '#FD2E5F',
-        background: '#0A0F2A',
-        dark: {
-          100: '#1A1F3A',
-          200: '#151A30',
-          300: '#0F1426',
-        }
+        white: '#FFFFFF',
+        black: '#000000',
       },
       fontFamily: {
         sans: ['Montserrat', 'sans-serif'],
+        // Titles: futuristic / techno style. We keep a dedicated slot.
+        // The actual font file can be added later; fallback keeps it production-safe.
+        display: ['var(--font-display)', 'Montserrat', 'sans-serif'],
       },
       boxShadow: {
-        'neon-blue': '0 0 20px rgba(0, 151, 252, 0.5)',
-        'neon-red': '0 0 20px rgba(253, 46, 95, 0.5)',
+        // Glow effects (soft neon)
+        'glow-blue': '0 0 24px rgba(0, 151, 252, 0.45)',
+        'glow-red': '0 0 24px rgba(253, 46, 95, 0.40)',
+        // Depth (shadows + blur feel)
+        'depth-1': '0 10px 30px rgba(0, 0, 0, 0.35)',
+        'depth-2': '0 18px 60px rgba(0, 0, 0, 0.45)',
+      },
+      borderRadius: {
+        // Rounded cards (not too soft)
+        md: '0.75rem',
+        lg: '1rem',
       },
     },
   },

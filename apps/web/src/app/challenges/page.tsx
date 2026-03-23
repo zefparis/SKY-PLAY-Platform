@@ -1,7 +1,7 @@
-import Navbar from '@/components/layout/Navbar'
 import ChallengeCard from '@/components/challenges/ChallengeCard'
 import Button from '@/components/ui/Button'
 import { Plus, Filter } from 'lucide-react'
+import Container from '@/components/ui/Container'
 
 export default function ChallengesPage() {
   const mockChallenges = [
@@ -68,14 +68,13 @@ export default function ChallengesPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="container mx-auto px-4 pt-24 pb-12">
+    <div className="min-h-screen">
+      <main className="pb-12">
+        <Container>
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">Challenges</h1>
-            <p className="text-gray-400">Join a challenge and compete for prizes</p>
+            <p className="text-white/65">Join a challenge and compete for prizes</p>
           </div>
           <div className="flex items-center space-x-4">
             <Button variant="outline" size="sm">
@@ -94,6 +93,7 @@ export default function ChallengesPage() {
             <ChallengeCard key={challenge.id} challenge={challenge} />
           ))}
         </div>
+        </Container>
       </main>
     </div>
   )

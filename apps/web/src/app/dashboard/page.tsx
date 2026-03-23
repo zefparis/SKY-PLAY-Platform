@@ -1,8 +1,9 @@
-import Navbar from '@/components/layout/Navbar'
 import WalletCard from '@/components/wallet/WalletCard'
 import ChallengeCard from '@/components/challenges/ChallengeCard'
 import Card from '@/components/ui/Card'
 import { Trophy, Gamepad2, TrendingUp } from 'lucide-react'
+import Container from '@/components/ui/Container'
+import Badge from '@/components/ui/Badge'
 
 export default function DashboardPage() {
   const mockChallenges = [
@@ -29,17 +30,16 @@ export default function DashboardPage() {
   ]
 
   const mockStats = [
-    { label: 'Total Wins', value: '12', icon: Trophy, color: 'text-yellow-400' },
+    { label: 'Total Wins', value: '12', icon: Trophy, color: 'text-secondary' },
     { label: 'Active Challenges', value: '3', icon: Gamepad2, color: 'text-secondary' },
-    { label: 'Win Rate', value: '68%', icon: TrendingUp, color: 'text-green-400' },
+    { label: 'Win Rate', value: '68%', icon: TrendingUp, color: 'text-secondary' },
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="container mx-auto px-4 pt-24 pb-12">
-        <h1 className="text-4xl font-bold text-white mb-8">Dashboard</h1>
+    <div className="min-h-screen">
+      <main className="pb-12">
+        <Container>
+        <h1 className="text-4xl font-bold text-white mb-8 title-tech">Dashboard</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
@@ -49,11 +49,11 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-4">
             {mockStats.map((stat, i) => (
               <Card key={i} className="flex items-center space-x-4">
-                <div className={`w-12 h-12 rounded-lg bg-dark-200 flex items-center justify-center ${stat.color}`}>
+                <div className={`w-12 h-12 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue flex items-center justify-center ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">{stat.label}</p>
+                  <p className="text-sm text-white/60">{stat.label}</p>
                   <p className="text-2xl font-bold text-white">{stat.value}</p>
                 </div>
               </Card>
@@ -75,24 +75,23 @@ export default function DashboardPage() {
           <Card>
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between py-3 border-b border-dark-200 last:border-0">
+                <div key={i} className="flex items-center justify-between py-3 border-b border-white/10 last:border-0">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
                       <Gamepad2 className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <p className="text-white font-semibold">FIFA 24 1v1</p>
-                      <p className="text-sm text-gray-400">2 hours ago</p>
+                      <p className="text-sm text-white/60">2 hours ago</p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">
-                    Won
-                  </span>
+                  <Badge variant="success">Won</Badge>
                 </div>
               ))}
             </div>
           </Card>
         </div>
+        </Container>
       </main>
     </div>
   )

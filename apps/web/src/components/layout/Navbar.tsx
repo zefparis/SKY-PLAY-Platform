@@ -6,6 +6,7 @@ import { Gamepad2, Wallet, Trophy, User, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
+import Container from '@/components/ui/Container'
 
 const Navbar = () => {
   const pathname = usePathname()
@@ -19,12 +20,16 @@ const Navbar = () => {
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-dark-200">
-      <div className="container mx-auto px-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/25 backdrop-blur-md">
+      <Container>
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
-            <Gamepad2 className="w-8 h-8 text-secondary" />
-            <span className="text-2xl font-bold text-gradient">SKY PLAY</span>
+            <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue">
+              <Gamepad2 className="w-6 h-6 text-secondary" />
+            </span>
+            <span className="text-xl sm:text-2xl font-extrabold title-tech text-gradient">
+              SKY PLAY
+            </span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -36,10 +41,10 @@ const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    'flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200',
+                    'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
                     isActive
-                      ? 'text-secondary glow-blue bg-secondary/10'
-                      : 'text-gray-300 hover:text-secondary'
+                      ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
+                      : 'text-white/75 hover:text-secondary hover:bg-white/5 hover:border-white/10'
                   )}
                 >
                   <Icon className="w-5 h-5" />
@@ -57,7 +62,7 @@ const Navbar = () => {
           </div>
 
           <button
-            className="md:hidden text-white"
+            className="md:hidden text-white/90 hover:text-white transition"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -74,10 +79,10 @@ const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    'flex items-center space-x-2 px-4 py-3 rounded-lg transition-all duration-200',
+                    'flex items-center space-x-2 px-4 py-3 rounded-md border border-transparent transition duration-200',
                     isActive
-                      ? 'text-secondary glow-blue bg-secondary/10'
-                      : 'text-gray-300 hover:text-secondary'
+                      ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
+                      : 'text-white/75 hover:text-secondary hover:bg-white/5 hover:border-white/10'
                   )}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -92,7 +97,7 @@ const Navbar = () => {
             </Button>
           </div>
         )}
-      </div>
+      </Container>
     </nav>
   )
 }

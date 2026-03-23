@@ -2,6 +2,7 @@ import { Users, Trophy, Gamepad2 } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils'
+import Badge from '@/components/ui/Badge'
 
 interface ChallengeCardProps {
   challenge: {
@@ -30,19 +31,17 @@ const ChallengeCard = ({ challenge }: ChallengeCardProps) => {
             <h3 className="text-lg font-bold text-white group-hover:text-secondary transition-colors">
               {challenge.title}
             </h3>
-            <p className="text-sm text-gray-400">{challenge.game}</p>
+            <p className="text-sm text-white/65">{challenge.game}</p>
           </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-          challenge.status === 'OPEN' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-        }`}>
+        <Badge variant={challenge.status === 'OPEN' ? 'success' : 'danger'}>
           {challenge.status}
-        </span>
+        </Badge>
       </div>
 
       <div className="space-y-3 mb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-gray-400">
+          <div className="flex items-center space-x-2 text-white/65">
             <Users className="w-4 h-4" />
             <span className="text-sm">Players</span>
           </div>
@@ -52,7 +51,7 @@ const ChallengeCard = ({ challenge }: ChallengeCardProps) => {
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-gray-400">
+          <div className="flex items-center space-x-2 text-white/65">
             <Trophy className="w-4 h-4" />
             <span className="text-sm">Prize Pool</span>
           </div>
@@ -62,14 +61,14 @@ const ChallengeCard = ({ challenge }: ChallengeCardProps) => {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-gray-400 text-sm">Entry Fee</span>
+          <span className="text-white/65 text-sm">Entry Fee</span>
           <span className="text-white font-semibold">
             {formatCurrency(challenge.entryFee)}
           </span>
         </div>
       </div>
 
-      <div className="pt-4 border-t border-dark-200">
+      <div className="pt-4 border-t border-white/10">
         <Button variant="primary" className="w-full" disabled={challenge.status !== 'OPEN'}>
           {challenge.status === 'OPEN' ? `Join Challenge (${spotsLeft} spots left)` : 'Full'}
         </Button>
