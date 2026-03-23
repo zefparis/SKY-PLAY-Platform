@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gamepad2, Wallet, Trophy, User, Menu, X } from 'lucide-react'
+import { Gamepad2, Wallet, Trophy, User, Menu, X, MessageCircle } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
@@ -16,6 +16,7 @@ const Navbar = () => {
     { href: '/dashboard', label: 'Dashboard', icon: Gamepad2 },
     { href: '/challenges', label: 'Challenges', icon: Trophy },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { href: '/chat', label: 'Chat', icon: MessageCircle },
     { href: '/wallet', label: 'Wallet', icon: Wallet },
   ]
 
@@ -55,10 +56,12 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="outline" size="sm">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </Button>
+            <Link href="/profile">
+              <Button variant="outline" size="sm">
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+            </Link>
           </div>
 
           <button
@@ -91,10 +94,12 @@ const Navbar = () => {
                 </Link>
               )
             })}
-            <Button variant="outline" size="sm" className="w-full">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </Button>
+            <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="outline" size="sm" className="w-full">
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+            </Link>
           </div>
         )}
       </Container>
