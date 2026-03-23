@@ -1,6 +1,7 @@
 {
   "name": "skyplay-platform",
   "private": true,
+  "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev:web": "npm run dev --prefix apps/web",
     "dev:admin": "npm run dev --prefix apps/admin",
