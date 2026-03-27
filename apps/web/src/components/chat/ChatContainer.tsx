@@ -191,7 +191,12 @@ export default function ChatContainer() {
           currentUser="Bob"
         />
         {typingUsers.length > 0 && (
-          <TypingIndicator users={typingUsers.map(uid => MOCK_USERS.find(u => u.id === uid)).filter(Boolean)} />
+          <TypingIndicator
+            users={typingUsers
+              .map((uid) => MOCK_USERS.find((u) => u.id === uid))
+              .filter((u): u is (typeof MOCK_USERS)[number] => Boolean(u))
+              .map((u) => ({ name: u.name }))}
+          />
         )}
       </div>
       <div className="border-t border-white/10 bg-black/20 px-4 py-3">

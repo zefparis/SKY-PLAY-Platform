@@ -39,7 +39,7 @@ export default function MessageBubble({
   currentUser,
 }: MessageBubbleProps) {
   // Mock users pour read receipts (à remplacer par vrai mapping userId/avatar)
-  const users = {
+  const users: Record<string, { name: string; avatar: string }> = {
     u1: { name: 'Alice', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Alice' },
     u2: { name: 'Bob', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Bob' },
   };

@@ -13,17 +13,21 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: 'm1',
+      userId: 'system',
       author: 'SKY PLAY',
       content: 'Bienvenue dans le chat. Ready to compete ?',
       createdAt: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       isMe: false,
+      readBy: ['system'],
     },
     {
       id: 'm2',
+      userId: 'me',
       author: 'Me',
       content: 'Let’s go.',
       createdAt: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
+      readBy: ['me'],
     },
   ])
 
@@ -51,7 +55,15 @@ export default function ChatPage() {
     const createdAt = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     setMessages((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), author: 'Me', content: value, isMe: true, createdAt },
+      {
+        id: crypto.randomUUID(),
+        userId: 'me',
+        author: 'Me',
+        content: value,
+        isMe: true,
+        createdAt,
+        readBy: ['me'],
+      },
     ])
   }
 
