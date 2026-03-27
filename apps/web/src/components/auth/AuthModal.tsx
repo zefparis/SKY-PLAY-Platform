@@ -424,7 +424,7 @@ function ForgotView({ setView }: { setView: (v: View) => void }) {
         <h2 className="text-xl font-bold text-white">Email envoyé</h2>
         <p className="text-sm text-white/40 mt-1">Note le code reçu et clique ci-dessous.</p>
       </div>
-      <button onClick={() => setStep("reset")} className={BTN_PRIMARY}>Entrer mon code</button>
+      <button onClick={() => setView("reset")} className={BTN_PRIMARY}>Entrer mon code</button>
       <button onClick={() => setView("login")} className={`${BTN_GHOST} mx-auto`}>
         <ArrowLeft className="w-3 h-3" /> Retour à la connexion
       </button>
