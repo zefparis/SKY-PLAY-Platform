@@ -1,0 +1,10 @@
+# railpack.toml pour déploiement monorepo npm workspaces + Prisma + NestJS (api-deploy)
+
+[build]
+install = "npm install"
+# Génère Prisma avant le build NestJS
+prebuild = "npx prisma generate --schema=api-deploy/prisma/schema.prisma"
+build = "npm run build --workspace=api-deploy"
+
+[start]
+cmd = "npm run start --workspace=api-deploy"
