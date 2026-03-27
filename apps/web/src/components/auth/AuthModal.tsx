@@ -210,7 +210,24 @@ function SignupView() {
 
 // ─── Nouvelle vue PendingView ────────────────────────────────────────────────
 function PendingView() {
-  const { email, setStep } = useAuthStore();
+  const { email, confirmSignup, resendSignupCode, loading, error, setStep, setError } = useAuthStore();
+  const [code, setCode] = useState("");
+  const [resent, setResent] = useState(false);
+
+  useEffect(() => {
+    setError(undefined);
+  }, []);
+
+  const handleConfirm = async () => {
+    if (code.replace(/\D/g, "").length !== 6) return;
+    await confirmSignup(code.replace(/\D/g, ""));
+  };
+
+  const handleResend = async () => {
+    await resendSignupCode();
+    setResent(true);
+    setTimeout(() => setResent(false), 4000);
+  };
   return (
     <div className="space-y-6 text-center">
       <div className="w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mx-auto">
@@ -219,11 +236,26 @@ function PendingView() {
       <div>
         <h2 className="text-xl font-bold text-white">Vérifie ta boîte mail</h2>
         <p className="text-sm text-white/40 mt-1">
-          Un lien de confirmation t'a été envoyé à <span className="text-white/60 font-medium">{email}</span>.<br />
-          Clique dessus pour activer ton compte.
+          Un code de confirmation a été envoyé à <span className="text-white/60 font-medium">{email}</span>.
         </p>
       </div>
-      <button onClick={() => setStep("login")} className={BTN_PRIMARY}>J'ai confirmé mon email</button>
+
+      {error && <Banner type="error" message={error} />}
+      {resent && <Banner type="success" message="Code renvoyé. Vérifie tes emails." />}
+
+      <OtpInput value={code} onChange={setCode} />
+
+      <button onClick={handleConfirm}
+        disabled={loading || code.replace(/\D/g, "").length !== 6}
+        className={BTN_PRIMARY}>
+        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+        Confirmer mon compte
+      </button>
+
+      <button onClick={handleResend} disabled={loading} className={`${BTN_GHOST} mx-auto`}>
+        Renvoyer le code
+      </button>
+
       <button onClick={() => setStep("signup")} className={`${BTN_GHOST} mx-auto`}>
         <ArrowLeft className="w-3 h-3" /> Retour
       </button>

@@ -37,6 +37,8 @@ export type AuthState = {
   setUser: (user: any) => void;
 
   signup: (email: string, password: string) => Promise<void>;
+  confirmSignup: (code: string) => Promise<void>;
+  resendSignupCode: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (code: string, newPassword: string) => Promise<void>;
@@ -101,6 +103,67 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             resolve();
           }
         );
+      });
+    } catch (e: any) {
+      set({ error: e?.message || "Erreur inconnue", loading: false });
+      throw e;
+    }
+  },
+
+  confirmSignup: async (code) => {
+    set({ loading: true, error: undefined });
+    const email = get().email;
+    try {
+      const userPool = new CognitoUserPool({
+        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
+        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
+      });
+      const user = new CognitoUser({
+        Username: email,
+        Pool: userPool,
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        user.confirmRegistration(code, true, (err) => {
+          if (err) {
+            set({ error: err.message, loading: false });
+            reject(err);
+            return;
+          }
+          set({ step: "login", loading: false, error: undefined });
+          resolve();
+        });
+      });
+    } catch (e: any) {
+      set({ error: e?.message || "Erreur inconnue", loading: false });
+      throw e;
+    }
+  },
+
+  resendSignupCode: async () => {
+    set({ loading: true, error: undefined });
+    const email = get().email;
+    try {
+      const userPool = new CognitoUserPool({
+        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
+        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
+      });
+      const user = new CognitoUser({
+        Username: email,
+        Pool: userPool,
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        user.resendConfirmationCode((err) => {
+          if (err) {
+            set({ error: err.message, loading: false });
+            reject(err);
+            return;
+          }
+          // reste sur pending
+          set({ loading: false, error: undefined });
+          resolve();
+        });
       });
     } catch (e: any) {
       set({ error: e?.message || "Erreur inconnue", loading: false });
