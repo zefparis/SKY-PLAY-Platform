@@ -20,6 +20,7 @@ export default function LoginClient() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const isLoading = status === 'authenticating'
 
@@ -55,7 +56,34 @@ export default function LoginClient() {
 
                 <div>
                   <label className="block text-sm text-white/70 mb-2">Mot de passe</label>
-                  <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" />
+                  <div className="relative">
+                    <Input
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white focus:outline-none"
+                    >
+                      {showPassword ? (
+                        // Icône œil barré
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4.03-9-7 0-1.306.835-2.417 2.197-3.197M6.13 6.13A9.956 9.956 0 0112 5c5 0 9 4.03 9 7 0 1.306-.835 2.417-2.197 3.197M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 6L6 6" />
+                        </svg>
+                      ) : (
+                        // Icône œil ouvert
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm7 0c0 3-4 7-10 7S2 15 2 12s4-7 10-7 10 4 10 7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {(localError || error) && (
