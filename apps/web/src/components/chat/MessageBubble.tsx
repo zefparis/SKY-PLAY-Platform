@@ -5,11 +5,20 @@ import ReactionBar from './ReactionBar'
 
 export type Message = {
   id: string
+  userId: string
   author: string
   content: string
   isMe?: boolean
   createdAt: string
   status?: 'sending' | 'sent' | 'delivered'
+  reactions?: { emoji: string; userIds: string[] }[]
+  readBy?: string[]
+  threadId?: string
+  pinned?: boolean
+  system?: boolean
+  xp?: number
+  badges?: string[]
+  streak?: number
 }
 
 type ReactionState = {
@@ -29,6 +38,27 @@ export default function MessageBubble({
   onReact,
   currentUser,
 }: MessageBubbleProps) {
+  // Mock users pour read receipts (à remplacer par vrai mapping userId/avatar)
+  const users = {
+    u1: { name: 'Alice', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Alice' },
+    u2: { name: 'Bob', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Bob' },
+  };
+
+  if (message.system) {
+    return (
+      <div className="flex justify-center my-2">
+        <motion.div
+          className="px-4 py-2 text-center italic text-white/60 text-sm"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        >
+          {message.content}
+        </motion.div>
+      </div>
+    );
+  }
+
   if (message.isMe) {
     return (
       <div className="flex justify-end">
@@ -60,8 +90,31 @@ export default function MessageBubble({
               </span>
             )}
           </div>
-          <div className="mt-1 text-right text-xs text-white/55">
-            {message.createdAt}
+          <div className="mt-1 text-right text-xs text-white/55 flex flex-col items-end gap-1">
+            <span>{message.createdAt}</span>
+            {message.readBy && message.readBy.length > 1 && (
+              <motion.div
+                className="flex -space-x-2 items-center"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+              >
+                {message.readBy
+                  .filter((uid) => uid !== message.userId)
+                  .map((uid) =>
+                    users[uid] ? (
+                      <img
+                        key={uid}
+                        src={users[uid].avatar}
+                        alt={users[uid].name}
+                        title={`Vu par ${users[uid].name}`}
+                        className="w-5 h-5 rounded-full border-2 border-white/60 bg-black/30"
+                        style={{ boxShadow: '0 0 4px #3b82f6aa' }}
+                      />
+                    ) : null
+                  )}
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </div>
