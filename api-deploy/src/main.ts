@@ -8,8 +8,12 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
+  const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: allowedOrigins.length > 0
+      ? allowedOrigins
+      : ['http://localhost:3000', 'http://localhost:3001', 'https://sky-play-platform.vercel.app'],
     credentials: true,
   });
 
