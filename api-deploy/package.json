@@ -5,9 +5,9 @@
   "description": "Standalone NestJS API for Railway",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "node node_modules/@nestjs/cli/bin/nest.js build",
+    "build": "tsc",
     "start": "node dist/main.js",
-    "start:dev": "npx nest start --watch"
+    "start:dev": "tsc && node dist/main.js"
   },
   "prisma": {
     "schema": "./prisma/schema.prisma"

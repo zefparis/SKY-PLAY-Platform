@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Gamepad2, Trophy, Zap } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -9,26 +10,37 @@ import { useI18n } from '@/components/i18n/I18nProvider'
 const Hero = () => {
   const { t } = useI18n()
 
+  // Generate stable star positions to avoid hydration mismatch
+  const stars = useMemo(() => 
+    Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: Math.random() * 3 + 2,
+      delay: Math.random() * 2,
+    }))
+  , [])
+
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-background to-background" />
-        {[...Array(50)].map((_, i) => (
+        {stars.map((star) => (
           <motion.div
-            key={i}
+            key={star.id}
             className="absolute w-1 h-1 bg-secondary rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${star.left}%`,
+              top: `${star.top}%`,
             }}
             animate={{
               opacity: [0, 1, 0],
               scale: [0, 1, 0],
             }}
             transition={{
-              duration: Math.random() * 3 + 2,
+              duration: star.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: star.delay,
             }}
           />
         ))}

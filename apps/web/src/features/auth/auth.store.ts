@@ -68,9 +68,18 @@ export const useAuthStore = create<AuthState>()(
       signup: async ({ email, password, username }) => {
         set({ status: 'authenticating', error: null })
         try {
-          await cognitoSignup({ email, password, username })
+          // 1. Créer l'utilisateur dans Cognito
+          const { userSub } = await cognitoSignup({ email, password, username })
 
-          // On passe en étape "pending" (confirmation email par code)
+          // 2. Créer l'utilisateur en base de données
+          try {
+            await api.post('/users/register', { email, cognitoSub: userSub })
+          } catch (dbError: any) {
+            console.warn('Erreur création DB (non bloquant):', dbError)
+            // On continue même si la DB échoue - l'utilisateur peut être créé au login
+          }
+
+          // 3. On passe en étape "pending" (confirmation email par code)
           set({ status: 'anonymous', email, signupStep: 'pending' })
         } catch (e: any) {
           set({ status: 'anonymous', error: e?.message || 'Signup failed', signupStep: 'idle' })
