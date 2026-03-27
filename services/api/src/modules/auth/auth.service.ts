@@ -39,6 +39,27 @@ export class AuthService {
     return null;
   }
 
+  async resolveCognitoUser(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    let user = await this.usersService.findByEmail(normalizedEmail);
+
+    if (!user) {
+      user = await this.usersService.create({
+        email: normalizedEmail,
+        username: normalizedEmail.split('@')[0],
+        password: '',
+        isVerified: true,
+      });
+    } else if (!user.isVerified) {
+      user = await this.usersService.update(user.id, {
+        isVerified: true,
+      });
+    }
+
+    const { password, ...result } = user;
+    return result;
+  }
+
   async login(user: any) {
     return {
       user,

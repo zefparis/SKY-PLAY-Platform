@@ -16,6 +16,7 @@
     "docker:check": "powershell ./scripts/check-docker.ps1"
   },
   "devDependencies": {
+    "@nestjs/cli": "^10.4.9",
     "turbo": "^2.8.20",
     "typescript": "^5.9.3"
   }
