@@ -8,7 +8,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY tsconfig*.json nest-cli.json ./
 COPY prisma ./prisma
@@ -28,7 +28,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
