@@ -68,18 +68,7 @@ export const useAuthStore = create<AuthState>()(
       signup: async ({ email, password, username }) => {
         set({ status: 'authenticating', error: null })
         try {
-          const { userSub } = await cognitoSignup({ email, password, username })
-
-          // Création DB dès le signup (best effort, silencieux)
-          try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/register`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, cognitoSub: userSub }),
-            })
-          } catch {
-            // silencieux
-          }
+          await cognitoSignup({ email, password, username })
 
           // On passe en étape "pending" (confirmation email par code)
           set({ status: 'anonymous', email, signupStep: 'pending' })
