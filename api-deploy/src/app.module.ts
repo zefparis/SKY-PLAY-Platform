@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { cognitoConfig } from './common/config/cognito.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -16,6 +17,13 @@ import { PrismaModule } from './prisma/prisma.module';
       envFilePath: ['.env', 'prisma/.env'],
       load: [cognitoConfig],
     }),
+    // Rate limiting global (config par défaut). Les endpoints peuvent surcharger via @Throttle.
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 60,
+      },
+    ]),
     PrismaModule,
     AuthModule,
     UsersModule,

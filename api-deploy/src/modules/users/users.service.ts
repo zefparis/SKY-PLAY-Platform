@@ -5,6 +5,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  private defaultUsernameFromEmail(email: string) {
+    return email.split('@')[0];
+  }
+
   async create(data: any) {
     const user = await this.prisma.user.create({
       data: {
@@ -109,6 +113,45 @@ export class UsersService {
       },
       include: {
         wallet: true,
+      },
+    });
+
+    return user;
+  }
+
+  /**
+   * Endpoint public (post-signup) : crée le user en DB dès que Cognito retourne un sub.
+   * - Idempotent (upsert sur cognitoSub)
+   * - isVerified doit rester false tant que /users/sync (post-login) n'a pas validé l'email.
+   */
+  async registerFromSignup(params: { email: string; cognitoSub: string }) {
+    const { email, cognitoSub } = params;
+    const username = this.defaultUsernameFromEmail(email);
+
+    const user = await this.prisma.user.upsert({
+      where: { cognitoSub },
+      update: {
+        // On garde l'email à jour si l'utilisateur réessaye avec le même sub
+        email,
+        username,
+        // Ne pas passer isVerified=true ici
+      },
+      create: {
+        cognitoSub,
+        email,
+        username,
+        password: null,
+        isVerified: false,
+        wallet: {
+          create: {
+            balance: 0,
+          },
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
       },
     });
 

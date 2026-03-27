@@ -71,12 +71,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           password,
           [new CognitoUserAttribute({ Name: "email", Value: email })],
           [],
-          (err, result) => {
+          async (err, result) => {
             if (err) {
               set({ error: err.message, loading: false });
               reject(err);
               return;
             }
+
+            // Déclenche la création DB dès que Cognito renvoie le sub (sans bloquer le signup)
+            try {
+              const cognitoSub = result?.userSub;
+              if (cognitoSub) {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/register`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    email,
+                    cognitoSub,
+                  }),
+                });
+              }
+            } catch (e) {
+              // Silencieux : ne bloque pas le signup
+            }
+
             set({ email, step: "pending", loading: false, error: undefined });
             resolve();
           }
