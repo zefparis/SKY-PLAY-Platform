@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { cognitoConfig } from './common/config/cognito.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -31,6 +32,13 @@ import { PrismaModule } from './prisma/prisma.module';
     MatchesModule,
     WalletModule,
     PaymentsModule,
+  ],
+  providers: [
+    // Active la limitation de débit globalement (les routes peuvent surcharger via @Throttle/@SkipThrottle)
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
