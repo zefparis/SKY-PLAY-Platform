@@ -7,6 +7,8 @@ import {
 } from 'amazon-cognito-identity-js'
 import { env } from '@/lib/env'
 
+const normalizeIdentifier = (value: string) => value.trim().toLowerCase()
+
 const getUserPool = () => {
   if (!env.cognitoUserPoolId || !env.cognitoClientId) {
     throw new Error(
@@ -25,14 +27,15 @@ export const cognitoSignup = async (params: {
   username?: string
 }) => {
   const pool = getUserPool()
+  const email = normalizeIdentifier(params.email)
 
-  const attributes = [new CognitoUserAttribute({ Name: 'email', Value: params.email })]
+  const attributes = [new CognitoUserAttribute({ Name: 'email', Value: email })]
   if (params.username) {
     attributes.push(new CognitoUserAttribute({ Name: 'preferred_username', Value: params.username }))
   }
 
   return new Promise<{ userSub: string }>((resolve, reject) => {
-    pool.signUp(params.email, params.password, attributes, [], (err, result) => {
+    pool.signUp(email, params.password, attributes, [], (err, result) => {
       if (err || !result) return reject(err)
       resolve({ userSub: result.userSub })
     })
@@ -41,7 +44,7 @@ export const cognitoSignup = async (params: {
 
 export const cognitoConfirmSignup = async (params: { email: string; code: string }) => {
   const pool = getUserPool()
-  const user = new CognitoUser({ Username: params.email, Pool: pool })
+  const user = new CognitoUser({ Username: normalizeIdentifier(params.email), Pool: pool })
 
   return new Promise<void>((resolve, reject) => {
     user.confirmRegistration(params.code, true, (err) => {
@@ -53,7 +56,7 @@ export const cognitoConfirmSignup = async (params: { email: string; code: string
 
 export const cognitoResendSignupCode = async (params: { email: string }) => {
   const pool = getUserPool()
-  const user = new CognitoUser({ Username: params.email, Pool: pool })
+  const user = new CognitoUser({ Username: normalizeIdentifier(params.email), Pool: pool })
 
   return new Promise<void>((resolve, reject) => {
     user.resendConfirmationCode((err) => {
@@ -65,8 +68,9 @@ export const cognitoResendSignupCode = async (params: { email: string }) => {
 
 export const cognitoLogin = async (params: { email: string; password: string }) => {
   const pool = getUserPool()
-  const user = new CognitoUser({ Username: params.email, Pool: pool })
-  const auth = new AuthenticationDetails({ Username: params.email, Password: params.password })
+  const email = normalizeIdentifier(params.email)
+  const user = new CognitoUser({ Username: email, Pool: pool })
+  const auth = new AuthenticationDetails({ Username: email, Password: params.password })
 
   return new Promise<{
     accessToken: string
@@ -89,7 +93,7 @@ export const cognitoLogin = async (params: { email: string; password: string }) 
 
 export const cognitoRefresh = async (params: { email: string; refreshToken: string }) => {
   const pool = getUserPool()
-  const user = new CognitoUser({ Username: params.email, Pool: pool })
+  const user = new CognitoUser({ Username: normalizeIdentifier(params.email), Pool: pool })
   const token = new CognitoRefreshToken({ RefreshToken: params.refreshToken })
 
   return new Promise<{ accessToken: string; idToken: string }>((resolve, reject) => {
