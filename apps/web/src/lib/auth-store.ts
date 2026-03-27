@@ -27,12 +27,14 @@ export type AuthState = {
   loading: boolean;
   error?: string;
   tokens?: AuthTokens | null;
+  user?: any; // Utilisateur synchronisé (type précis possible si DTO connu)
 
   setStep: (step: AuthStep) => void;
   setEmail: (email: string) => void;
   setError: (error?: string) => void;
   setLoading: (loading: boolean) => void;
   setTokens: (tokens: AuthTokens | null) => void;
+  setUser: (user: any) => void;
 
   signup: (email: string, password: string) => Promise<void>;
   confirm: (code: string) => Promise<void>;
@@ -48,12 +50,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: false,
   error: undefined,
   tokens: null,
+  user: undefined,
 
   setStep: (step) => set({ step, error: undefined }),
   setEmail: (email) => set({ email }),
   setError: (error) => set({ error }),
   setLoading: (loading) => set({ loading }),
   setTokens: (tokens) => set({ tokens }),
+  setUser: (user) => set({ user }),
 
   signup: async (email, password) => {
     set({ loading: true, error: undefined });
@@ -136,7 +140,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       await new Promise<void>((resolve, reject) => {
         user.authenticateUser(authDetails, {
-          onSuccess: (session) => {
+          onSuccess: async (session) => {
             set({
               tokens: {
                 accessToken: session.getAccessToken().getJwtToken(),
@@ -148,6 +152,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               error: undefined,
               email,
             });
+
+            // Synchronisation Cognito → API Railway
+            try {
+              const idToken = session.getIdToken().getJwtToken();
+              const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/users/sync`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${idToken}`,
+                  },
+                }
+              );
+              if (res.ok) {
+                const user = await res.json();
+                get().setUser(user);
+              }
+            } catch (e) {
+              // Silencieux : ne bloque pas le login
+            }
+
             resolve();
           },
           onFailure: (err) => {

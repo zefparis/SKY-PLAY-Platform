@@ -72,4 +72,46 @@ export class UsersService {
       include: { wallet: true },
     });
   }
+
+  /**
+   * Upsert utilisateur à partir des infos Cognito.
+   * Idempotent : plusieurs appels ne créent pas de doublon.
+   * Met à jour email, username, isVerified si besoin.
+   */
+  async upsertFromCognito(params: {
+    cognitoSub: string;
+    email: string;
+    username: string;
+    isVerified: boolean;
+  }) {
+    const { cognitoSub, email, username, isVerified } = params;
+
+    // Upsert sur cognitoSub (clé unique)
+    const user = await this.prisma.user.upsert({
+      where: { cognitoSub },
+      update: {
+        email,
+        username,
+        isVerified,
+        // On ne touche jamais au mot de passe (Cognito source de vérité)
+      },
+      create: {
+        cognitoSub,
+        email,
+        username,
+        password: null,
+        isVerified,
+        wallet: {
+          create: {
+            balance: 0,
+          },
+        },
+      },
+      include: {
+        wallet: true,
+      },
+    });
+
+    return user;
+  }
 }
