@@ -35,6 +35,16 @@ export default function SignupPage() {
     // Évite useSearchParams (exige Suspense en build). On lit le query param côté client.
     const sp = new URLSearchParams(window.location.search)
     setForceConfirm(sp.get('step') === 'confirm')
+    
+    // Reset form fields when component mounts
+    setEmail('')
+    setUsername('')
+    setPassword('')
+    setCode('')
+    setLocalError(null)
+    setSuccess(null)
+    setShowPassword(false)
+    setResent(false)
   }, [])
 
   const isLoading = status === 'authenticating'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
@@ -23,6 +23,14 @@ export default function LoginClient() {
   const [password, setPassword] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  // Reset form fields when component mounts
+  useEffect(() => {
+    setEmail('')
+    setPassword('')
+    setLocalError(null)
+    setShowPassword(false)
+  }, [])
 
   const isLoading = status === 'authenticating'
 
