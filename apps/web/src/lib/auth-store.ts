@@ -62,37 +62,56 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setTokens: (tokens) => set({ tokens }),
   setUser: (user) => set({ user }),
 
-      signup: async (email: string, password: string) => {
+  signup: async (email: string, password: string) => {
     set({ loading: true, error: undefined });
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:3001';
+      const userPool = new CognitoUserPool({
+        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
+        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
+      });
 
-      console.log('🚀 Appel register backend:', `${apiUrl}/users/register`);
+      // 1. Création dans Cognito (on récupère le UserSub)
+      const cognitoResult = await new Promise<any>((resolve, reject) => {
+        userPool.signUp(
+          email,
+          password,
+          [new CognitoUserAttribute({ Name: "email", Value: email })],
+          [],
+          (err, result) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(result);
+          }
+        );
+      });
+
+      const cognitoSub = cognitoResult.userSub; // ← C'est ça qu'on veut
+
+      console.log("✅ Cognito UserSub reçu :", cognitoSub);
+
+      // 2. Envoi au backend pour créer l'utilisateur dans Prisma
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:3001';
 
       const response = await fetch(`${apiUrl}/users/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          password,
-          // Ajoute ici d'autres champs si ton endpoint les attend
-          // username: email.split('@')[0],
-          // firstName: "",
-          // lastName: "",
+          cognitoSub,           // ← OBLIGATOIRE
+          // username: email.split('@')[0], // tu peux ajouter si tu veux
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('❌ Erreur backend:', data);
-        throw new Error(data.message || "Erreur lors de l'inscription");
+        throw new Error(data.message || "Erreur lors de l'enregistrement en base");
       }
 
-      // Succès → on passe à l'étape de confirmation email
+      // 3. Tout est bon → on passe à l'étape de confirmation email
       set({
         email,
         step: "pending",
@@ -100,12 +119,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: undefined,
       });
 
-      console.log("✅ Inscription réussie via backend", data);
+      console.log("✅ Utilisateur créé dans Cognito + DB", { cognitoSub, data });
 
     } catch (e: any) {
-      console.error("❌ Erreur signup:", e);
+      console.error("❌ Erreur signup :", e);
       set({
-        error: e?.message || "Impossible de créer le compte. Réessaie.",
+        error: e?.message || "Impossible de créer le compte",
         loading: false,
       });
     }

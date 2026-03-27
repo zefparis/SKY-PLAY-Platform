@@ -124,11 +124,16 @@ function LoginView() {
       </div>
       {error && <Banner type="error" message={error} />}
       <Field icon={Mail} type="email" placeholder="Email" value={emailVal} onChange={setEmailVal} autoFocus />
-      <Field icon={Lock} type="password" placeholder="Mot de passe" value={password}
-        onChange={setPassword} reveal={showPwd} onToggleReveal={() => setShowPwd(!showPwd)} />
-      <button onClick={() => setStep("forgot")} className={`${BTN_GHOST} ml-auto block`}>
-        Mot de passe oublié ?
-      </button>
+      <div>
+        <Field icon={Lock} type="password" placeholder="Mot de passe" value={password}
+          onChange={setPassword} reveal={showPwd} onToggleReveal={() => setShowPwd(!showPwd)} />
+        {/* ✅ Lien "Mot de passe oublié ?" aligné à droite */}
+        <div className="flex justify-end mt-2">
+          <button onClick={() => setStep("forgot")} className={BTN_GHOST}>
+            Mot de passe oublié ?
+          </button>
+        </div>
+      </div>
       <button onClick={() => login(emailVal, password)}
         disabled={loading || !emailVal || !password} className={BTN_PRIMARY}>
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
