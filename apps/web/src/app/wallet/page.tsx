@@ -68,6 +68,20 @@ export default function WalletPage() {
     return 'danger'
   }
 
+  const formatCompactAmount = (amount: number) => {
+    const absoluteAmount = Math.abs(amount)
+
+    if (absoluteAmount >= 1000000) {
+      return `${amount > 0 ? '+' : ''}${(absoluteAmount / 1000000).toFixed(absoluteAmount % 1000000 === 0 ? 0 : 1)}M XOF`
+    }
+
+    if (absoluteAmount >= 1000) {
+      return `${amount > 0 ? '+' : ''}${(absoluteAmount / 1000).toFixed(absoluteAmount % 1000 === 0 ? 0 : 1)}K XOF`
+    }
+
+    return `${amount > 0 ? '+' : ''}${formatCurrency(absoluteAmount)}`
+  }
+
   return (
     <div className="min-h-screen">
       <main className="pb-12">
@@ -104,36 +118,43 @@ export default function WalletPage() {
         </div>
 
         <Card>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Transaction History</h2>
-            <Clock className="w-5 h-5 text-white/55" />
+          <div className="mb-4 flex items-center justify-between sm:mb-6">
+            <h2 className="text-xl font-bold text-white sm:text-2xl">Transaction History</h2>
+            <Clock className="w-4 h-4 text-white/55 sm:w-5 sm:h-5" />
           </div>
 
           <div className="space-y-3">
             {mockTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 transition duration-200"
+                className="rounded-lg bg-white/5 border border-white/10 p-3 sm:p-4 hover:border-white/20 transition duration-200"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-lg bg-black/25 border border-white/10 flex items-center justify-center">
-                    {getTransactionIcon(transaction.type)}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black/25 border border-white/10">
+                      {getTransactionIcon(transaction.type)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-base font-semibold text-white sm:text-lg break-words">
+                        {transaction.description}
+                      </p>
+                      <p className="text-sm text-white/60">{formatDate(transaction.createdAt)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-white font-semibold">{transaction.description}</p>
-                    <p className="text-sm text-white/60">{formatDate(transaction.createdAt)}</p>
-                  </div>
-                </div>
 
-                <div className="text-right">
-                  <p className={`text-lg font-bold ${
-                    transaction.amount > 0 ? 'text-secondary' : 'text-accent'
-                  }`}>
-                    {transaction.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}
-                  </p>
-                  <Badge variant={getStatusColor(transaction.status) as any}>
-                    {transaction.status}
-                  </Badge>
+                  <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-3 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
+                    <p className={`truncate text-base font-bold tabular-nums sm:text-lg ${
+                      transaction.amount > 0 ? 'text-secondary' : 'text-accent'
+                    }`}>
+                      <span className="sm:hidden">{formatCompactAmount(transaction.amount)}</span>
+                      <span className="hidden sm:inline">
+                        {transaction.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}
+                      </span>
+                    </p>
+                    <Badge variant={getStatusColor(transaction.status) as any} className="shrink-0 px-2.5 py-1 text-[10px] sm:px-3 sm:text-xs">
+                      {transaction.status}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             ))}

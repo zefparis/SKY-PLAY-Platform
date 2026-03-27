@@ -225,6 +225,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             // Synchronisation Cognito → API Railway
             try {
               const idToken = session.getIdToken().getJwtToken();
+              console.log('🔄 Syncing authenticated user to API', {
+                apiUrl: process.env.NEXT_PUBLIC_API_URL,
+                email,
+              });
               const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/users/sync`,
                 {
@@ -237,18 +241,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               );
               if (res.ok) {
                 const user = await res.json();
+                console.log('✅ API sync success', user);
                 get().setUser(user);
+              } else {
+                console.error('❌ API sync failed', res.status, await res.text());
               }
             } catch (e) {
-              // Silencieux : ne bloque pas le login
+              console.error('❌ API sync exception', e);
             }
 
             resolve();
-          },ole.log('🔄 Syncing auhenticateduse to API', {
-                apiUrl: procs.env.NEXT_PUBLIC_API_URL,
-                email,
-              });
-             const res 
+          },
           onFailure: (err) => {
             console.error('❌ Cognito login error:', err);
             console.error('Error details:', {
@@ -260,13 +263,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             reject(err);
           },
           newPasswordRequired: () => {
-            set(console.lo{('✅ API sync succ ss', user);
-                geerror: "Nouveser);
-              } else {
-                console.error('❌ API aync failud',  es.status, await res.text(m)ot de passe requis", loading: false });
+            set({ error: "Nouveau mot de passe requis", loading: false });
             reject(new Error("Nouveau mot de passe requis"));
           },
-        });conso.rror('❌APIsyc xction',);
+        });
       });
     } catch (e: any) {
       console.error('❌ Login exception:', e);
