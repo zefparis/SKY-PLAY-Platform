@@ -7,12 +7,22 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-RUN npm ci
+# Root workspace metadata
+COPY package.json package-lock.json ./
 
-COPY tsconfig*.json nest-cli.json ./
-COPY prisma ./prisma
-COPY src ./src
+# Workspace metadata
+COPY api-deploy/package.json ./api-deploy/package.json
+
+# Install deps for the workspace
+RUN npm ci --workspace=api-deploy
+
+# Copy workspace sources
+COPY api-deploy/tsconfig*.json ./api-deploy/
+COPY api-deploy/nest-cli.json ./api-deploy/
+COPY api-deploy/prisma ./api-deploy/prisma
+COPY api-deploy/src ./api-deploy/src
+
+WORKDIR /app/api-deploy
 
 RUN npx prisma generate --schema ./prisma/schema.prisma
 RUN npm run build
@@ -27,17 +37,21 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-RUN npm ci --omit=dev
+# Root workspace metadata
+COPY package.json package-lock.json ./
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Workspace metadata
+COPY api-deploy/package.json ./api-deploy/package.json
 
-# 🔥 important pour runtime prisma
-RUN npx prisma generate --schema ./prisma/schema.prisma
+# Install prod deps only for the workspace
+RUN npm ci --omit=dev --workspace=api-deploy
 
-# 🔐 sécurité
+WORKDIR /app/api-deploy
+
+COPY --from=builder /app/api-deploy/dist ./dist
+COPY --from=builder /app/api-deploy/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
+
 RUN useradd -m appuser
 USER appuser
 
