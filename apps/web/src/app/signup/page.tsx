@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
@@ -15,9 +15,11 @@ export default function SignupPage() {
   const signup = useAuthStore((s) => s.signup)
   const confirmSignup = useAuthStore((s) => s.confirmSignup)
   const resendSignupCode = useAuthStore((s) => s.resendSignupCode)
+  const setSignupEmailForConfirm = useAuthStore((s) => s.setSignupEmailForConfirm)
   const status = useAuthStore((s) => s.status)
   const error = useAuthStore((s) => s.error)
   const signupStep = useAuthStore((s) => s.signupStep)
+  const storeEmail = useAuthStore((s) => s.email)
 
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
@@ -27,6 +29,13 @@ export default function SignupPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [resent, setResent] = useState(false)
+  const [forceConfirm, setForceConfirm] = useState(false)
+
+  useEffect(() => {
+    // Évite useSearchParams (exige Suspense en build). On lit le query param côté client.
+    const sp = new URLSearchParams(window.location.search)
+    setForceConfirm(sp.get('step') === 'confirm')
+  }, [])
 
   const isLoading = status === 'authenticating'
   const canSubmit = useMemo(() => {
@@ -61,6 +70,10 @@ export default function SignupPage() {
   const onResend = async () => {
     setLocalError(null)
     try {
+      // si on arrive via deep-link, on initialise l'email dans le store
+      if (!storeEmail && email) {
+        setSignupEmailForConfirm(email)
+      }
       await resendSignupCode()
       setResent(true)
       setTimeout(() => setResent(false), 4000)
@@ -69,7 +82,7 @@ export default function SignupPage() {
     }
   }
 
-  const isConfirmMode = signupStep === 'pending'
+  const isConfirmMode = signupStep === 'pending' || forceConfirm
 
   return (
     <div className="min-h-screen">
@@ -133,6 +146,19 @@ export default function SignupPage() {
 
                 {isConfirmMode && (
                   <div>
+                    {!storeEmail && (
+                      <div className="text-xs text-amber-200 bg-amber-500/10 border border-amber-500/20 rounded-md p-3 mb-3">
+                        Renseigne ton email ci-dessous puis clique sur “Renvoyer le code”, ou refais un signup.
+                      </div>
+                    )}
+
+                    {!storeEmail && (
+                      <div className="mb-3">
+                        <label className="block text-sm text-white/70 mb-2">{AUTH_COPY.signup.emailLabel}</label>
+                        <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" />
+                      </div>
+                    )}
+
                     <label className="block text-sm text-white/70 mb-2">Code (6 chiffres)</label>
                     <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" />
                     <div className="mt-2">

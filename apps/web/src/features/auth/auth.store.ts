@@ -29,6 +29,7 @@ type AuthState = {
 
   hydrate: () => Promise<void>
   signup: (params: { email: string; password: string; username?: string }) => Promise<void>
+  setSignupEmailForConfirm: (email: string) => void
   confirmSignup: (params: { code: string }) => Promise<void>
   resendSignupCode: () => Promise<void>
   login: (params: { email: string; password: string }) => Promise<void>
@@ -86,6 +87,12 @@ export const useAuthStore = create<AuthState>()(
           set({ status: 'anonymous', error: e?.message || 'Signup failed', signupStep: 'idle' })
           throw e
         }
+      },
+
+      // Permet d'initier un flow de confirmation même après refresh / deep link
+      // (ex: /signup?step=confirm)
+      setSignupEmailForConfirm: (email: string) => {
+        set({ email, signupStep: 'pending' })
       },
 
       confirmSignup: async ({ code }) => {
