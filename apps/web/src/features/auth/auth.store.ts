@@ -179,7 +179,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'skyplay-auth',
-      partialize: (state) => ({ email: state.email, tokens: state.tokens, signupStep: state.signupStep }),
+      // On ne persiste pas signupStep ni les erreurs pour éviter que l'UI reste
+      // "bloquée" sur un état (ex: compte confirmé) après un refresh.
+      partialize: (state) => ({ email: state.email, tokens: state.tokens }),
     }
   )
 )
