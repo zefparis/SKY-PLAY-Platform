@@ -26,13 +26,13 @@ export default function LeaderboardPage() {
     <div className="min-h-screen">
       <main className="pb-12">
         <Container>
-        <div className="flex items-center space-x-4 mb-8">
-          <div className="w-16 h-16 rounded-xl bg-gradient-primary flex items-center justify-center glow-blue">
-            <Trophy className="w-8 h-8 text-white" />
+        <div className="mb-6 flex items-start gap-3 sm:mb-8 sm:items-center sm:gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-primary glow-blue sm:h-16 sm:w-16">
+            <Trophy className="h-6 w-6 text-white sm:h-8 sm:w-8" />
           </div>
-          <div>
-            <h1 className="text-4xl font-bold text-white">{t('leaderboard.title')}</h1>
-            <p className="text-white/65">{t('leaderboard.subtitle')}</p>
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold text-white sm:text-4xl">{t('leaderboard.title')}</h1>
+            <p className="text-sm text-white/65 sm:text-base">{t('leaderboard.subtitle')}</p>
           </div>
         </div>
 
@@ -40,32 +40,32 @@ export default function LeaderboardPage() {
           <LeaderboardTable entries={mockLeaderboard} />
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 sm:gap-6 md:grid-cols-3">
           <Card className="text-center">
             <div className="w-16 h-16 rounded-full bg-accent/15 border border-accent/25 flex items-center justify-center mx-auto mb-4 shadow-glow-red">
               <Trophy className="w-8 h-8 text-accent" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">ProGamer123</h3>
+            <h3 className="truncate text-xl font-bold text-white mb-2 sm:text-2xl">ProGamer123</h3>
             <p className="text-white/65 mb-4">{t('leaderboard.topPlayer')}</p>
-            <p className="text-3xl font-bold text-gradient">45 {t('leaderboard.wins')}</p>
+            <p className="text-2xl font-bold text-gradient sm:text-3xl">45 {t('leaderboard.wins')}</p>
           </Card>
 
           <Card className="text-center">
             <div className="w-16 h-16 rounded-full bg-secondary/20 flex items-center justify-center mx-auto mb-4">
               <Trophy className="w-8 h-8 text-secondary" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">2.5M XOF</h3>
+            <h3 className="break-words text-xl font-bold text-white mb-2 tabular-nums sm:text-2xl">2.5M XOF</h3>
             <p className="text-white/65 mb-4">{t('leaderboard.highestEarnings')}</p>
-            <p className="text-lg text-secondary font-semibold">{t('leaderboard.thisMonth')}</p>
+            <p className="text-base text-secondary font-semibold sm:text-lg">{t('leaderboard.thisMonth')}</p>
           </Card>
 
           <Card className="text-center">
             <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
               <Trophy className="w-8 h-8 text-accent" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">156</h3>
+            <h3 className="text-xl font-bold text-white mb-2 tabular-nums sm:text-2xl">156</h3>
             <p className="text-white/65 mb-4">{t('leaderboard.activePlayers')}</p>
-            <p className="text-lg text-accent font-semibold">{t('leaderboard.competingNow')}</p>
+            <p className="text-base text-accent font-semibold sm:text-lg">{t('leaderboard.competingNow')}</p>
           </Card>
         </div>
         </Container>

@@ -14,6 +14,18 @@ interface LeaderboardTableProps {
 }
 
 const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
+  const formatCompactEarnings = (value: number) => {
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(value % 1000000 === 0 ? 0 : 1)}M XOF`
+    }
+
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}K XOF`
+    }
+
+    return formatCurrency(value)
+  }
+
   const getRankIcon = (rank: number) => {
     // Strict palette: use electric blue for top ranks and accent red for #1 highlight
     if (rank === 1) return <Trophy className="w-6 h-6 text-accent" />
@@ -34,28 +46,38 @@ const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
       {entries.map((entry) => (
         <div
           key={entry.rank}
-          className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-300 hover:scale-[1.02] ${getRankBg(entry.rank)}`}
+          className={`rounded-lg border p-3 sm:p-4 transition-all duration-300 hover:scale-[1.02] ${getRankBg(entry.rank)}`}
         >
-          <div className="flex items-center space-x-4 flex-1">
-            <div className="w-12 flex items-center justify-center">
-              {getRankIcon(entry.rank)}
-            </div>
-            
-            <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold">
-              {entry.avatar || entry.username.charAt(0).toUpperCase()}
-            </div>
-            
-            <div>
-              <h3 className="text-white font-semibold">{entry.username}</h3>
-              <p className="text-sm text-white/65">{entry.wins} wins</p>
-            </div>
-          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4 sm:flex-1">
+              <div className="flex w-10 shrink-0 items-center justify-center sm:w-12">
+                {getRankIcon(entry.rank)}
+              </div>
 
-          <div className="text-right">
-            <p className="text-secondary font-bold text-lg">
-              {formatCurrency(entry.earnings)}
-            </p>
-            <p className="text-xs text-white/60">Total Earnings</p>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-sm font-bold text-white sm:h-12 sm:w-12 sm:text-base">
+                {entry.avatar || entry.username.charAt(0).toUpperCase()}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h3 className="truncate text-sm font-semibold text-white sm:text-base">
+                  {entry.username}
+                </h3>
+                <p className="text-xs text-white/65 sm:text-sm">{entry.wins} wins</p>
+              </div>
+            </div>
+
+            <div className="flex items-end justify-between gap-3 border-t border-white/10 pt-3 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-white/45 sm:hidden">
+                Total Earnings
+              </p>
+              <div className="min-w-0 sm:max-w-[180px]">
+                <p className="truncate text-sm font-bold text-secondary tabular-nums sm:text-lg">
+                  <span className="sm:hidden">{formatCompactEarnings(entry.earnings)}</span>
+                  <span className="hidden sm:inline">{formatCurrency(entry.earnings)}</span>
+                </p>
+                <p className="hidden text-xs text-white/60 sm:block">Total Earnings</p>
+              </div>
+            </div>
           </div>
         </div>
       ))}
