@@ -5,7 +5,8 @@ import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 import ChatLayout from '@/components/chat/ChatLayout'
 import ChatInput from '@/components/chat/ChatInput'
-import MessageBubble, { Message } from '@/components/chat/MessageBubble'
+import MessageList from '@/components/chat/MessageList'
+import { Message } from '@/components/chat/MessageBubble'
 import { MessageCircle } from 'lucide-react'
 
 export default function ChatPage() {
@@ -70,9 +71,12 @@ export default function ChatPage() {
                 ref={listRef}
                 className="h-[55vh] overflow-y-auto px-6 py-5 space-y-4"
               >
-                {messages.map((m) => (
-                  <MessageBubble key={m.id} message={m} />
-                ))}
+                <MessageList
+                  messages={messages}
+                  reactions={{}}
+                  onReact={() => {}}
+                  currentUser="Me"
+                />
               </div>
 
               <div className="px-6 py-5 border-t border-white/10 bg-black/15">
