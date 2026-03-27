@@ -2,9 +2,9 @@
   "name": "@skyplay/api",
   "private": true,
   "scripts": {
-    "postinstall": "node ./scripts/railway-prisma-compat.js && prisma generate --schema ./prisma/schema.prisma || true",
-    "build": "prisma generate --schema ./prisma/schema.prisma && nest build",
-    "start:dev": "nest start --watch",
+    "postinstall": "prisma generate --schema ../../database/prisma/schema.prisma || true",
+    "build": "prisma generate --schema ../../database/prisma/schema.prisma && npx nest build",
+    "start:dev": "npx @nestjs/cli start --watch",
     "start": "node dist/main.js"
   },
   "dependencies": {
