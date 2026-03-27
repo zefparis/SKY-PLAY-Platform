@@ -39,6 +39,30 @@ export const cognitoSignup = async (params: {
   })
 }
 
+export const cognitoConfirmSignup = async (params: { email: string; code: string }) => {
+  const pool = getUserPool()
+  const user = new CognitoUser({ Username: params.email, Pool: pool })
+
+  return new Promise<void>((resolve, reject) => {
+    user.confirmRegistration(params.code, true, (err) => {
+      if (err) return reject(err)
+      resolve()
+    })
+  })
+}
+
+export const cognitoResendSignupCode = async (params: { email: string }) => {
+  const pool = getUserPool()
+  const user = new CognitoUser({ Username: params.email, Pool: pool })
+
+  return new Promise<void>((resolve, reject) => {
+    user.resendConfirmationCode((err) => {
+      if (err) return reject(err)
+      resolve()
+    })
+  })
+}
+
 export const cognitoLogin = async (params: { email: string; password: string }) => {
   const pool = getUserPool()
   const user = new CognitoUser({ Username: params.email, Pool: pool })

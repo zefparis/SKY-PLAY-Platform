@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { useAuthStore } from '@/features/auth/auth.store'
+import { AUTH_COPY } from '@/lib/auth-copy'
 
 export default function LoginClient() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function LoginClient() {
   const login = useAuthStore((s) => s.login)
   const status = useAuthStore((s) => s.status)
   const error = useAuthStore((s) => s.error)
+  const signupStep = useAuthStore((s) => s.signupStep)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -45,17 +47,34 @@ export default function LoginClient() {
         <Container>
           <div className="max-w-md mx-auto">
             <Card variant="glass" className="p-6">
-              <h1 className="title-tech text-2xl text-white font-extrabold mb-1">Connexion</h1>
-              <p className="text-white/60 mb-6">Accède à SKY PLAY avec ton compte.</p>
+              <h1 className="title-tech text-2xl text-white font-extrabold mb-1">{AUTH_COPY.login.title}</h1>
+              <p className="text-white/60 mb-6">{AUTH_COPY.login.subtitle}</p>
+
+              {signupStep === 'pending' && (
+                <div className="text-sm text-amber-200 bg-amber-500/10 border border-amber-500/20 rounded-md p-3 mb-4">
+                  {AUTH_COPY.signup.confirmSubtitle}
+                  <div className="mt-2">
+                    <a className="text-secondary hover:underline" href="/signup?step=confirm">
+                      {AUTH_COPY.signup.confirmTitle}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {signupStep === 'confirmed' && (
+                <div className="text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-500/20 rounded-md p-3 mb-4">
+                  {AUTH_COPY.signup.confirmed}
+                </div>
+              )}
 
               <form onSubmit={onSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Email</label>
+                  <label className="block text-sm text-white/70 mb-2">{AUTH_COPY.login.emailLabel}</label>
                   <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Mot de passe</label>
+                  <label className="block text-sm text-white/70 mb-2">{AUTH_COPY.login.passwordLabel}</label>
                   <div className="relative">
                     <Input
                       value={password}
@@ -93,24 +112,24 @@ export default function LoginClient() {
                 )}
 
                 <Button type="submit" disabled={!canSubmit} className="w-full">
-                  {isLoading ? 'Connexion…' : 'Se connecter'}
+                  {isLoading ? AUTH_COPY.login.submitLoading : AUTH_COPY.login.submit}
                 </Button>
 
                 <div className="text-sm text-white/60">
-                  Pas de compte ?{' '}
+                  {AUTH_COPY.login.noAccount}{' '}
                   <a className="text-secondary hover:underline" href="/signup">
-                    Créer un compte
+                    {AUTH_COPY.login.createAccount}
                   </a>
                 </div>
 
                 <div className="pt-4 border-t border-white/10">
-                  <p className="text-xs text-white/50 mb-3">Social login (préparé)</p>
+                  <p className="text-xs text-white/50 mb-3">{AUTH_COPY.login.socialTitle}</p>
                   <div className="grid grid-cols-2 gap-3">
                     <Button type="button" variant="outline" disabled className="w-full">
-                      Google (bientôt)
+                      {AUTH_COPY.login.googleSoon}
                     </Button>
                     <Button type="button" variant="outline" disabled className="w-full">
-                      Discord (bientôt)
+                      {AUTH_COPY.login.discordSoon}
                     </Button>
                   </div>
                 </div>

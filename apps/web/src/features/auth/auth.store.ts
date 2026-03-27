@@ -2,7 +2,14 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { cognitoLogin, cognitoLogout, cognitoRefresh, cognitoSignup } from '@/features/auth/cognito'
+import {
+  cognitoConfirmSignup,
+  cognitoLogin,
+  cognitoLogout,
+  cognitoRefresh,
+  cognitoResendSignupCode,
+  cognitoSignup,
+} from '@/features/auth/cognito'
 import { api, setAuthToken } from '@/lib/api'
 
 export type AuthTokens = {
@@ -18,8 +25,12 @@ type AuthState = {
   user: any | null
   error: string | null
 
+  signupStep: 'idle' | 'pending' | 'confirmed'
+
   hydrate: () => Promise<void>
   signup: (params: { email: string; password: string; username?: string }) => Promise<void>
+  confirmSignup: (params: { code: string }) => Promise<void>
+  resendSignupCode: () => Promise<void>
   login: (params: { email: string; password: string }) => Promise<void>
   refresh: () => Promise<void>
   logout: () => Promise<void>
@@ -33,6 +44,7 @@ export const useAuthStore = create<AuthState>()(
       tokens: null,
       user: null,
       error: null,
+      signupStep: 'idle',
 
       hydrate: async () => {
         const tokens = get().tokens
@@ -55,12 +67,49 @@ export const useAuthStore = create<AuthState>()(
       signup: async ({ email, password, username }) => {
         set({ status: 'authenticating', error: null })
         try {
-          await cognitoSignup({ email, password, username })
-          // Selon la config du pool, un code de confirmation peut être requis.
-          // Ici on laisse l'utilisateur se connecter ensuite.
-          set({ status: 'anonymous' })
+          const { userSub } = await cognitoSignup({ email, password, username })
+
+          // Création DB dès le signup (best effort, silencieux)
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, cognitoSub: userSub }),
+            })
+          } catch {
+            // silencieux
+          }
+
+          // On passe en étape "pending" (confirmation email par code)
+          set({ status: 'anonymous', email, signupStep: 'pending' })
         } catch (e: any) {
-          set({ status: 'anonymous', error: e?.message || 'Signup failed' })
+          set({ status: 'anonymous', error: e?.message || 'Signup failed', signupStep: 'idle' })
+          throw e
+        }
+      },
+
+      confirmSignup: async ({ code }) => {
+        const email = get().email
+        if (!email) throw new Error('Email manquant')
+        set({ status: 'authenticating', error: null })
+        try {
+          await cognitoConfirmSignup({ email, code })
+          set({ status: 'anonymous', signupStep: 'confirmed', error: null })
+        } catch (e: any) {
+          set({ status: 'anonymous', error: e?.message || 'Confirmation failed', signupStep: 'pending' })
+          throw e
+        }
+      },
+
+      resendSignupCode: async () => {
+        const email = get().email
+        if (!email) throw new Error('Email manquant')
+        set({ status: 'authenticating', error: null })
+        try {
+          await cognitoResendSignupCode({ email })
+          set({ status: 'anonymous', error: null, signupStep: 'pending' })
+        } catch (e: any) {
+          set({ status: 'anonymous', error: e?.message || 'Resend failed', signupStep: 'pending' })
           throw e
         }
       },
@@ -71,7 +120,7 @@ export const useAuthStore = create<AuthState>()(
           const tokens = await cognitoLogin({ email, password })
           setAuthToken(tokens.accessToken)
           const { data } = await api.get('/auth/me')
-          set({ status: 'authenticated', email, tokens, user: data.user, error: null })
+          set({ status: 'authenticated', email, tokens, user: data.user, error: null, signupStep: 'idle' })
         } catch (e: any) {
           setAuthToken(null)
           set({ status: 'anonymous', tokens: null, user: null, error: e?.message || 'Login failed' })
@@ -93,12 +142,12 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         cognitoLogout()
         setAuthToken(null)
-        set({ status: 'anonymous', email: null, tokens: null, user: null, error: null })
+        set({ status: 'anonymous', email: null, tokens: null, user: null, error: null, signupStep: 'idle' })
       },
     }),
     {
       name: 'skyplay-auth',
-      partialize: (state) => ({ email: state.email, tokens: state.tokens }),
+      partialize: (state) => ({ email: state.email, tokens: state.tokens, signupStep: state.signupStep }),
     }
   )
 )
