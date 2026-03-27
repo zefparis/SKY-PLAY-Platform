@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import type { CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageBubble, { Message } from './MessageBubble';
 
@@ -63,7 +64,7 @@ export default function MessageList({
         width="100%"
         className="virtualized-message-list"
       >
-        {({ index, style }) => {
+        {({ index, style }: { index: number; style: CSSProperties }) => {
           const msg = messages[index];
           return (
             <div style={style} key={msg.id}>
