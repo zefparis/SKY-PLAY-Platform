@@ -136,6 +136,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           // Auto-login après confirmation OTP
           user.getSession(async (sessionErr: any, session: CognitoUserSession | null) => {
             if (sessionErr || !session) {
+              console.error("❌ Session error after OTP:", sessionErr);
               set({ step: "login", loading: false, error: undefined });
               resolve();
               return;
@@ -144,13 +145,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             // Sync user to database
             try {
               const idToken = session.getIdToken().getJwtToken();
-              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/sync`, {
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+              console.log("🔄 Syncing user to database...", { apiUrl, email });
+              
+              const response = await fetch(`${apiUrl}/users/sync`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${idToken}`,
                 },
               });
+
+              if (!response.ok) {
+                console.error("❌ Sync failed:", response.status, await response.text());
+              } else {
+                const userData = await response.json();
+                console.log("✅ User synced to database:", userData);
+              }
 
               set({
                 tokens: {
@@ -163,6 +174,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 error: undefined,
               });
             } catch (syncErr) {
+              console.error("❌ Sync error:", syncErr);
               set({ step: "login", loading: false, error: undefined });
             }
 
