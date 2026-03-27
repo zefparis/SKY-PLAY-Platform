@@ -22,55 +22,60 @@ const ChallengeCard = ({ challenge }: ChallengeCardProps) => {
 
   return (
     <Card glow className="group cursor-pointer">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center">
-            <Gamepad2 className="w-6 h-6 text-white" />
+      <div className="flex items-start justify-between gap-2 mb-4">
+        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0">
+            <Gamepad2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-white group-hover:text-secondary transition-colors">
+          <div className="min-w-0">
+            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-secondary transition-colors truncate">
               {challenge.title}
             </h3>
-            <p className="text-sm text-white/65">{challenge.game}</p>
+            <p className="text-xs sm:text-sm text-white/65 truncate">{challenge.game}</p>
           </div>
         </div>
-        <Badge variant={challenge.status === 'OPEN' ? 'success' : 'danger'}>
+        <Badge variant={challenge.status === 'OPEN' ? 'success' : 'danger'} className="shrink-0">
           {challenge.status}
         </Badge>
       </div>
 
-      <div className="space-y-3 mb-4">
+      <div className="space-y-2 sm:space-y-3 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 text-white/65">
-            <Users className="w-4 h-4" />
-            <span className="text-sm">Players</span>
+            <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Players</span>
           </div>
-          <span className="text-white font-semibold">
+          <span className="text-sm sm:text-base text-white font-semibold">
             {challenge.currentPlayers}/{challenge.maxPlayers}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 text-white/65">
-            <Trophy className="w-4 h-4" />
-            <span className="text-sm">Prize Pool</span>
+            <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Prize Pool</span>
           </div>
-          <span className="text-secondary font-bold">
+          <span className="text-sm sm:text-base text-secondary font-bold">
             {formatCurrency(challenge.prizePool)}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-white/65 text-sm">Entry Fee</span>
-          <span className="text-white font-semibold">
+          <span className="text-white/65 text-xs sm:text-sm">Entry Fee</span>
+          <span className="text-sm sm:text-base text-white font-semibold">
             {formatCurrency(challenge.entryFee)}
           </span>
         </div>
       </div>
 
-      <div className="pt-4 border-t border-white/10">
-        <Button variant="primary" className="w-full" disabled={challenge.status !== 'OPEN'}>
-          {challenge.status === 'OPEN' ? `Join Challenge (${spotsLeft} spots left)` : 'Full'}
+      <div className="pt-3 sm:pt-4 border-t border-white/10">
+        <Button variant="primary" className="w-full text-sm sm:text-base" disabled={challenge.status !== 'OPEN'}>
+          {challenge.status === 'OPEN' ? (
+            <>
+              <span className="hidden sm:inline">Join Challenge ({spotsLeft} spots left)</span>
+              <span className="sm:hidden">Join ({spotsLeft} left)</span>
+            </>
+          ) : 'Full'}
         </Button>
       </div>
     </Card>

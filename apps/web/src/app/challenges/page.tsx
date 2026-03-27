@@ -71,20 +71,23 @@ export default function ChallengesPage() {
     <div className="min-h-screen">
       <main className="pb-12">
         <Container>
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Challenges</h1>
-            <p className="text-white/65">Join a challenge and compete for prizes</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
-            <Button variant="primary" size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Challenge
-            </Button>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Challenges</h1>
+              <p className="text-sm sm:text-base text-white/65">Join a challenge and compete for prizes</p>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <Filter className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Filter</span>
+              </Button>
+              <Button variant="primary" size="sm" className="flex-1 sm:flex-none">
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Create</span>
+                <span className="sm:hidden">New</span>
+              </Button>
+            </div>
           </div>
         </div>
 

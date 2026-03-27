@@ -44,31 +44,31 @@ export default function DashboardPage() {
     <div className="min-h-screen">
       <main className="pb-12">
         <Container>
-        <h1 className="text-4xl font-bold text-white mb-8 title-tech">{t('dashboard.title')}</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 title-tech">{t('dashboard.title')}</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="lg:col-span-2">
             <WalletCard balance={125000} />
           </div>
           
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 sm:gap-4">
             {mockStats.map((stat, i) => (
-              <Card key={i} className="flex items-center space-x-4">
-                <div className={`w-12 h-12 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue flex items-center justify-center ${stat.color}`}>
-                  <stat.icon className="w-6 h-6" />
+              <Card key={i} className="flex items-center space-x-3 sm:space-x-4">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue flex items-center justify-center shrink-0 ${stat.color}`}>
+                  <stat.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-sm text-white/60">{stat.label}</p>
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-white/60 truncate">{stat.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">{stat.value}</p>
                 </div>
               </Card>
             ))}
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.section.activeChallenges')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">{t('dashboard.section.activeChallenges')}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {mockChallenges.map((challenge) => (
               <ChallengeCard key={challenge.id} challenge={challenge} />
             ))}
@@ -76,7 +76,7 @@ export default function DashboardPage() {
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.section.recentMatches')}</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">{t('dashboard.section.recentMatches')}</h2>
           <Card>
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (

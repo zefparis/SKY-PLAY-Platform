@@ -13,9 +13,9 @@ export default function Home() {
     <main>
       <Hero />
 
-      <section className="pb-16">
+      <section className="pb-12 sm:pb-16">
         <Container>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {[
               {
                 icon: Trophy,
@@ -36,16 +36,16 @@ export default function Home() {
               <Card
                 key={item.title}
                 glow
-                className="flex items-start gap-4"
+                className="flex items-start gap-3 sm:gap-4"
               >
-                <div className="mt-1 inline-flex items-center justify-center w-11 h-11 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue">
-                  <item.icon className="w-5 h-5 text-secondary" />
+                <div className="mt-1 inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue shrink-0">
+                  <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
                 </div>
-                <div>
-                  <h3 className="title-tech text-lg font-extrabold text-white">
+                <div className="min-w-0">
+                  <h3 className="title-tech text-base sm:text-lg font-extrabold text-white">
                     {item.title}
                   </h3>
-                  <p className="text-white/70 mt-1">{item.desc}</p>
+                  <p className="text-sm sm:text-base text-white/70 mt-1">{item.desc}</p>
                 </div>
               </Card>
             ))}
