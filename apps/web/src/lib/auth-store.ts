@@ -132,54 +132,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             reject(err);
             return;
           }
-
-          // Auto-login après confirmation OTP
-          user.getSession(async (sessionErr: any, session: CognitoUserSession | null) => {
-            if (sessionErr || !session) {
-              console.error("❌ Session error after OTP:", sessionErr);
-              set({ step: "login", loading: false, error: undefined });
-              resolve();
-              return;
-            }
-
-            // Sync user to database
-            try {
-              const idToken = session.getIdToken().getJwtToken();
-              const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-              console.log("🔄 Syncing user to database...", { apiUrl, email });
-              
-              const response = await fetch(`${apiUrl}/users/sync`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${idToken}`,
-                },
-              });
-
-              if (!response.ok) {
-                console.error("❌ Sync failed:", response.status, await response.text());
-              } else {
-                const userData = await response.json();
-                console.log("✅ User synced to database:", userData);
-              }
-
-              set({
-                tokens: {
-                  accessToken: session.getAccessToken().getJwtToken(),
-                  idToken: session.getIdToken().getJwtToken(),
-                  refreshToken: session.getRefreshToken().getToken(),
-                },
-                step: undefined as any,
-                loading: false,
-                error: undefined,
-              });
-            } catch (syncErr) {
-              console.error("❌ Sync error:", syncErr);
-              set({ step: "login", loading: false, error: undefined });
-            }
-
-            resolve();
-          });
+          set({ step: "login", loading: false, error: undefined });
+          resolve();
         });
       });
     } catch (e: any) {
@@ -311,6 +265,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             resolve();
           },
           onFailure: (err) => {
+            console.error('❌ Cognito login error:', err);
+            console.error('Error details:', {
+              name: err?.name,
+              message: err?.message,
+              code: err?.code,
+            });
             set({ error: err.message, loading: false });
             reject(err);
           },
