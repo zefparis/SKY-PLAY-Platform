@@ -11,7 +11,7 @@ import {
 export type AuthStep =
   | "login"
   | "signup"
-  | "confirm"
+  | "pending"
   | "forgot"
   | "reset";
 
@@ -37,7 +37,6 @@ export type AuthState = {
   setUser: (user: any) => void;
 
   signup: (email: string, password: string) => Promise<void>;
-  confirm: (code: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (code: string, newPassword: string) => Promise<void>;
@@ -78,45 +77,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               reject(err);
               return;
             }
-            set({ email, step: "confirm", loading: false, error: undefined });
+            set({ email, step: "pending", loading: false, error: undefined });
             resolve();
           }
         );
-      });
-    } catch (e: any) {
-      set({ error: e?.message || "Erreur inconnue", loading: false });
-      throw e;
-    }
-  },
-  confirm: async (code) => {
-    set({ loading: true, error: undefined });
-    const email = get().email;
-    try {
-      const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
-      });
-      const user = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
-      await new Promise<void>((resolve, reject) => {
-        user.confirmRegistration(code, true, async (err, result) => {
-          if (err) {
-            set({ error: err.message, loading: false });
-            reject(err);
-            return;
-          }
-          // Succès : login automatique
-          try {
-            await get().login(email, (get() as any).lastPasswordForConfirm || "");
-            set({ loading: false, error: undefined });
-            resolve();
-          } catch (loginErr: any) {
-            set({ error: loginErr?.message || "Erreur lors du login", loading: false });
-            reject(loginErr);
-          }
-        });
       });
     } catch (e: any) {
       set({ error: e?.message || "Erreur inconnue", loading: false });
