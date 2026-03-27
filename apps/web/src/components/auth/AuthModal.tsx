@@ -110,7 +110,7 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
 // ─── Views ────────────────────────────────────────────────────────────────────
 
 function LoginView() {
-  const { login, loading, error, setStep, setError } = useAuthStore();
+  const { login, loginWithGoogle, loginWithDiscord, loading, error, setStep, setError } = useAuthStore();
   const [emailVal, setEmailVal] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -134,6 +134,31 @@ function LoginView() {
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
         Se connecter
       </button>
+
+      <div className="pt-4 border-t border-white/10">
+        <p className="text-xs text-white/40 mb-3">Social login</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button type="button" onClick={loginWithGoogle} className={BTN_PRIMARY}>
+            <span className="inline-flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.847 32.659 29.303 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 19.0 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.338 6.306 14.691z"/>
+                <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.185 35.091 26.715 36 24 36c-5.283 0-9.82-3.324-11.29-7.957l-6.52 5.02C9.505 39.556 16.227 44 24 44z"/>
+                <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.706 2.058-2.02 3.8-3.784 5.07l.003-.002 6.19 5.238C36.4 39.5 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+              </svg>
+              Google
+            </span>
+          </button>
+          <button type="button" onClick={loginWithDiscord} className={BTN_PRIMARY}>
+            <span className="inline-flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#5865F2" d="M19.54 0.7a19.33 19.33 0 0 0-4.76 1.47c-.2.35-.39.73-.54 1.12a18.4 18.4 0 0 0-5.48 0c-.15-.39-.34-.77-.54-1.12A19.33 19.33 0 0 0 3.46.7C.46 5.1-.32 9.4.07 13.64c1.75 1.3 3.45 2.1 5.13 2.63.41-.56.78-1.16 1.09-1.8-.6-.23-1.18-.51-1.74-.83.15-.11.3-.23.44-.35 3.36 1.58 7.0 1.58 10.32 0 .14.12.29.24.44.35-.56.32-1.14.6-1.74.83.31.64.68 1.24 1.09 1.8 1.68-.53 3.38-1.33 5.13-2.63.45-4.9-.77-9.17-3.66-12.94ZM8.68 12.65c-.95 0-1.72-.87-1.72-1.94 0-1.07.76-1.94 1.72-1.94.96 0 1.73.87 1.72 1.94 0 1.07-.76 1.94-1.72 1.94Zm6.64 0c-.95 0-1.72-.87-1.72-1.94 0-1.07.76-1.94 1.72-1.94.96 0 1.73.87 1.72 1.94 0 1.07-.76 1.94-1.72 1.94Z"/>
+              </svg>
+              Discord
+            </span>
+          </button>
+        </div>
+      </div>
       <p className="text-center text-xs text-white/30">
         Pas encore de compte ?{" "}
         <button onClick={() => setStep("signup")} className="text-sky-400 hover:text-sky-300 font-medium transition-colors">
@@ -145,7 +170,7 @@ function LoginView() {
 }
 
 function SignupView() {
-  const { signup, loading, error, setStep, setError } = useAuthStore();
+  const { signup, loginWithGoogle, loginWithDiscord, loading, error, setStep, setError } = useAuthStore();
   const [emailVal, setEmailVal] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -198,6 +223,31 @@ function SignupView() {
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
         Créer mon compte
       </button>
+
+      <div className="pt-4 border-t border-white/10">
+        <p className="text-xs text-white/40 mb-3">Ou continuer avec</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button type="button" onClick={loginWithGoogle} className={BTN_PRIMARY}>
+            <span className="inline-flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.847 32.659 29.303 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 19.0 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.338 6.306 14.691z"/>
+                <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.185 35.091 26.715 36 24 36c-5.283 0-9.82-3.324-11.29-7.957l-6.52 5.02C9.505 39.556 16.227 44 24 44z"/>
+                <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.706 2.058-2.02 3.8-3.784 5.07l.003-.002 6.19 5.238C36.4 39.5 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+              </svg>
+              Google
+            </span>
+          </button>
+          <button type="button" onClick={loginWithDiscord} className={BTN_PRIMARY}>
+            <span className="inline-flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#5865F2" d="M19.54 0.7a19.33 19.33 0 0 0-4.76 1.47c-.2.35-.39.73-.54 1.12a18.4 18.4 0 0 0-5.48 0c-.15-.39-.34-.77-.54-1.12A19.33 19.33 0 0 0 3.46.7C.46 5.1-.32 9.4.07 13.64c1.75 1.3 3.45 2.1 5.13 2.63.41-.56.78-1.16 1.09-1.8-.6-.23-1.18-.51-1.74-.83.15-.11.3-.23.44-.35 3.36 1.58 7.0 1.58 10.32 0 .14.12.29.24.44.35-.56.32-1.14.6-1.74.83.31.64.68 1.24 1.09 1.8 1.68-.53 3.38-1.33 5.13-2.63.45-4.9-.77-9.17-3.66-12.94ZM8.68 12.65c-.95 0-1.72-.87-1.72-1.94 0-1.07.76-1.94 1.72-1.94.96 0 1.73.87 1.72 1.94 0 1.07-.76 1.94-1.72 1.94Zm6.64 0c-.95 0-1.72-.87-1.72-1.94 0-1.07.76-1.94 1.72-1.94.96 0 1.73.87 1.72 1.94 0 1.07-.76 1.94-1.72 1.94Z"/>
+              </svg>
+              Discord
+            </span>
+          </button>
+        </div>
+      </div>
       <p className="text-center text-xs text-white/30">
         Déjà un compte ?{" "}
         <button onClick={() => setStep("login")} className="text-sky-400 hover:text-sky-300 font-medium transition-colors">

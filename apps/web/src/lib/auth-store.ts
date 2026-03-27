@@ -40,6 +40,8 @@ export type AuthState = {
   confirmSignup: (code: string) => Promise<void>;
   resendSignupCode: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => void;
+  loginWithDiscord: () => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (code: string, newPassword: string) => Promise<void>;
   logout: () => void;
@@ -169,6 +171,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ error: e?.message || "Erreur inconnue", loading: false });
       throw e;
     }
+  },
+
+  loginWithGoogle: () => {
+    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN;
+    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID;
+    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN;
+    if (!domain || !clientId || !redirectUri) return;
+
+    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`);
+    url.searchParams.set("client_id", clientId);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", "email openid profile");
+    url.searchParams.set("redirect_uri", redirectUri);
+    url.searchParams.set("identity_provider", "Google");
+    window.location.assign(url.toString());
+  },
+
+  loginWithDiscord: () => {
+    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN;
+    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID;
+    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN;
+    if (!domain || !clientId || !redirectUri) return;
+
+    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`);
+    url.searchParams.set("client_id", clientId);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("scope", "email openid profile");
+    url.searchParams.set("redirect_uri", redirectUri);
+    url.searchParams.set("identity_provider", "Discord");
+    window.location.assign(url.toString());
   },
   login: async (email, password) => {
     set({ loading: true, error: undefined });
