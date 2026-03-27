@@ -1,3 +1,4 @@
+import RequireAuth from '@/features/auth/RequireAuth'
 import Container from '@/components/ui/Container'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import StatsGrid from '@/components/profile/StatsGrid'
@@ -58,20 +59,22 @@ export default function ProfilePage() {
   ]
 
   return (
-    <div className="min-h-screen">
-      <main className="pb-12">
-        <Container>
-          <div className="space-y-8">
-            <ProfileHeader username={username} rank={rank} />
-            <StatsGrid stats={stats} />
+    <RequireAuth>
+      <div className="min-h-screen">
+        <main className="pb-12">
+          <Container>
+            <div className="space-y-8">
+              <ProfileHeader username={username} rank={rank} />
+              <StatsGrid stats={stats} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <MatchHistory matches={matches} />
-              <Achievements achievements={achievements} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <MatchHistory matches={matches} />
+                <Achievements achievements={achievements} />
+              </div>
             </div>
-          </div>
-        </Container>
-      </main>
-    </div>
+          </Container>
+        </main>
+      </div>
+    </RequireAuth>
   )
 }

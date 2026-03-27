@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import RequireAuth from '@/features/auth/RequireAuth'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 import ChatLayout from '@/components/chat/ChatLayout'
@@ -68,36 +69,35 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="pb-12">
-        <Container>
-          <div className="mb-8">{header}</div>
+    <RequireAuth>
+      <div className="min-h-screen">
+        <main className="pb-12">
+          <Container>
+            <div className="mb-8">{header}</div>
 
-          <ChatLayout>
-            <Card variant="glass" className="p-0 overflow-hidden">
-              <div className="px-6 py-5 border-b border-white/10">
-                <p className="title-tech text-sm text-white/85"># general</p>
-              </div>
+            <ChatLayout>
+              <Card variant="glass" className="p-0 overflow-hidden">
+                <div className="px-6 py-5 border-b border-white/10">
+                  <p className="title-tech text-sm text-white/85"># general</p>
+                </div>
 
-              <div
-                ref={listRef}
-                className="h-[55vh] overflow-y-auto px-6 py-5 space-y-4"
-              >
-                <MessageList
-                  messages={messages}
-                  reactions={{}}
-                  onReact={() => {}}
-                  currentUser="Me"
-                />
-              </div>
+                <div ref={listRef} className="h-[55vh] overflow-y-auto px-6 py-5 space-y-4">
+                  <MessageList
+                    messages={messages}
+                    reactions={{}}
+                    onReact={() => {}}
+                    currentUser="Me"
+                  />
+                </div>
 
-              <div className="px-6 py-5 border-t border-white/10 bg-black/15">
-                <ChatInput onSend={send} />
-              </div>
-            </Card>
-          </ChatLayout>
-        </Container>
-      </main>
-    </div>
+                <div className="px-6 py-5 border-t border-white/10 bg-black/15">
+                  <ChatInput onSend={send} />
+                </div>
+              </Card>
+            </ChatLayout>
+          </Container>
+        </main>
+      </div>
+    </RequireAuth>
   )
 }

@@ -9,11 +9,14 @@ import Button from '@/components/ui/Button'
 import Container from '@/components/ui/Container'
 import LanguageSwitch from '@/components/i18n/LanguageSwitch'
 import { useI18n } from '@/components/i18n/I18nProvider'
+import { useAuthStore } from '@/features/auth/auth.store'
 
 const Navbar = () => {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { t } = useI18n()
+  const status = useAuthStore((s) => s.status)
+  const logout = useAuthStore((s) => s.logout)
 
   const navLinks = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
@@ -60,12 +63,27 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center space-x-4">
             <LanguageSwitch />
-            <Link href="/profile">
-              <Button variant="outline" size="sm">
-                <User className="w-4 h-4 mr-2" />
-                {t('nav.profile')}
-              </Button>
-            </Link>
+            {status === 'authenticated' ? (
+              <>
+                <Link href="/profile">
+                  <Button variant="outline" size="sm">
+                    <User className="w-4 h-4 mr-2" />
+                    {t('nav.profile')}
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logout()}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Link href="/login">
+                <Button variant="outline" size="sm">Login</Button>
+              </Link>
+            )}
           </div>
 
           <button
@@ -101,12 +119,31 @@ const Navbar = () => {
                 </Link>
               )
             })}
-            <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="outline" size="sm" className="w-full">
-                <User className="w-4 h-4 mr-2" />
-                {t('nav.profile')}
-              </Button>
-            </Link>
+            {status === 'authenticated' ? (
+              <>
+                <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <User className="w-4 h-4 mr-2" />
+                    {t('nav.profile')}
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    logout()
+                    setMobileMenuOpen(false)
+                  }}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full">Login</Button>
+              </Link>
+            )}
           </div>
         )}
       </Container>

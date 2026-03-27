@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { cognitoConfig } from './common/config/cognito.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ChallengesModule } from './modules/challenges/challenges.module';
@@ -13,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', 'prisma/.env'],
+      load: [cognitoConfig],
     }),
     PrismaModule,
     AuthModule,

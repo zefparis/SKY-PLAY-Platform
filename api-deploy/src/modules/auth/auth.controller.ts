@@ -1,20 +1,19 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('register')
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
-  }
-
-  @UseGuards(LocalAuthGuard)
-  @Post('login')
-  async login(@Request() req, @Body() dto: LoginDto) {
-    return this.authService.login(req.user);
+  /**
+   * Endpoint utilitaire: permet au frontend de valider le token et récupérer
+   * le user (après user-sync).
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async me(@CurrentUser() user: RequestUser) {
+    return this.authService.me(user);
   }
 }

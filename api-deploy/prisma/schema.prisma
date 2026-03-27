@@ -9,9 +9,10 @@ datasource db {
 
 model User {
   id            String          @id @default(uuid())
+  cognitoSub    String?         @unique
   email         String          @unique
   username      String          @unique
-  password      String
+  password      String?
   firstName     String?
   lastName      String?
   avatar        String?
