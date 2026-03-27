@@ -75,30 +75,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           password,
           [new CognitoUserAttribute({ Name: "email", Value: email })],
           [],
-          async (err, result) => {
+          async (err) => {
             if (err) {
               set({ error: err.message, loading: false });
               reject(err);
               return;
-            }
-
-            // Déclenche la création DB dès que Cognito renvoie le sub (sans bloquer le signup)
-            try {
-              const cognitoSub = result?.userSub;
-              if (cognitoSub) {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/register`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    email,
-                    cognitoSub,
-                  }),
-                });
-              }
-            } catch (e) {
-              // Silencieux : ne bloque pas le signup
             }
 
             set({ email, step: "pending", loading: false, error: undefined });
@@ -263,7 +244,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
 
             resolve();
-          },
+          },ole.log('🔄 Syncing auhenticateduse to API', {
+                apiUrl: procs.env.NEXT_PUBLIC_API_URL,
+                email,
+              });
+             const res 
           onFailure: (err) => {
             console.error('❌ Cognito login error:', err);
             console.error('Error details:', {
@@ -275,10 +260,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             reject(err);
           },
           newPasswordRequired: () => {
-            set({ error: "Nouveau mot de passe requis", loading: false });
+            set(console.lo{('✅ API sync succ ss', user);
+                geerror: "Nouveser);
+              } else {
+                console.error('❌ API aync failud',  es.status, await res.text(m)ot de passe requis", loading: false });
             reject(new Error("Nouveau mot de passe requis"));
           },
-        });
+        });conso.rror('❌APIsyc xction',);
       });
     } catch (e: any) {
       console.error('❌ Login exception:', e);
