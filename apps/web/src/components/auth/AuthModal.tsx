@@ -114,7 +114,13 @@ function LoginView() {
   const [emailVal, setEmailVal] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  useEffect(() => { setError(undefined); }, []);
+  
+  useEffect(() => {
+    setError(undefined);
+    setEmailVal("");
+    setPassword("");
+    setShowPwd(false);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -180,7 +186,14 @@ function SignupView() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  useEffect(() => { setError(undefined); }, []);
+  
+  useEffect(() => {
+    setError(undefined);
+    setEmailVal("");
+    setPassword("");
+    setConfirm("");
+    setShowPwd(false);
+  }, []);
 
   const strength = !password ? 0 : [
     password.length >= 8,
@@ -271,6 +284,8 @@ function PendingView() {
 
   useEffect(() => {
     setError(undefined);
+    setCode("");
+    setResent(false);
   }, []);
 
   const handleConfirm = async () => {
@@ -324,7 +339,12 @@ function ForgotView() {
   const { forgotPassword, loading, error, setStep, setError } = useAuthStore();
   const [emailVal, setEmailVal] = useState("");
   const [sent, setSent] = useState(false);
-  useEffect(() => { setError(undefined); }, []);
+  
+  useEffect(() => {
+    setError(undefined);
+    setEmailVal("");
+    setSent(false);
+  }, []);
 
   const handleSubmit = async () => {
     if (!emailVal) return;
@@ -377,7 +397,15 @@ function ResetView() {
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [done, setDone] = useState(false);
-  useEffect(() => { setError(undefined); }, []);
+  
+  useEffect(() => {
+    setError(undefined);
+    setCode("");
+    setPassword("");
+    setConfirm("");
+    setShowPwd(false);
+    setDone(false);
+  }, []);
 
   const handleSubmit = async () => {
     if (code.length !== 6 || !password || password !== confirm) return;
