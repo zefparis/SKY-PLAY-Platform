@@ -9,6 +9,8 @@ import {
   cognitoRefresh,
   cognitoResendSignupCode,
   cognitoSignup,
+  cognitoForgotPassword,
+  cognitoResetPassword,
 } from '@/features/auth/cognito'
 import { api, setAuthToken } from '@/lib/api'
 
@@ -33,6 +35,8 @@ type AuthState = {
   confirmSignup: (params: { code: string }) => Promise<void>
   resendSignupCode: () => Promise<void>
   login: (params: { email: string; password: string }) => Promise<void>
+  forgotPassword: (params: { email: string }) => Promise<void>
+  resetPassword: (params: { email: string; code: string; newPassword: string }) => Promise<void>
   refresh: () => Promise<void>
   logout: () => Promise<void>
 }
@@ -129,6 +133,29 @@ export const useAuthStore = create<AuthState>()(
         } catch (e: any) {
           setAuthToken(null)
           set({ status: 'anonymous', tokens: null, user: null, error: e?.message || 'Login failed' })
+          throw e
+        }
+      },
+
+      forgotPassword: async ({ email }) => {
+        set({ status: 'authenticating', error: null })
+        try {
+          await cognitoForgotPassword({ email })
+          // On ne change pas signupStep ici, c'est seulement pour gestion UI (modal/page)
+          set({ status: 'anonymous', error: null, email })
+        } catch (e: any) {
+          set({ status: 'anonymous', error: e?.message || 'Forgot password failed' })
+          throw e
+        }
+      },
+
+      resetPassword: async ({ email, code, newPassword }) => {
+        set({ status: 'authenticating', error: null })
+        try {
+          await cognitoResetPassword({ email, code, newPassword })
+          set({ status: 'anonymous', error: null })
+        } catch (e: any) {
+          set({ status: 'anonymous', error: e?.message || 'Reset password failed' })
           throw e
         }
       },

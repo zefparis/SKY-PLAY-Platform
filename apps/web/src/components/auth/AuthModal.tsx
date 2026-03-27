@@ -6,13 +6,12 @@ import {
   X, Eye, EyeOff, Mail, Lock,
   ArrowLeft, CheckCircle, AlertCircle, Loader2,
 } from "lucide-react";
-import { useAuthStore } from "@/lib/auth-store";
-import type { AuthStep } from "@/lib/auth-store";
+import { useAuthStore } from '@/features/auth/auth.store'
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultView?: AuthStep;
+  defaultView?: View;
 }
 
 const INPUT_BASE =
@@ -109,14 +108,43 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
 
 // ─── Views ────────────────────────────────────────────────────────────────────
 
-function LoginView() {
-  const { login, loginWithGoogle, loginWithDiscord, loading, error, setStep, setError } = useAuthStore();
+type View = 'login' | 'signup' | 'pending' | 'forgot' | 'reset'
+
+function LoginView({ setView }: { setView: (v: View) => void }) {
+  const login = useAuthStore((s) => s.login)
+  const status = useAuthStore((s) => s.status)
+  const error = useAuthStore((s) => s.error)
+  const loginWithGoogle = () => {
+    // redirection OAuth gérée par la page /auth/callback via Cognito (déjà en place)
+    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
+    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
+    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
+    if (!domain || !clientId || !redirectUri) return
+    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
+    url.searchParams.set('client_id', clientId)
+    url.searchParams.set('response_type', 'code')
+    url.searchParams.set('scope', 'email openid profile')
+    url.searchParams.set('redirect_uri', redirectUri)
+    window.location.assign(url.toString())
+  }
+  const loginWithDiscord = () => {
+    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
+    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
+    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
+    if (!domain || !clientId || !redirectUri) return
+    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
+    url.searchParams.set('client_id', clientId)
+    url.searchParams.set('response_type', 'code')
+    url.searchParams.set('scope', 'email openid profile')
+    url.searchParams.set('redirect_uri', redirectUri)
+    url.searchParams.set('identity_provider', 'Discord')
+    window.location.assign(url.toString())
+  }
   const [emailVal, setEmailVal] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  
+  const loading = status === 'authenticating'
   useEffect(() => {
-    setError(undefined);
     setEmailVal("");
     setPassword("");
     setShowPwd(false);
@@ -133,15 +161,17 @@ function LoginView() {
       <div>
         <Field icon={Lock} type="password" placeholder="Mot de passe" value={password}
           onChange={setPassword} reveal={showPwd} onToggleReveal={() => setShowPwd(!showPwd)} />
-        {/* ✅ Lien "Mot de passe oublié ?" aligné à droite */}
         <div className="flex justify-end mt-2">
-          <button onClick={() => setStep("forgot")} className={BTN_GHOST}>
+          <button onClick={() => setView("forgot")} className={BTN_GHOST}>
             Mot de passe oublié ?
           </button>
         </div>
       </div>
-      <button onClick={() => login(emailVal, password)}
-        disabled={loading || !emailVal || !password} className={BTN_PRIMARY}>
+      <button
+        onClick={() => login({ email: emailVal, password })}
+        disabled={loading || !emailVal || !password}
+        className={BTN_PRIMARY}
+      >
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
         Se connecter
       </button>
@@ -172,7 +202,7 @@ function LoginView() {
       </div>
       <p className="text-center text-xs text-white/30">
         Pas encore de compte ?{" "}
-        <button onClick={() => setStep("signup")} className="text-sky-400 hover:text-sky-300 font-medium transition-colors">
+        <button onClick={() => setView("signup")} className="text-sky-400 hover:text-sky-300 font-medium transition-colors">
           Créer un compte
         </button>
       </p>
@@ -180,15 +210,42 @@ function LoginView() {
   );
 }
 
-function SignupView() {
-  const { signup, loginWithGoogle, loginWithDiscord, loading, error, setStep, setError } = useAuthStore();
+function SignupView({ setView }: { setView: (v: View) => void }) {
+  const signup = useAuthStore((s) => s.signup)
+  const status = useAuthStore((s) => s.status)
+  const error = useAuthStore((s) => s.error)
+  const loginWithGoogle = () => {
+    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
+    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
+    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
+    if (!domain || !clientId || !redirectUri) return
+    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
+    url.searchParams.set('client_id', clientId)
+    url.searchParams.set('response_type', 'code')
+    url.searchParams.set('scope', 'email openid profile')
+    url.searchParams.set('redirect_uri', redirectUri)
+    window.location.assign(url.toString())
+  }
+  const loginWithDiscord = () => {
+    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
+    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
+    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
+    if (!domain || !clientId || !redirectUri) return
+    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
+    url.searchParams.set('client_id', clientId)
+    url.searchParams.set('response_type', 'code')
+    url.searchParams.set('scope', 'email openid profile')
+    url.searchParams.set('redirect_uri', redirectUri)
+    url.searchParams.set('identity_provider', 'Discord')
+    window.location.assign(url.toString())
+  }
   const [emailVal, setEmailVal] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  
+  const loading = status === 'authenticating'
+
   useEffect(() => {
-    setError(undefined);
     setEmailVal("");
     setPassword("");
     setConfirm("");
@@ -236,7 +293,8 @@ function SignupView() {
         <p className="text-xs text-red-400/80">Les mots de passe ne correspondent pas</p>
       )}
       {/* signup() appelle setStep("pending") en interne */}
-      <button onClick={() => signup(emailVal, password)}
+      <button
+        onClick={() => signup({ email: emailVal, password })}
         disabled={loading || !emailVal || !password || password !== confirm} className={BTN_PRIMARY}>
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
         Créer mon compte
@@ -268,7 +326,7 @@ function SignupView() {
       </div>
       <p className="text-center text-xs text-white/30">
         Déjà un compte ?{" "}
-        <button onClick={() => setStep("login")} className="text-sky-400 hover:text-sky-300 font-medium transition-colors">
+        <button onClick={() => setView("login")} className="text-sky-400 hover:text-sky-300 font-medium transition-colors">
           Se connecter
         </button>
       </p>
@@ -277,20 +335,24 @@ function SignupView() {
 }
 
 // ─── Nouvelle vue PendingView ────────────────────────────────────────────────
-function PendingView() {
-  const { email, confirmSignup, resendSignupCode, loading, error, setStep, setError } = useAuthStore();
+function PendingView({ setView }: { setView: (v: View) => void }) {
+  const email = useAuthStore((s) => s.email)
+  const confirmSignup = useAuthStore((s) => s.confirmSignup)
+  const resendSignupCode = useAuthStore((s) => s.resendSignupCode)
+  const status = useAuthStore((s) => s.status)
+  const error = useAuthStore((s) => s.error)
   const [code, setCode] = useState("");
   const [resent, setResent] = useState(false);
+  const loading = status === 'authenticating'
 
   useEffect(() => {
-    setError(undefined);
     setCode("");
     setResent(false);
   }, []);
 
   const handleConfirm = async () => {
     if (code.replace(/\D/g, "").length !== 6) return;
-    await confirmSignup(code.replace(/\D/g, ""));
+    await confirmSignup({ code: code.replace(/\D/g, "") });
   };
 
   const handleResend = async () => {
@@ -326,7 +388,7 @@ function PendingView() {
         Renvoyer le code
       </button>
 
-      <button onClick={() => setStep("signup")} className={`${BTN_GHOST} mx-auto`}>
+      <button onClick={() => setView("signup")} className={`${BTN_GHOST} mx-auto`}>
         <ArrowLeft className="w-3 h-3" /> Retour
       </button>
     </div>
@@ -334,21 +396,22 @@ function PendingView() {
 }
 
 
-function ForgotView() {
-  // forgotPassword() appelle setStep("reset") en interne
-  const { forgotPassword, loading, error, setStep, setError } = useAuthStore();
+function ForgotView({ setView }: { setView: (v: View) => void }) {
+  const forgotPassword = useAuthStore((s) => s.forgotPassword)
+  const status = useAuthStore((s) => s.status)
+  const error = useAuthStore((s) => s.error)
   const [emailVal, setEmailVal] = useState("");
   const [sent, setSent] = useState(false);
+  const loading = status === 'authenticating'
   
   useEffect(() => {
-    setError(undefined);
     setEmailVal("");
     setSent(false);
   }, []);
 
   const handleSubmit = async () => {
     if (!emailVal) return;
-    await forgotPassword(emailVal);
+    await forgotPassword({ email: emailVal });
     setSent(true);
   };
 
@@ -362,7 +425,7 @@ function ForgotView() {
         <p className="text-sm text-white/40 mt-1">Note le code reçu et clique ci-dessous.</p>
       </div>
       <button onClick={() => setStep("reset")} className={BTN_PRIMARY}>Entrer mon code</button>
-      <button onClick={() => setStep("login")} className={`${BTN_GHOST} mx-auto`}>
+      <button onClick={() => setView("login")} className={`${BTN_GHOST} mx-auto`}>
         <ArrowLeft className="w-3 h-3" /> Retour à la connexion
       </button>
     </div>
@@ -371,7 +434,7 @@ function ForgotView() {
   return (
     <div className="space-y-4">
       <div>
-        <button onClick={() => setStep("login")} className={BTN_GHOST}>
+        <button onClick={() => setView("login")} className={BTN_GHOST}>
           <ArrowLeft className="w-3 h-3" /> Retour
         </button>
         <div className="mt-4 space-y-1">
@@ -389,17 +452,18 @@ function ForgotView() {
   );
 }
 
-function ResetView() {
-  // resetPassword(code, newPassword) utilise get().email en interne
-  const { resetPassword, loading, error, setStep, setError } = useAuthStore();
+function ResetView({ setView, email }: { setView: (v: View) => void; email: string }) {
+  const resetPassword = useAuthStore((s) => s.resetPassword)
+  const status = useAuthStore((s) => s.status)
+  const error = useAuthStore((s) => s.error)
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [done, setDone] = useState(false);
-  
+  const loading = status === 'authenticating'
+
   useEffect(() => {
-    setError(undefined);
     setCode("");
     setPassword("");
     setConfirm("");
@@ -409,7 +473,7 @@ function ResetView() {
 
   const handleSubmit = async () => {
     if (code.length !== 6 || !password || password !== confirm) return;
-    await resetPassword(code, password);
+    await resetPassword({ email, code, newPassword: password });
     setDone(true);
   };
 
@@ -422,14 +486,14 @@ function ResetView() {
         <h2 className="text-xl font-bold text-white">Mot de passe mis à jour</h2>
         <p className="text-sm text-white/40 mt-1">Tu peux maintenant te connecter.</p>
       </div>
-      <button onClick={() => setStep("login")} className={BTN_PRIMARY}>Se connecter</button>
+      <button onClick={() => setView("login")} className={BTN_PRIMARY}>Se connecter</button>
     </div>
   );
 
   return (
     <div className="space-y-4">
       <div>
-        <button onClick={() => setStep("forgot")} className={BTN_GHOST}>
+        <button onClick={() => setView("forgot")} className={BTN_GHOST}>
           <ArrowLeft className="w-3 h-3" /> Retour
         </button>
         <div className="mt-4 space-y-1">
@@ -455,26 +519,25 @@ function ResetView() {
 
 // ─── Modal principal ──────────────────────────────────────────────────────────
 export function AuthModal({ isOpen, onClose, defaultView = "login" }: AuthModalProps) {
-  const { tokens, step, setStep } = useAuthStore();
+  const [view, setView] = useState<View>(defaultView as View)
+  const tokens = useAuthStore((s) => s.tokens)
+  const storeEmail = useAuthStore((s) => s.email)
 
   useEffect(() => { if (tokens) onClose(); }, [tokens]);
-  useEffect(() => { if (isOpen) setStep(defaultView); }, [isOpen]);
+  useEffect(() => { if (isOpen) setView(defaultView as View); }, [isOpen, defaultView]);
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
 
-  const views: Record<AuthStep, React.ReactNode> = {
-    login:   <LoginView />,
-    signup:  <SignupView />,
-    pending: <PendingView />,
-    forgot:  <ForgotView />,
-    reset:   <ResetView />,
+  const views: Record<View, React.ReactNode> = {
+    login:   <LoginView setView={setView} />,
+    signup:  <SignupView setView={setView} />,
+    pending: <PendingView setView={setView} />,
+    forgot:  <ForgotView setView={setView} />,
+    reset:   <ResetView setView={setView} email={storeEmail || ''} />,
   };
-
-  const currentView: AuthStep =
-    step && (step in views) ? step : "login";
 
   return (
     <AnimatePresence>
@@ -509,10 +572,10 @@ export function AuthModal({ isOpen, onClose, defaultView = "login" }: AuthModalP
                 </div>
                 <div className="px-8 pb-8 pt-4" style={{ minHeight: "340px" }}>
                   <AnimatePresence mode="wait">
-                    <motion.div key={currentView}
+                    <motion.div key={view}
                       initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.18, ease: "easeInOut" }}>
-                      {views[currentView]}
+                      {views[view]}
                     </motion.div>
                   </AnimatePresence>
                 </div>

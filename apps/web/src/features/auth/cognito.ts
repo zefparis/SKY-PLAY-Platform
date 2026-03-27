@@ -75,6 +75,31 @@ export const cognitoResendSignupCode = async (params: { email: string }) => {
   })
 }
 
+// Mot de passe oublié / reset
+export const cognitoForgotPassword = async (params: { email: string }) => {
+  const pool = getUserPool()
+  const user = new CognitoUser({ Username: normalizeIdentifier(params.email), Pool: pool })
+
+  return new Promise<void>((resolve, reject) => {
+    user.forgotPassword({
+      onSuccess: () => resolve(),
+      onFailure: (err) => reject(formatCognitoError(err)),
+    })
+  })
+}
+
+export const cognitoResetPassword = async (params: { email: string; code: string; newPassword: string }) => {
+  const pool = getUserPool()
+  const user = new CognitoUser({ Username: normalizeIdentifier(params.email), Pool: pool })
+
+  return new Promise<void>((resolve, reject) => {
+    user.confirmPassword(params.code, params.newPassword, {
+      onSuccess: () => resolve(),
+      onFailure: (err) => reject(formatCognitoError(err)),
+    })
+  })
+}
+
 export const cognitoLogin = async (params: { email: string; password: string }) => {
   const pool = getUserPool()
   const email = normalizeIdentifier(params.email)
