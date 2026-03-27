@@ -1,11 +1,25 @@
 [phases.setup]
-nixPkgs = ["nodejs-20_x"]
+nixPkgs = ["openssl", "ca-certificates"]
 
 [phases.install]
-cmds = ["npm install --prefix api-deploy"]
+cmds = [
+  "npm ci"
+]
 
 [phases.build]
-cmds = ["npx --prefix api-deploy prisma generate", "npm run build --prefix api-deploy"]
+cmds = [
+  "npm run build --workspace=api-deploy"
+]
+
+[phases.prisma]
+cmds = [
+  "npx prisma generate --schema=api-deploy/prisma/schema.prisma"
+]
+
+[phases.start]
+cmds = [
+  "node api-deploy/dist/main.js"
+]
 
 [start]
-cmd = "cd api-deploy && node dist/main.js"
+cmd = "node api-deploy/dist/main.js"
