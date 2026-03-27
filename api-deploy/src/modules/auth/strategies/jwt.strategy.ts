@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -39,13 +39,54 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         jwksUri,
       }) as any,
     });
+
+    // IMPORTANT: pas de `this.*` avant le `super()`
+    Logger.log(
+      `Cognito JWT configured: issuer=${issuer} audience(clientId)=${audience} jwksUri=${jwksUri}`,
+      JwtStrategy.name,
+    );
   }
 
   async validate(payload: CognitoJwtPayload) {
-    // On accepte principalement l'access token (token_use=access)
+    const cognito = this.config.get('cognito');
+    const expectedIssuer = cognito?.issuer;
+    const expectedAudience = cognito?.clientId;
+
+    // Debug utile (sans spammer la prod: ce logger peut être filtré via level)
+    Logger.debug(
+      {
+      sub: payload.sub,
+      iss: payload.iss,
+      token_use: payload.token_use,
+      aud: payload.aud,
+      client_id: payload.client_id,
+      exp: payload.exp,
+      } as any,
+      JwtStrategy.name,
+    );
+
+    if (expectedIssuer && payload.iss !== expectedIssuer) {
+      Logger.warn(
+        `JWT issuer mismatch: expected=${expectedIssuer} got=${payload.iss}`,
+        JwtStrategy.name,
+      );
+      throw new UnauthorizedException('Invalid token issuer');
+    }
+
+    const gotAudience = payload.client_id || payload.aud;
+    if (expectedAudience && gotAudience && gotAudience !== expectedAudience) {
+      Logger.warn(
+        `JWT audience mismatch: expected=${expectedAudience} got=${gotAudience}`,
+        JwtStrategy.name,
+      );
+      throw new UnauthorizedException('Invalid token audience');
+    }
+
+    // On accepte principalement l'access token
     if (payload.token_use && payload.token_use !== 'access') {
-      // si vous voulez accepter id token aussi, retirer ce check.
-      throw new Error('Invalid token_use: expected access token');
+      Logger.warn(`Invalid token_use: ${payload.token_use}`, JwtStrategy.name);
+      // si vous voulez accepter id token aussi, ajuster ici.
+      throw new UnauthorizedException('Invalid token_use');
     }
 
     const cognitoSub = payload.sub;
