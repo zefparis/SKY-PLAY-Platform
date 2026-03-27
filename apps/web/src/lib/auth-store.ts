@@ -251,9 +251,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     set({ loading: true, error: undefined });
     try {
+      const userPoolId = process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID;
+      const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID;
+      
+      console.log('🔐 Login attempt:', { email, userPoolId, clientId });
+      
+      if (!userPoolId || !clientId) {
+        throw new Error('Cognito configuration missing');
+      }
+      
       const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
+        UserPoolId: userPoolId,
+        ClientId: clientId,
       });
       const user = new CognitoUser({
         Username: email,
@@ -312,6 +321,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       });
     } catch (e: any) {
+      console.error('❌ Login exception:', e);
       set({ error: e?.message || "Erreur inconnue", loading: false });
       throw e;
     }
