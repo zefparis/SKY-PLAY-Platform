@@ -62,16 +62,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setTokens: (tokens) => set({ tokens }),
   setUser: (user) => set({ user }),
 
-    signup: async (email: string, password: string) => {
+      signup: async (email: string, password: string) => {
     set({ loading: true, error: undefined });
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      if (!apiUrl) {
-        throw new Error("NEXT_PUBLIC_API_URL n'est pas configuré");
-      }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:3001';
 
-      // Appel au backend qui va gérer Cognito + Prisma en une seule fois
+      console.log('🚀 Appel register backend:', `${apiUrl}/users/register`);
+
       const response = await fetch(`${apiUrl}/users/register`, {
         method: "POST",
         headers: {
@@ -80,7 +78,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         body: JSON.stringify({
           email,
           password,
-          // Tu peux ajouter d'autres champs si tu les demandes dans le formulaire plus tard
+          // Ajoute ici d'autres champs si ton endpoint les attend
           // username: email.split('@')[0],
           // firstName: "",
           // lastName: "",
@@ -90,10 +88,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const data = await response.json();
 
       if (!response.ok) {
+        console.error('❌ Erreur backend:', data);
         throw new Error(data.message || "Erreur lors de l'inscription");
       }
 
-      // Succès : on passe en mode confirmation email
+      // Succès → on passe à l'étape de confirmation email
       set({
         email,
         step: "pending",
@@ -101,15 +100,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: undefined,
       });
 
-      console.log("✅ Inscription backend réussie, code de confirmation envoyé", data);
+      console.log("✅ Inscription réussie via backend", data);
 
     } catch (e: any) {
       console.error("❌ Erreur signup:", e);
       set({
-        error: e?.message || "Erreur lors de la création du compte",
+        error: e?.message || "Impossible de créer le compte. Réessaie.",
         loading: false,
       });
-      throw e;
     }
   },
 

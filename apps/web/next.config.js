@@ -6,7 +6,9 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  webpack: (config) => {
+  // Empty turbopack config to silence the warning
+  turbopack: {},
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       '@': path.resolve(__dirname, 'src'),
