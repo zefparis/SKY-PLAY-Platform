@@ -62,33 +62,53 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setTokens: (tokens) => set({ tokens }),
   setUser: (user) => set({ user }),
 
-  signup: async (email, password) => {
+    signup: async (email: string, password: string) => {
     set({ loading: true, error: undefined });
+
     try {
-      const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
-      });
-      await new Promise<void>((resolve, reject) => {
-        userPool.signUp(
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) {
+        throw new Error("NEXT_PUBLIC_API_URL n'est pas configuré");
+      }
+
+      // Appel au backend qui va gérer Cognito + Prisma en une seule fois
+      const response = await fetch(`${apiUrl}/users/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           email,
           password,
-          [new CognitoUserAttribute({ Name: "email", Value: email })],
-          [],
-          async (err) => {
-            if (err) {
-              set({ error: err.message, loading: false });
-              reject(err);
-              return;
-            }
-
-            set({ email, step: "pending", loading: false, error: undefined });
-            resolve();
-          }
-        );
+          // Tu peux ajouter d'autres champs si tu les demandes dans le formulaire plus tard
+          // username: email.split('@')[0],
+          // firstName: "",
+          // lastName: "",
+        }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors de l'inscription");
+      }
+
+      // Succès : on passe en mode confirmation email
+      set({
+        email,
+        step: "pending",
+        loading: false,
+        error: undefined,
+      });
+
+      console.log("✅ Inscription backend réussie, code de confirmation envoyé", data);
+
     } catch (e: any) {
-      set({ error: e?.message || "Erreur inconnue", loading: false });
+      console.error("❌ Erreur signup:", e);
+      set({
+        error: e?.message || "Erreur lors de la création du compte",
+        loading: false,
+      });
       throw e;
     }
   },
