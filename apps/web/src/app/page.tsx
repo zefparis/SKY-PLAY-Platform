@@ -1,10 +1,12 @@
 "use client"
 
-import Hero from '@/components/home/Hero'
+import dynamic from 'next/dynamic'
 import Container from '@/components/ui/Container'
 import Card from '@/components/ui/Card'
 import { Gamepad2, Trophy, Wallet } from 'lucide-react'
 import { useI18n } from '@/components/i18n/I18nProvider'
+
+const Hero = dynamic(() => import('@/components/home/Hero'), { ssr: false })
 
 export default function Home() {
   const { t } = useI18n()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Gamepad2, Trophy, Zap } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -10,16 +10,26 @@ import { useI18n } from '@/components/i18n/I18nProvider'
 const Hero = () => {
   const { t } = useI18n()
 
-  // Generate stable star positions to avoid hydration mismatch
-  const stars = useMemo(() => 
-    Array.from({ length: 50 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      duration: Math.random() * 3 + 2,
-      delay: Math.random() * 2,
-    }))
-  , [])
+  // Generate stars only on client to avoid SSR hydration mismatch
+  const [stars, setStars] = useState<Array<{
+    id: number;
+    left: number;
+    top: number;
+    duration: number;
+    delay: number;
+  }>>([])
+
+  useEffect(() => {
+    setStars(
+      Array.from({ length: 50 }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        duration: Math.random() * 3 + 2,
+        delay: Math.random() * 2,
+      }))
+    )
+  }, [])
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
