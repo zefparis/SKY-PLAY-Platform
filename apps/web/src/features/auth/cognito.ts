@@ -9,6 +9,15 @@ import { env } from '@/lib/env'
 
 const normalizeIdentifier = (value: string) => value.trim().toLowerCase()
 
+const formatCognitoError = (err: any) => {
+  if (!err) return new Error('Erreur Cognito inconnue')
+  const code = typeof err.code === 'string' ? err.code : null
+  const message = typeof err.message === 'string' ? err.message : null
+  if (code && message) return new Error(`${code}: ${message}`)
+  if (message) return new Error(message)
+  return err instanceof Error ? err : new Error(String(err))
+}
+
 const getUserPool = () => {
   if (!env.cognitoUserPoolId || !env.cognitoClientId) {
     throw new Error(
@@ -36,7 +45,7 @@ export const cognitoSignup = async (params: {
 
   return new Promise<{ userSub: string }>((resolve, reject) => {
     pool.signUp(email, params.password, attributes, [], (err, result) => {
-      if (err || !result) return reject(err)
+      if (err || !result) return reject(formatCognitoError(err))
       resolve({ userSub: result.userSub })
     })
   })
@@ -48,7 +57,7 @@ export const cognitoConfirmSignup = async (params: { email: string; code: string
 
   return new Promise<void>((resolve, reject) => {
     user.confirmRegistration(params.code, true, (err) => {
-      if (err) return reject(err)
+      if (err) return reject(formatCognitoError(err))
       resolve()
     })
   })
@@ -60,7 +69,7 @@ export const cognitoResendSignupCode = async (params: { email: string }) => {
 
   return new Promise<void>((resolve, reject) => {
     user.resendConfirmationCode((err) => {
-      if (err) return reject(err)
+      if (err) return reject(formatCognitoError(err))
       resolve()
     })
   })
@@ -85,7 +94,7 @@ export const cognitoLogin = async (params: { email: string; password: string }) 
           refreshToken: session.getRefreshToken().getToken(),
         })
       },
-      onFailure: (err) => reject(err),
+      onFailure: (err) => reject(formatCognitoError(err)),
       newPasswordRequired: () => reject(new Error('NEW_PASSWORD_REQUIRED')),
     })
   })
