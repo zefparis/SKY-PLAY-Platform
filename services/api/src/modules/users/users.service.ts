@@ -35,4 +35,12 @@ export class UsersService {
       include: { wallet: true },
     });
   }
+
+  async update(id: string, data: any) {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+      include: { wallet: true },
+    });
+  }
 }

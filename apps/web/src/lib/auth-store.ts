@@ -126,14 +126,48 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       await new Promise<void>((resolve, reject) => {
-        user.confirmRegistration(code, true, (err) => {
+        user.confirmRegistration(code, true, async (err) => {
           if (err) {
             set({ error: err.message, loading: false });
             reject(err);
             return;
           }
-          set({ step: "login", loading: false, error: undefined });
-          resolve();
+
+          // Auto-login après confirmation OTP
+          user.getSession(async (sessionErr: any, session: CognitoUserSession | null) => {
+            if (sessionErr || !session) {
+              set({ step: "login", loading: false, error: undefined });
+              resolve();
+              return;
+            }
+
+            // Sync user to database
+            try {
+              const idToken = session.getIdToken().getJwtToken();
+              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/sync`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${idToken}`,
+                },
+              });
+
+              set({
+                tokens: {
+                  accessToken: session.getAccessToken().getJwtToken(),
+                  idToken: session.getIdToken().getJwtToken(),
+                  refreshToken: session.getRefreshToken().getToken(),
+                },
+                step: undefined as any,
+                loading: false,
+                error: undefined,
+              });
+            } catch (syncErr) {
+              set({ step: "login", loading: false, error: undefined });
+            }
+
+            resolve();
+          });
         });
       });
     } catch (e: any) {
