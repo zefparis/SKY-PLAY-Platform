@@ -25,7 +25,7 @@ export default function LoginClient() {
   const isLoading = status === 'authenticating'
 
   const canSubmit = useMemo(() => {
-    return email.length > 3 && password.length >= 6 && !isLoading
+    return email.length >= 3 && password.length >= 6 && !isLoading
   }, [email, password, isLoading])
 
   const onSubmit = async (e: React.FormEvent) => {
