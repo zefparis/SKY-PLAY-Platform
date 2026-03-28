@@ -39,9 +39,6 @@ export const cognitoSignup = async (params: {
   const email = normalizeIdentifier(params.email)
 
   const attributes = [new CognitoUserAttribute({ Name: 'email', Value: email })]
-  if (params.username) {
-    attributes.push(new CognitoUserAttribute({ Name: 'preferred_username', Value: params.username }))
-  }
 
   return new Promise<{ userSub: string }>((resolve, reject) => {
     pool.signUp(email, params.password, attributes, [], (err, result) => {

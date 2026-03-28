@@ -18,12 +18,19 @@ async function bootstrap() {
   const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
 
   app.enableCors({
-    origin: allowedOrigins.length > 0
-      ? allowedOrigins
-      : ['http://localhost:3000', 'http://localhost:3001', 'https://sky-play-platform.vercel.app'],
+    origin: (origin, callback) => {
+      const fallbackOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://sky-play-platform.vercel.app'];
+      const origins = allowedOrigins.length > 0 ? allowedOrigins : fallbackOrigins;
+
+      if (!origin || origins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin not allowed by CORS: ${origin}`), false);
+    },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
