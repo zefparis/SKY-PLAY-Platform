@@ -15,6 +15,7 @@ type Friend = {
 
 export default function FriendsList() {
   const tokens = useAuthStore((state) => state.tokens)
+  const initialized = useAuthStore((state) => state.initialized)
   const [friends, setFriends] = useState<Friend[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -22,7 +23,7 @@ export default function FriendsList() {
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    if (!tokens?.idToken) return
+    if (!initialized || !tokens?.idToken) return
 
     const fetchFriends = async () => {
       try {
@@ -45,9 +46,9 @@ export default function FriendsList() {
     }
 
     fetchFriends()
-  }, [tokens?.idToken])
+  }, [tokens?.idToken, initialized])
 
-  if (!mounted || !tokens) return null
+  if (!mounted || !initialized || !tokens) return null
 
   const onlineFriends = friends.filter((f) => f.status === 'ONLINE')
 

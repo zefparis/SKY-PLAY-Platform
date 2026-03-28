@@ -37,6 +37,7 @@ type AuthStoreState = {
   tokens: AuthTokens | null
   user: AuthUser | null
   isLoading: boolean
+  initialized: boolean
   error: string | null
   confirmEmail: string | null
   signup: (email: string, password: string) => Promise<void>
@@ -229,6 +230,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
   tokens: initialState.tokens,
   user: initialState.user,
   isLoading: false,
+  initialized: false,
   error: null,
   confirmEmail: initialState.confirmEmail,
 
@@ -412,6 +414,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     const currentUser = get().user
 
     if (!currentTokens || !currentUser?.email || !currentTokens.refreshToken) {
+      set({ initialized: true })
       return
     }
 
@@ -421,10 +424,10 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       const tokens = await refreshWithToken(currentUser.email, currentTokens.refreshToken)
       const user = await syncUser(tokens)
 
-      set({ tokens, user, isLoading: false, error: null })
+      set({ tokens, user, isLoading: false, initialized: true, error: null })
       persistState({ tokens, user, confirmEmail: get().confirmEmail })
     } catch {
-      set({ tokens: null, user: null, isLoading: false, error: null })
+      set({ tokens: null, user: null, isLoading: false, initialized: true, error: null })
       persistState({ tokens: null, user: null, confirmEmail: get().confirmEmail })
     }
   },

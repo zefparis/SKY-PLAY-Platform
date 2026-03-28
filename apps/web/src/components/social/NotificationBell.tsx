@@ -15,6 +15,7 @@ type Notification = {
 
 export default function NotificationBell() {
   const tokens = useAuthStore((state) => state.tokens)
+  const initialized = useAuthStore((state) => state.initialized)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
@@ -23,7 +24,7 @@ export default function NotificationBell() {
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    if (!tokens?.idToken) return
+    if (!initialized || !tokens?.idToken) return
 
     const fetchNotifications = async () => {
       try {
@@ -49,7 +50,7 @@ export default function NotificationBell() {
     fetchNotifications()
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
-  }, [tokens?.idToken])
+  }, [tokens?.idToken, initialized])
 
   const markAsRead = async (id: string) => {
     if (!tokens?.idToken) return
@@ -74,7 +75,7 @@ export default function NotificationBell() {
     }
   }
 
-  if (!mounted || !tokens) return null
+  if (!mounted || !initialized || !tokens) return null
 
   return (
     <div className="relative">

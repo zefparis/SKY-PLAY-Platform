@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Navbar from '@/components/layout/Navbar'
 import { I18nProvider } from '@/components/i18n/I18nProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import SessionRestorer from '@/components/providers/SessionRestorer'
 
 export const metadata: Metadata = {
   title: 'SKY PLAY - Competitive Gaming Platform',
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className="dark:bg-[#00165F] bg-[#f0f4ff] dark:text-white text-[#00165F] min-h-screen transition-colors duration-200">
         <ThemeProvider>
           <I18nProvider>
+            <SessionRestorer />
             <Navbar />
             <div className="pt-20">{children}</div>
           </I18nProvider>
