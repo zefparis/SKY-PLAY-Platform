@@ -28,15 +28,15 @@ export default function LoginClient() {
         <Container>
           <div className="max-w-md mx-auto">
             <Card variant="glass" className="p-6">
-              <h1 className="title-tech text-2xl text-white font-extrabold mb-1">Connexion</h1>
-              <p className="text-white/60 mb-6">Connectez-vous avec Google pour accéder à SkyPlay.</p>
+              <h1 className="title-tech text-2xl dark:text-white text-[#00165F] font-extrabold mb-1">Connexion</h1>
+              <p className="dark:text-white/60 text-[#00165F]/60 mb-6">Connectez-vous avec Google pour accéder à SkyPlay.</p>
 
               <div className="space-y-4">
                 <Button type="button" onClick={() => loginWithGoogle()} className="w-full">
                   {isLoading ? 'Connexion en cours...' : 'Continuer avec Google'}
                 </Button>
 
-                <p className="text-sm text-white/60">
+                <p className="text-sm dark:text-white/60 text-[#00165F]/60">
                   Pas encore de compte ?{' '}
                   <a className="text-secondary hover:underline" href="/signup">
                     Découvrir l&apos;accès Google

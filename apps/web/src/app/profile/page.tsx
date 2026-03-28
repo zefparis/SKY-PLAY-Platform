@@ -184,28 +184,28 @@ export default function ProfilePage() {
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                     <div>
-                      <h1 className="title-tech text-white text-3xl font-extrabold">{username}</h1>
-                      <p className="text-white/60 mt-1">{email}</p>
+                      <h1 className="title-tech dark:text-white text-[#00165F] text-3xl font-extrabold">{username}</h1>
+                      <p className="dark:text-white/60 text-[#00165F]/60 mt-1">{email}</p>
                     </div>
                     <Badge variant="danger">{rank}</Badge>
                   </div>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
-                      <p className="text-white/60 text-xs mb-1">Matchs</p>
-                      <p className="text-white text-xl font-bold">{stats.gamesPlayed}</p>
+                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Matchs</p>
+                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.gamesPlayed}</p>
                     </div>
-                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
-                      <p className="text-white/60 text-xs mb-1">Victoires</p>
-                      <p className="text-white text-xl font-bold">{stats.wins}</p>
+                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Victoires</p>
+                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.wins}</p>
                     </div>
-                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
-                      <p className="text-white/60 text-xs mb-1">Défaites</p>
-                      <p className="text-white text-xl font-bold">{stats.losses}</p>
+                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Défaites</p>
+                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.losses}</p>
                     </div>
-                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
-                      <p className="text-white/60 text-xs mb-1">Winrate</p>
-                      <p className="text-white text-xl font-bold">{stats.winRate}%</p>
+                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Winrate</p>
+                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.winRate}%</p>
                     </div>
                   </div>
                 </div>

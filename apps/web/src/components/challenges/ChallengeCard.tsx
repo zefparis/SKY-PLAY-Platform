@@ -28,10 +28,10 @@ const ChallengeCard = ({ challenge }: ChallengeCardProps) => {
             <Gamepad2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-secondary transition-colors truncate">
+            <h3 className="text-base sm:text-lg font-bold dark:text-white text-[#00165F] group-hover:text-secondary transition-colors truncate">
               {challenge.title}
             </h3>
-            <p className="text-xs sm:text-sm text-white/65 truncate">{challenge.game}</p>
+            <p className="text-xs sm:text-sm dark:text-white/65 text-[#00165F]/65 truncate">{challenge.game}</p>
           </div>
         </div>
         <Badge variant={challenge.status === 'OPEN' ? 'success' : 'danger'} className="shrink-0">
@@ -41,17 +41,17 @@ const ChallengeCard = ({ challenge }: ChallengeCardProps) => {
 
       <div className="space-y-2 sm:space-y-3 mb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-white/65">
+          <div className="flex items-center space-x-2 dark:text-white/65 text-[#00165F]/65">
             <Users className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="text-xs sm:text-sm">Players</span>
           </div>
-          <span className="text-sm sm:text-base text-white font-semibold">
+          <span className="text-sm sm:text-base dark:text-white text-[#00165F] font-semibold">
             {challenge.currentPlayers}/{challenge.maxPlayers}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-white/65">
+          <div className="flex items-center space-x-2 dark:text-white/65 text-[#00165F]/65">
             <Trophy className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="text-xs sm:text-sm">Prize Pool</span>
           </div>
@@ -61,14 +61,14 @@ const ChallengeCard = ({ challenge }: ChallengeCardProps) => {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-white/65 text-xs sm:text-sm">Entry Fee</span>
-          <span className="text-sm sm:text-base text-white font-semibold">
+          <span className="dark:text-white/65 text-[#00165F]/65 text-xs sm:text-sm">Entry Fee</span>
+          <span className="text-sm sm:text-base dark:text-white text-[#00165F] font-semibold">
             {formatCurrency(challenge.entryFee)}
           </span>
         </div>
       </div>
 
-      <div className="pt-3 sm:pt-4 border-t border-white/10">
+      <div className="pt-3 sm:pt-4 border-t dark:border-white/10 border-[#00165F]/10">
         <Button variant="primary" className="w-full text-sm sm:text-base" disabled={challenge.status !== 'OPEN'}>
           {challenge.status === 'OPEN' ? (
             <>

@@ -16,7 +16,7 @@ const GOOGLE_BUTTON =
   'flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-black/30 transition hover:scale-[1.01] hover:bg-slate-100 active:scale-[0.99]'
 
 const INPUT_CLASSNAME =
-  'w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-sky-400/70 focus:bg-white/10'
+  'w-full rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-white px-4 py-3 text-sm dark:text-white text-[#00165F] outline-none transition dark:placeholder:text-white/35 placeholder:text-[#00165F]/40 focus:border-[#0097FC] focus:bg-white dark:focus:border-sky-400/70 dark:focus:bg-white/10'
 
 const PRIMARY_BUTTON =
   'flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sky-400 to-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-900/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70'
@@ -213,15 +213,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
             <div
-              className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-[#071226] p-8 shadow-2xl shadow-black/50"
+              className="relative w-full max-w-sm overflow-hidden rounded-3xl border dark:border-white/10 border-[#00165F]/15 dark:bg-[#071226] bg-white p-8 shadow-2xl dark:shadow-black/50 shadow-[#00165F]/20"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/70 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent dark:via-sky-400/70 via-[#0097FC]/50 to-transparent" />
 
               <button
                 type="button"
                 onClick={onClose}
-                className="absolute right-4 top-4 rounded-full p-2 text-white/50 transition hover:bg-white/5 hover:text-white"
+                className="absolute right-4 top-4 rounded-full p-2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:bg-white/5 hover:bg-[#00165F]/5 dark:hover:text-white hover:text-[#00165F]"
                 aria-label="Fermer"
               >
                 <X className="h-4 w-4" />
@@ -232,8 +232,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   SP
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300/80">SkyPlay</p>
-                  <h2 className="text-2xl font-bold text-white">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0097FC] dark:text-sky-300/80">SkyPlay</p>
+                  <h2 className="text-2xl font-bold dark:text-white text-[#00165F]">
                     {view === 'login' ? 'Connexion' : view === 'signup' ? 'Créer un compte' : 'Confirmer le compte'}
                   </h2>
                 </div>
@@ -243,7 +243,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {view === 'login' ? (
                   <motion.form key="login" className="space-y-4" onSubmit={handleLoginSubmit} {...viewTransition}>
                     <div className="space-y-2">
-                      <label className="text-sm text-white/70">Email</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
                       <input
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
@@ -255,7 +255,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm text-white/70">Mot de passe</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
                       <div className="relative">
                         <input
                           value={password}
@@ -268,7 +268,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         <button
                           type="button"
                           onClick={() => setShowPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition hover:text-white"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]"
                           aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -277,7 +277,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </div>
 
                     {error ? (
-                      <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      <div className="rounded-2xl border dark:border-red-400/20 border-[#FD2E5F]/20 dark:bg-red-500/10 bg-[#FD2E5F]/10 px-4 py-3 text-sm dark:text-red-200 text-[#FD2E5F]">
                         {error}
                       </div>
                     ) : null}
@@ -286,10 +286,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Se connecter'}
                     </button>
 
-                    <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] text-white/35">
-                      <div className="h-px flex-1 bg-white/10" />
+                    <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
+                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
                       <span>ou</span>
-                      <div className="h-px flex-1 bg-white/10" />
+                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
                     </div>
 
                     <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
@@ -297,9 +297,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       <span>Continuer avec Google</span>
                     </button>
 
-                    <p className="text-center text-sm text-white/55">
+                    <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       Pas de compte ?{' '}
-                      <button type="button" onClick={() => switchView('signup')} className="font-semibold text-sky-300 hover:text-sky-200">
+                      <button type="button" onClick={() => switchView('signup')} className="font-semibold text-sky-300 dark:hover:text-sky-200 text-[#0097FC] hover:text-[#00165F] transition-colors">
                         S&apos;inscrire
                       </button>
                     </p>
@@ -309,7 +309,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {view === 'signup' ? (
                   <motion.form key="signup" className="space-y-4" onSubmit={handleSignupSubmit} {...viewTransition}>
                     <div className="space-y-2">
-                      <label className="text-sm text-white/70">Email</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
                       <input
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
@@ -321,7 +321,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm text-white/70">Mot de passe</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
                       <div className="relative">
                         <input
                           value={password}
@@ -334,15 +334,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         <button
                           type="button"
                           onClick={() => setShowPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition hover:text-white"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]"
                           aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
 
-                      <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                        <div className="flex items-center justify-between text-xs text-white/60">
+                      <div className="space-y-2 rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-white px-4 py-3">
+                        <div className="flex items-center justify-between text-xs dark:text-white/60 text-[#00165F]/60">
                           <span>Force du mot de passe</span>
                           <span>{passwordStrength.label}</span>
                         </div>
@@ -350,7 +350,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                           {Array.from({ length: 4 }, (_, index) => (
                             <div
                               key={index}
-                              className={`h-1.5 rounded-full ${index < passwordStrength.level ? passwordStrength.color : 'bg-white/10'}`}
+                              className={`h-1.5 rounded-full ${index < passwordStrength.level ? passwordStrength.color : 'dark:bg-white/10 bg-[#00165F]/10'}`}
                             />
                           ))}
                         </div>
@@ -358,7 +358,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm text-white/70">Confirmer le mot de passe</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Confirmer le mot de passe</label>
                       <div className="relative">
                         <input
                           value={confirmPassword}
@@ -371,19 +371,19 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition hover:text-white"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]"
                           aria-label={showConfirmPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       {confirmPassword.length > 0 && !signupPasswordsMatch ? (
-                        <p className="text-xs text-red-200">Les mots de passe ne correspondent pas</p>
+                        <p className="text-xs text-[#FD2E5F] dark:text-red-200">Les mots de passe ne correspondent pas</p>
                       ) : null}
                     </div>
 
                     {error ? (
-                      <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      <div className="rounded-2xl border dark:border-red-400/20 border-[#FD2E5F]/20 dark:bg-red-500/10 bg-[#FD2E5F]/10 px-4 py-3 text-sm dark:text-red-200 text-[#FD2E5F]">
                         {error}
                       </div>
                     ) : null}
@@ -392,10 +392,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Créer mon compte'}
                     </button>
 
-                    <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] text-white/35">
-                      <div className="h-px flex-1 bg-white/10" />
+                    <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
+                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
                       <span>ou</span>
-                      <div className="h-px flex-1 bg-white/10" />
+                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
                     </div>
 
                     <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
@@ -403,9 +403,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       <span>Continuer avec Google</span>
                     </button>
 
-                    <p className="text-center text-sm text-white/55">
+                    <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       Déjà un compte ?{' '}
-                      <button type="button" onClick={() => switchView('login')} className="font-semibold text-sky-300 hover:text-sky-200">
+                      <button type="button" onClick={() => switchView('login')} className="font-semibold text-sky-300 dark:hover:text-sky-200 text-[#0097FC] hover:text-[#00165F] transition-colors">
                         Se connecter
                       </button>
                     </p>
@@ -415,13 +415,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {view === 'confirm' ? (
                   <motion.form key="confirm" className="space-y-5" onSubmit={handleConfirmSubmit} {...viewTransition}>
                     <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-center">
-                      <MailCheck className="mx-auto mb-3 h-6 w-6 text-sky-300" />
-                      <p className="text-sm font-medium text-white">Vérifie ta boîte mail</p>
-                      <p className="mt-1 text-sm text-white/60">Entre le code reçu sur <span className="font-semibold text-white">{confirmEmail ?? email}</span>.</p>
+                      <MailCheck className="mx-auto mb-3 h-6 w-6 text-[#0097FC] dark:text-sky-300" />
+                      <p className="text-sm font-medium dark:text-white text-[#00165F]">Vérifie ta boîte mail</p>
+                      <p className="mt-1 text-sm dark:text-white/60 text-[#00165F]/70">Entre le code reçu sur <span className="font-semibold dark:text-white text-[#00165F]">{confirmEmail ?? email}</span>.</p>
                     </div>
 
                     <div className="space-y-2" onPaste={handleOtpPaste}>
-                      <label className="text-sm text-white/70">Code de confirmation</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code de confirmation</label>
                       <div className="grid grid-cols-6 gap-2">
                         {otpValues.map((digit, index) => (
                           <input
@@ -434,14 +434,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             onKeyDown={(event) => handleOtpKeyDown(index, event)}
                             inputMode="numeric"
                             maxLength={1}
-                            className="h-12 rounded-2xl border border-white/10 bg-white/5 text-center text-lg font-semibold text-white outline-none transition focus:border-sky-400/70 focus:bg-white/10"
+                            className="h-12 rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-white text-center text-lg font-semibold dark:text-white text-[#00165F] outline-none transition focus:border-[#0097FC] focus:bg-white dark:focus:border-sky-400/70 dark:focus:bg-white/10"
                           />
                         ))}
                       </div>
                     </div>
 
                     {error ? (
-                      <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      <div className="rounded-2xl border dark:border-red-400/20 border-[#FD2E5F]/20 dark:bg-red-500/10 bg-[#FD2E5F]/10 px-4 py-3 text-sm dark:text-red-200 text-[#FD2E5F]">
                         {error}
                       </div>
                     ) : null}
@@ -450,14 +450,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmer'}
                     </button>
 
-                    <p className="text-center text-sm text-white/55">
+                    <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       <button
                         type="button"
                         onClick={() => {
                           setConfirmEmail(null)
                           switchView('signup')
                         }}
-                        className="font-semibold text-sky-300 hover:text-sky-200"
+                        className="font-semibold text-sky-300 dark:hover:text-sky-200 text-[#0097FC] hover:text-[#00165F] transition-colors"
                       >
                         Retour
                       </button>

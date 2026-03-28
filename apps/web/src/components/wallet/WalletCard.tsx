@@ -10,7 +10,7 @@ interface WalletCardProps {
 
 const WalletCard = ({ balance, currency = 'XOF' }: WalletCardProps) => {
   return (
-    <Card className="gradient-primary relative overflow-hidden">
+    <Card className="gradient-primary relative overflow-hidden text-white border-0 shadow-glow-blue dark:shadow-none">
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
       <div className="relative z-10">
         <div className="flex items-center space-x-3 mb-4 sm:mb-6">
