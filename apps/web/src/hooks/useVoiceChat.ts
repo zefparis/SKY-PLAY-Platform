@@ -26,6 +26,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
 
   const localStreamRef = useRef<MediaStream | null>(null)
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map())
+  const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map())
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const retryCountRef = useRef<Map<string, number>>(new Map())
@@ -97,9 +98,28 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       }
 
       pc.ontrack = (event) => {
-        const audio = new Audio()
-        audio.srcObject = event.streams[0]
-        audio.play().catch((err) => console.error('Audio play error:', err))
+        const stream = event.streams[0]
+        if (!stream) return
+
+        // Crée un élément audio invisible et joue le stream
+        const audioEl = document.createElement('audio')
+        audioEl.srcObject = stream
+        audioEl.autoplay = true
+        audioEl.volume = 1.0
+
+        // Important pour les casques et les mobiles
+        audioEl.setAttribute('playsinline', 'true')
+
+        document.body.appendChild(audioEl)
+
+        // Stocke la référence pour cleanup
+        audioElementsRef.current.set(socketId, audioEl)
+
+        // Joue immédiatement (certains navigateurs bloquent autoplay)
+        audioEl.play().catch(() => {
+          // Si autoplay bloqué → attendre interaction utilisateur
+          document.addEventListener('click', () => audioEl.play(), { once: true })
+        })
       }
 
       pc.onconnectionstatechange = () => {
@@ -176,6 +196,14 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     peersRef.current.forEach((pc) => pc.close())
     peersRef.current.clear()
 
+    // Cleanup all audio elements
+    audioElementsRef.current.forEach((audioEl) => {
+      audioEl.pause()
+      audioEl.srcObject = null
+      audioEl.remove()
+    })
+    audioElementsRef.current.clear()
+
     // Stop local stream
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop())
@@ -249,6 +277,14 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       if (pc) {
         pc.close()
         peersRef.current.delete(socketId)
+      }
+      // Cleanup audio element
+      const audioEl = audioElementsRef.current.get(socketId)
+      if (audioEl) {
+        audioEl.pause()
+        audioEl.srcObject = null
+        audioEl.remove()
+        audioElementsRef.current.delete(socketId)
       }
     }
 
