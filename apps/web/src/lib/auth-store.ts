@@ -53,7 +53,7 @@ type AuthStoreState = {
 const STORAGE_KEY = 'skyplay-auth'
 const PASSWORD_CACHE_KEY = 'skyplay-auth-confirm-password'
 
-const getRequiredEnv = (
+const getEnv = (
   key:
     | 'NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID'
     | 'NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID'
@@ -61,19 +61,15 @@ const getRequiredEnv = (
     | 'NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN'
     | 'NEXT_PUBLIC_API_URL',
 ): string => {
-  const value = process.env[key]
-  if (!value) {
-    throw new Error(`Variable d'environnement manquante: ${key}`)
-  }
-  return value
+  return process.env[key] ?? ''
 }
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase()
 
 const getUserPool = (): CognitoUserPool => {
   return new CognitoUserPool({
-    UserPoolId: getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID'),
-    ClientId: getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID'),
+    UserPoolId: getEnv('NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID'),
+    ClientId: getEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID'),
   })
 }
 
@@ -169,7 +165,7 @@ const translateCognitoError = (error: unknown): string => {
 }
 
 const syncUser = async (tokens: AuthTokens): Promise<AuthUser> => {
-  const apiUrl = getRequiredEnv('NEXT_PUBLIC_API_URL').replace(/\/+$/, '')
+  const apiUrl = getEnv('NEXT_PUBLIC_API_URL').replace(/\/+$/, '')
 
   const response = await fetch(`${apiUrl}/users/sync`, {
     method: 'POST',
@@ -338,9 +334,17 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
   },
 
   loginWithGoogle: () => {
-    const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
-    const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
-    const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
+    const domain = getEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
+    const clientId = getEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
+    const redirectUri = getEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
+
+    if (!domain || !clientId) {
+      console.error('Configuration Cognito manquante pour loginWithGoogle', {
+        domain,
+        clientId,
+      })
+      return
+    }
 
     const url = new URL(`${domain}/oauth2/authorize`)
     url.searchParams.set('client_id', clientId)
@@ -357,9 +361,9 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     set({ isLoading: true, error: null })
 
     try {
-      const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
-      const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
-      const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
+      const domain = getEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
+      const clientId = getEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
+      const redirectUri = getEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
 
       const response = await fetch(`${domain}/oauth2/token`, {
         method: 'POST',
