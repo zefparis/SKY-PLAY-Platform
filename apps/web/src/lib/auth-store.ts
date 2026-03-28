@@ -1,15 +1,21 @@
 'use client'
 
+import {
+  AuthenticationDetails,
+  CognitoRefreshToken,
+  CognitoUser,
+  CognitoUserAttribute,
+  CognitoUserPool,
+} from 'amazon-cognito-identity-js'
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 
-type AuthTokens = {
+export type AuthTokens = {
   accessToken: string
   idToken: string
   refreshToken: string
 }
 
-type AuthUser = {
+export type AuthUser = {
   id: string
   email: string
   username: string
@@ -27,19 +33,31 @@ type TokenExchangeResponse = {
   refresh_token?: string
 }
 
-type AuthState = {
+type AuthStoreState = {
   tokens: AuthTokens | null
   user: AuthUser | null
   isLoading: boolean
+  error: string | null
+  confirmEmail: string | null
+  signup: (email: string, password: string) => Promise<void>
+  confirmSignup: (email: string, code: string, password?: string) => Promise<void>
+  login: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => void
   handleOAuthCallback: (code: string) => Promise<void>
+  restoreSession: () => Promise<void>
+  clearError: () => void
+  setConfirmEmail: (email: string | null) => void
   logout: () => void
 }
 
+const STORAGE_KEY = 'skyplay-auth'
+const PASSWORD_CACHE_KEY = 'skyplay-auth-confirm-password'
+
 const getRequiredEnv = (
   key:
-    | 'NEXT_PUBLIC_AWS_COGNITO_DOMAIN'
+    | 'NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID'
     | 'NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID'
+    | 'NEXT_PUBLIC_AWS_COGNITO_DOMAIN'
     | 'NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN'
     | 'NEXT_PUBLIC_API_URL',
 ): string => {
@@ -50,97 +68,370 @@ const getRequiredEnv = (
   return value
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      tokens: null,
-      user: null,
-      isLoading: false,
+const normalizeEmail = (email: string): string => email.trim().toLowerCase()
 
-      loginWithGoogle: () => {
-        const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
-        const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
-        const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
+const getUserPool = (): CognitoUserPool => {
+  return new CognitoUserPool({
+    UserPoolId: getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID'),
+    ClientId: getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID'),
+  })
+}
 
-        const url = new URL(`${domain}/oauth2/authorize`)
-        url.searchParams.set('client_id', clientId)
-        url.searchParams.set('response_type', 'code')
-        url.searchParams.set('scope', 'email openid profile')
-        url.searchParams.set('redirect_uri', redirectUri)
-        url.searchParams.set('identity_provider', 'Google')
-        window.location.href = url.toString()
-      },
+const createCognitoUser = (email: string): CognitoUser => {
+  return new CognitoUser({
+    Username: normalizeEmail(email),
+    Pool: getUserPool(),
+  })
+}
 
-      handleOAuthCallback: async (code: string) => {
-        set({ isLoading: true })
+const parseStoredState = (): Pick<AuthStoreState, 'tokens' | 'user' | 'confirmEmail'> => {
+  if (typeof window === 'undefined') {
+    return { tokens: null, user: null, confirmEmail: null }
+  }
 
-        try {
-          const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
-          const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
-          const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
-          const apiUrl = getRequiredEnv('NEXT_PUBLIC_API_URL').replace(/\/+$/, '')
+  const raw = window.localStorage.getItem(STORAGE_KEY)
+  if (!raw) {
+    return { tokens: null, user: null, confirmEmail: null }
+  }
 
-          const tokenResponse = await fetch(`${domain}/oauth2/token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              grant_type: 'authorization_code',
-              client_id: clientId,
-              code,
-              redirect_uri: redirectUri,
-            }),
-          })
+  try {
+    const parsed = JSON.parse(raw) as Partial<Pick<AuthStoreState, 'tokens' | 'user' | 'confirmEmail'>>
+    return {
+      tokens: parsed.tokens ?? null,
+      user: parsed.user ?? null,
+      confirmEmail: parsed.confirmEmail ?? null,
+    }
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY)
+    return { tokens: null, user: null, confirmEmail: null }
+  }
+}
 
-          if (!tokenResponse.ok) {
-            const details = await tokenResponse.text().catch(() => '')
-            throw new Error(`Échec échange OAuth (${tokenResponse.status}): ${details || tokenResponse.statusText}`)
-          }
+const persistState = (state: Pick<AuthStoreState, 'tokens' | 'user' | 'confirmEmail'>): void => {
+  if (typeof window === 'undefined') {
+    return
+  }
 
-          const tokenData = (await tokenResponse.json()) as TokenExchangeResponse
-          const tokens: AuthTokens = {
-            accessToken: tokenData.access_token,
-            idToken: tokenData.id_token,
-            refreshToken: tokenData.refresh_token ?? '',
-          }
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+}
 
-          const syncResponse = await fetch(`${apiUrl}/users/sync`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${tokens.idToken}`,
-            },
-            body: JSON.stringify({}),
-          })
+const readCachedPassword = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+  return window.sessionStorage.getItem(PASSWORD_CACHE_KEY)
+}
 
-          if (!syncResponse.ok) {
-            const details = await syncResponse.text().catch(() => '')
-            throw new Error(`Échec synchronisation utilisateur (${syncResponse.status}): ${details || syncResponse.statusText}`)
-          }
+const writeCachedPassword = (password: string | null): void => {
+  if (typeof window === 'undefined') {
+    return
+  }
 
-          const user = (await syncResponse.json()) as AuthUser
-          set({ tokens, user, isLoading: false })
-          window.location.href = '/'
-        } catch (error) {
-          set({ tokens: null, user: null, isLoading: false })
-          throw error instanceof Error ? error : new Error('Échec de connexion OAuth')
-        }
-      },
+  if (password) {
+    window.sessionStorage.setItem(PASSWORD_CACHE_KEY, password)
+    return
+  }
 
-      logout: () => {
-        set({ tokens: null, user: null })
-        window.location.href = '/login'
-      },
-    }),
-    {
-      name: 'skyplay-auth-store',
-      partialize: (state) => ({
-        tokens: state.tokens,
-        user: state.user,
-      }),
+  window.sessionStorage.removeItem(PASSWORD_CACHE_KEY)
+}
+
+const translateCognitoError = (error: unknown): string => {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string'
+      ? error.code
+      : null
+
+  if (code === 'UsernameExistsException') {
+    return 'Un compte existe déjà avec cet email'
+  }
+
+  if (code === 'NotAuthorizedException') {
+    return 'Email ou mot de passe incorrect'
+  }
+
+  if (code === 'CodeMismatchException') {
+    return 'Code invalide'
+  }
+
+  if (code === 'UserNotConfirmedException') {
+    return 'Compte non confirmé, vérifie ta boîte mail'
+  }
+
+  if (error instanceof Error && error.message === 'NEW_PASSWORD_REQUIRED') {
+    return 'Ce compte nécessite une mise à jour du mot de passe depuis votre profil'
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return 'Une erreur est survenue pendant l’authentification'
+}
+
+const syncUser = async (tokens: AuthTokens): Promise<AuthUser> => {
+  const apiUrl = getRequiredEnv('NEXT_PUBLIC_API_URL').replace(/\/+$/, '')
+
+  const response = await fetch(`${apiUrl}/users/sync`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${tokens.idToken || tokens.accessToken}`,
     },
-  ),
-)
+    body: JSON.stringify({}),
+  })
 
-export type { AuthTokens, AuthUser }
+  if (!response.ok) {
+    const details = await response.text().catch(() => '')
+    throw new Error(`Échec synchronisation utilisateur (${response.status}): ${details || response.statusText}`)
+  }
+
+  return (await response.json()) as AuthUser
+}
+
+const loginWithSrp = async (email: string, password: string): Promise<AuthTokens> => {
+  const user = createCognitoUser(email)
+  const authenticationDetails = new AuthenticationDetails({
+    Username: normalizeEmail(email),
+    Password: password,
+  })
+
+  return new Promise<AuthTokens>((resolve, reject) => {
+    user.authenticateUser(authenticationDetails, {
+      onSuccess: (session) => {
+        resolve({
+          accessToken: session.getAccessToken().getJwtToken(),
+          idToken: session.getIdToken().getJwtToken(),
+          refreshToken: session.getRefreshToken().getToken(),
+        })
+      },
+      onFailure: (error) => reject(error),
+      newPasswordRequired: () => reject(new Error('NEW_PASSWORD_REQUIRED')),
+    })
+  })
+}
+
+const refreshWithToken = async (email: string, refreshToken: string): Promise<AuthTokens> => {
+  const user = createCognitoUser(email)
+  const cognitoRefreshToken = new CognitoRefreshToken({ RefreshToken: refreshToken })
+
+  return new Promise<AuthTokens>((resolve, reject) => {
+    user.refreshSession(cognitoRefreshToken, (error, session) => {
+      if (error || !session) {
+        reject(error ?? new Error('Session invalide'))
+        return
+      }
+
+      resolve({
+        accessToken: session.getAccessToken().getJwtToken(),
+        idToken: session.getIdToken().getJwtToken(),
+        refreshToken,
+      })
+    })
+  })
+}
+
+const initialState = parseStoredState()
+
+export const useAuthStore = create<AuthStoreState>((set, get) => ({
+  tokens: initialState.tokens,
+  user: initialState.user,
+  isLoading: false,
+  error: null,
+  confirmEmail: initialState.confirmEmail,
+
+  clearError: () => {
+    set({ error: null })
+  },
+
+  setConfirmEmail: (email) => {
+    const nextConfirmEmail = email ? normalizeEmail(email) : null
+    set({ confirmEmail: nextConfirmEmail })
+    persistState({
+      tokens: get().tokens,
+      user: get().user,
+      confirmEmail: nextConfirmEmail,
+    })
+  },
+
+  signup: async (email, password) => {
+    const normalizedEmail = normalizeEmail(email)
+    set({ isLoading: true, error: null })
+
+    try {
+      const attributes = [new CognitoUserAttribute({ Name: 'email', Value: normalizedEmail })]
+
+      await new Promise<void>((resolve, reject) => {
+        getUserPool().signUp(normalizedEmail, password, attributes, [], (error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+          resolve()
+        })
+      })
+
+      writeCachedPassword(password)
+      set({ confirmEmail: normalizedEmail, isLoading: false, error: null })
+      persistState({ tokens: get().tokens, user: get().user, confirmEmail: normalizedEmail })
+    } catch (error) {
+      const message = translateCognitoError(error)
+      set({ isLoading: false, error: message })
+      throw new Error(message)
+    }
+  },
+
+  confirmSignup: async (email, code, password) => {
+    const normalizedEmail = normalizeEmail(email)
+    set({ isLoading: true, error: null })
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        createCognitoUser(normalizedEmail).confirmRegistration(code, true, (error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+          resolve()
+        })
+      })
+
+      const passwordToUse = password ?? readCachedPassword()
+
+      if (passwordToUse) {
+        await get().login(normalizedEmail, passwordToUse)
+      } else {
+        set({ isLoading: false, error: null, confirmEmail: null })
+        persistState({ tokens: get().tokens, user: get().user, confirmEmail: null })
+      }
+
+      writeCachedPassword(null)
+    } catch (error) {
+      const message = translateCognitoError(error)
+      set({ isLoading: false, error: message })
+      throw new Error(message)
+    }
+  },
+
+  login: async (email, password) => {
+    const normalizedEmail = normalizeEmail(email)
+    set({ isLoading: true, error: null })
+
+    try {
+      const tokens = await loginWithSrp(normalizedEmail, password)
+      const user = await syncUser(tokens)
+
+      set({
+        tokens,
+        user,
+        isLoading: false,
+        error: null,
+        confirmEmail: null,
+      })
+
+      persistState({ tokens, user, confirmEmail: null })
+      writeCachedPassword(null)
+    } catch (error) {
+      const message = translateCognitoError(error)
+      set({ isLoading: false, error: message })
+      throw new Error(message)
+    }
+  },
+
+  loginWithGoogle: () => {
+    const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
+    const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
+    const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
+
+    const url = new URL(`${domain}/oauth2/authorize`)
+    url.searchParams.set('client_id', clientId)
+    url.searchParams.set('response_type', 'code')
+    url.searchParams.set('scope', 'email openid profile')
+    url.searchParams.set('redirect_uri', redirectUri)
+    url.searchParams.set('identity_provider', 'Google')
+
+    set({ error: null })
+    window.location.assign(url.toString())
+  },
+
+  handleOAuthCallback: async (code) => {
+    set({ isLoading: true, error: null })
+
+    try {
+      const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
+      const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
+      const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
+
+      const response = await fetch(`${domain}/oauth2/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: clientId,
+          code,
+          redirect_uri: redirectUri,
+        }),
+      })
+
+      if (!response.ok) {
+        const details = await response.text().catch(() => '')
+        throw new Error(`Échec échange OAuth (${response.status}): ${details || response.statusText}`)
+      }
+
+      const tokenData = (await response.json()) as TokenExchangeResponse
+      const tokens: AuthTokens = {
+        accessToken: tokenData.access_token,
+        idToken: tokenData.id_token,
+        refreshToken: tokenData.refresh_token ?? '',
+      }
+
+      const user = await syncUser(tokens)
+
+      set({
+        tokens,
+        user,
+        isLoading: false,
+        error: null,
+        confirmEmail: null,
+      })
+
+      persistState({ tokens, user, confirmEmail: null })
+      window.location.assign('/')
+    } catch (error) {
+      const message = translateCognitoError(error)
+      set({ isLoading: false, error: message, tokens: null, user: null })
+      persistState({ tokens: null, user: null, confirmEmail: get().confirmEmail })
+      throw new Error(message)
+    }
+  },
+
+  restoreSession: async () => {
+    const currentTokens = get().tokens
+    const currentUser = get().user
+
+    if (!currentTokens || !currentUser?.email || !currentTokens.refreshToken) {
+      return
+    }
+
+    set({ isLoading: true, error: null })
+
+    try {
+      const tokens = await refreshWithToken(currentUser.email, currentTokens.refreshToken)
+      const user = await syncUser(tokens)
+
+      set({ tokens, user, isLoading: false, error: null })
+      persistState({ tokens, user, confirmEmail: get().confirmEmail })
+    } catch {
+      set({ tokens: null, user: null, isLoading: false, error: null })
+      persistState({ tokens: null, user: null, confirmEmail: get().confirmEmail })
+    }
+  },
+
+  logout: () => {
+    getUserPool().getCurrentUser()?.signOut()
+    set({ tokens: null, user: null, error: null, isLoading: false, confirmEmail: null })
+    persistState({ tokens: null, user: null, confirmEmail: null })
+    writeCachedPassword(null)
+  },
+}))
