@@ -101,6 +101,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       cognitoSub,
       email: user.email,
       username: user.username,
+      role: user.role,
     };
   }
 }
