@@ -4,13 +4,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader2, AlertTriangle } from 'lucide-react';
 import { formatCFA } from '@/lib/currency';
+import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
-function getToken() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-}
 
 interface WithdrawModalProps {
   balance: number;
@@ -19,6 +15,7 @@ interface WithdrawModalProps {
 }
 
 export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawModalProps) {
+  const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
   const [amount, setAmount] = useState('');
   const [network, setNetwork] = useState<'MTN' | 'ORANGE'>('MTN');
   const [phone, setPhone] = useState('');
@@ -36,7 +33,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
     try {
       const res = await fetch(`${API}/wallet/withdraw`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: JSON.stringify({ amount: amountNum, phoneNumber: phone, network, name: name.trim() }),
       });
       const data = await res.json();

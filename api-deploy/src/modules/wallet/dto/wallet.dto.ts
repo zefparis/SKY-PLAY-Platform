@@ -1,4 +1,5 @@
 import { IsEnum, IsInt, IsOptional, IsString, IsEmail, Min, IsIn } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class InitiateDepositDto {
   @IsInt()
@@ -44,11 +45,13 @@ export class InitiateWithdrawalDto {
 
 export class GetTransactionsQueryDto {
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   page?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   limit?: number;

@@ -4,25 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Smartphone, CreditCard, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { formatCFA } from '@/lib/currency';
+import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const QUICK_AMOUNTS = [1000, 2000, 5000, 10000, 20000, 50000];
 const POLL_INTERVAL = 3000;
 const POLL_MAX = 40;
-
-function getToken() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-}
-
-function getUserFromToken() {
-  try {
-    const token = getToken();
-    if (!token) return { email: '', name: '' };
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return { email: payload.email || '', name: payload.username || payload.name || payload.sub || '' };
-  } catch { return { email: '', name: '' }; }
-}
 
 type PayMethod = 'MTN' | 'ORANGE' | 'CARD';
 
@@ -32,6 +19,8 @@ interface DepositModalProps {
 }
 
 export default function DepositModal({ onClose, onSuccess }: DepositModalProps) {
+  const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
+  const user = useAuthStore((s) => s.user);
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState(5000);
   const [customAmount, setCustomAmount] = useState('');
@@ -45,7 +34,8 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
   const pollCount = useRef(0);
 
   const finalAmount = customAmount ? parseInt(customAmount, 10) : amount;
-  const { email, name } = getUserFromToken();
+  const email = user?.email || 'user@skyplay.cm';
+  const name = user?.username || user?.firstName || 'SKY PLAY User';
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
@@ -63,7 +53,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
       }
       try {
         const res = await fetch(`${API}/wallet/transactions?limit=20`, {
-          headers: { Authorization: `Bearer ${getToken()}` },
+          headers: { Authorization: `Bearer ${idToken}` },
         });
         if (!res.ok) return;
         const data = await res.json();
@@ -87,8 +77,8 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
     try {
       const res = await fetch(`${API}/wallet/deposit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ amount: finalAmount, paymentMethod: method, phoneNumber: phone || undefined, email: email || 'user@skyplay.cm', name: name || 'SKY PLAY User' }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ amount: finalAmount, paymentMethod: method, phoneNumber: phone || undefined, email, name }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Erreur');

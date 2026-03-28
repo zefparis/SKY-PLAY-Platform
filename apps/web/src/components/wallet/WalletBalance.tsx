@@ -4,23 +4,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { Wallet, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { formatCFA } from '@/lib/currency';
+import { useAuthStore } from '@/lib/auth-store';
 import DepositModal from './DepositModal';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-function getToken() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-}
-
 export default function WalletBalance() {
+  const idToken = useAuthStore((s) => s.tokens?.idToken);
+  const initialized = useAuthStore((s) => s.initialized);
   const [balance, setBalance] = useState<number | null>(null);
   const [showDeposit, setShowDeposit] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const fetchBalance = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
+  const fetchBalance = useCallback(async (token: string) => {
     try {
       const res = await fetch(`${API}/wallet`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
@@ -29,10 +25,12 @@ export default function WalletBalance() {
     } catch {}
   }, []);
 
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
-    setMounted(true);
-    fetchBalance();
-  }, [fetchBalance]);
+    if (!initialized || !idToken) return;
+    fetchBalance(idToken);
+  }, [initialized, idToken, fetchBalance]);
 
   useEffect(() => {
     const handleWalletUpdate = (e: CustomEvent) => {
@@ -60,7 +58,7 @@ export default function WalletBalance() {
         {showDeposit && (
           <DepositModal
             onClose={() => setShowDeposit(false)}
-            onSuccess={() => fetchBalance()}
+            onSuccess={() => idToken && fetchBalance(idToken)}
           />
         )}
       </AnimatePresence>

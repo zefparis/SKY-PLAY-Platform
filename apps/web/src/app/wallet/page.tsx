@@ -7,16 +7,12 @@ import {
   RefreshCw, TrendingUp, TrendingDown, Trophy, FlaskConical,
 } from 'lucide-react';
 import { formatCFA } from '@/lib/currency';
+import { useAuthStore } from '@/lib/auth-store';
 import DepositModal from '@/components/wallet/DepositModal';
 import WithdrawModal from '@/components/wallet/WithdrawModal';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const IS_TEST = process.env.NEXT_PUBLIC_FLW_ENV !== 'production';
-
-function getToken() {
-  if (typeof window === 'undefined') return '';
-  return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-}
 
 const TX_TYPE_LABELS: Record<string, { label: string; color: string; icon: string }> = {
   DEPOSIT:          { label: 'Dépôt',         color: 'text-green-400',  icon: '↓' },
@@ -46,6 +42,8 @@ const FILTERS = [
 ];
 
 export default function WalletPage() {
+  const idToken = useAuthStore((s) => s.tokens?.idToken);
+  const initialized = useAuthStore((s) => s.initialized);
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -56,9 +54,7 @@ export default function WalletPage() {
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
 
-  const loadWallet = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
+  const loadWallet = useCallback(async (token: string) => {
     try {
       const res = await fetch(`${API}/wallet`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
@@ -68,9 +64,7 @@ export default function WalletPage() {
     }
   }, []);
 
-  const loadTransactions = useCallback(async (p: number, f: string, append = false) => {
-    const token = getToken();
-    if (!token) return;
+  const loadTransactions = useCallback(async (token: string, p: number, f: string, append = false) => {
     setTxLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: '20' });
@@ -85,19 +79,44 @@ export default function WalletPage() {
     }
   }, []);
 
-  useEffect(() => { loadWallet(); }, [loadWallet]);
-  useEffect(() => { setPage(1); setTransactions([]); loadTransactions(1, filter); }, [filter, loadTransactions]);
+  useEffect(() => {
+    if (!initialized) return;
+    if (!idToken) { setLoading(false); return; }
+    loadWallet(idToken);
+  }, [initialized, idToken, loadWallet]);
+
+  useEffect(() => {
+    if (!initialized || !idToken) return;
+    setPage(1); setTransactions([]);
+    loadTransactions(idToken, 1, filter);
+  }, [filter, initialized, idToken, loadTransactions]);
 
   const handleLoadMore = () => {
+    if (!idToken) return;
     const next = page + 1;
     setPage(next);
-    loadTransactions(next, filter, true);
+    loadTransactions(idToken, next, filter, true);
   };
 
-  const handleRefresh = () => { loadWallet(); loadTransactions(1, filter); setPage(1); };
+  const handleRefresh = () => {
+    if (!idToken) return;
+    loadWallet(idToken);
+    loadTransactions(idToken, 1, filter);
+    setPage(1);
+  };
 
-  const handleDepositSuccess = () => { loadWallet(); loadTransactions(1, filter); setPage(1); };
-  const handleWithdrawSuccess = () => { loadWallet(); loadTransactions(1, filter); setPage(1); };
+  const handleDepositSuccess = () => {
+    if (!idToken) return;
+    loadWallet(idToken);
+    loadTransactions(idToken, 1, filter);
+    setPage(1);
+  };
+  const handleWithdrawSuccess = () => {
+    if (!idToken) return;
+    loadWallet(idToken);
+    loadTransactions(idToken, 1, filter);
+    setPage(1);
+  };
 
   if (loading) {
     return (
