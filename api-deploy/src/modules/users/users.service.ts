@@ -9,6 +9,18 @@ export class UsersService {
     return email.split('@')[0];
   }
 
+  private async generateUniqueUsername(base: string): Promise<string> {
+    const sanitized = base.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'player';
+    const existing = await this.prisma.user.findUnique({ where: { username: sanitized } });
+    if (!existing) return sanitized;
+    for (let i = 2; i <= 999; i++) {
+      const candidate = `${sanitized.slice(0, 16)}_${i}`;
+      const taken = await this.prisma.user.findUnique({ where: { username: candidate } });
+      if (!taken) return candidate;
+    }
+    return `player_${Date.now()}`;
+  }
+
   async create(data: any) {
     const user = await this.prisma.user.create({
       data: {
@@ -61,13 +73,23 @@ export class UsersService {
     // email est unique; si pas fourni, on fabrique un placeholder non délivrable.
     const email = params.email || `${params.cognitoSub}@cognito.local`;
 
-    return this.create({
-      cognitoSub: params.cognitoSub,
-      email,
-      username: baseUsername,
-      password: null,
-      isVerified: true,
-    });
+    const uniqueUsername = await this.generateUniqueUsername(baseUsername);
+
+    try {
+      return await this.create({
+        cognitoSub: params.cognitoSub,
+        email,
+        username: uniqueUsername,
+        password: null,
+        isVerified: true,
+      });
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        const race = await this.findByCognitoSub(params.cognitoSub);
+        if (race) return race;
+      }
+      throw err;
+    }
   }
 
   async findById(id: string) {
@@ -110,26 +132,29 @@ export class UsersService {
       return user;
     }
 
-    // Nouvel utilisateur : créer avec les données de base
-    const user = await this.prisma.user.create({
-      data: {
-        cognitoSub,
-        email,
-        username,
-        password: null,
-        isVerified,
-        wallet: {
-          create: {
-            balance: 0,
-          },
-        },
-      },
-      include: {
-        wallet: true,
-      },
-    });
+    // Nouvel utilisateur : créer avec username unique
+    const uniqueUsername = await this.generateUniqueUsername(username);
 
-    return user;
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          cognitoSub,
+          email,
+          username: uniqueUsername,
+          password: null,
+          isVerified,
+          wallet: { create: { balance: 0 } },
+        },
+        include: { wallet: true },
+      });
+      return user;
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        const race = await this.findByCognitoSub(cognitoSub);
+        if (race) return race;
+      }
+      throw err;
+    }
   }
 
   /**
