@@ -165,9 +165,7 @@ export const useAuthStore = create<AuthState>()(
           setAuthToken(accessToken)
           
           // Sync avec l'API pour créer/récupérer l'utilisateur
-          const { data } = await api.post('/users/sync', {}, {
-            headers: { Authorization: `Bearer ${idToken}` }
-          })
+          const { data } = await api.post('/users/sync', { idToken })
           
           set({ 
             status: 'authenticated', 
