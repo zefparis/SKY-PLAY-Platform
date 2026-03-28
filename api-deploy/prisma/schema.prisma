@@ -66,7 +66,7 @@ model Wallet {
   userId       String        @unique
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance      Decimal       @default(0) @db.Decimal(10, 2)
-  currency     String        @default("XOF")
+  currency     String        @default("XAF")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   transactions Transaction[]
@@ -75,18 +75,27 @@ model Wallet {
 }
 
 model Transaction {
-  id            String            @id @default(uuid())
+  id            String            @id @default(cuid())
   walletId      String
   wallet        Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
   type          TransactionType
   amount        Decimal           @db.Decimal(10, 2)
+  balanceBefore Int?
+  balanceAfter  Int?
   status        TransactionStatus @default(PENDING)
   reference     String?           @unique
   description   String?
+  flwRef        String?
+  flwTxId       String?
+  paymentMethod String?
+  phoneNumber   String?
   metadata      Json?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
+  @@index([walletId])
+  @@index([status])
+  @@index([type])
   @@map("transactions")
 }
 
@@ -95,6 +104,8 @@ enum TransactionType {
   WITHDRAWAL
   CHALLENGE_ENTRY
   CHALLENGE_WIN
+  CHALLENGE_DEBIT
+  CHALLENGE_CREDIT
   REFUND
   COMMISSION
   DEBIT

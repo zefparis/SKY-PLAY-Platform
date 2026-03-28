@@ -13,6 +13,7 @@ import { useAuthStore } from '@/lib/auth-store'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import NotificationBell from '@/components/social/NotificationBell'
 import FriendsList from '@/components/social/FriendsList'
+import WalletBalance from '@/components/wallet/WalletBalance'
 
 const Navbar = () => {
   const pathname = usePathname()
@@ -66,6 +67,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <WalletBalance />
             <NotificationBell />
             <FriendsList />
             <button

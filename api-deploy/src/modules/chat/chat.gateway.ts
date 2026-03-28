@@ -16,6 +16,7 @@ import { CognitoJwtPayload } from '../../common/types/cognito-jwt-payload';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ChallengesService } from '../challenges/challenges.service';
+import { WalletService } from '../wallet/wallet.service';
 
 interface ConnectedUser {
   id: string;
@@ -80,6 +81,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   onModuleInit() {
     this.challengesService.setServer(this.server);
+    this.walletService.setServer(this.server);
   }
 
   private logger = new Logger(ChatGateway.name);
@@ -94,6 +96,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private usersService: UsersService,
     private prisma: PrismaService,
     private challengesService: ChallengesService,
+    private walletService: WalletService,
   ) {
     const cognito = config.get('cognito');
     const jwksUri = cognito?.jwksUri;
@@ -179,6 +182,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.connectedUsers.set(client.id, connectedUser);
 
       client.join('global');
+      client.join(`user_${user.id}`);
 
       // Mettre à jour le statut à ONLINE
       await this.prisma.user.update({
