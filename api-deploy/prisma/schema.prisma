@@ -22,6 +22,8 @@ model User {
   role                UserRole        @default(PLAYER)
   isVerified          Boolean         @default(false)
   isBanned            Boolean         @default(false)
+  banReason           String?
+  bannedUntil         DateTime?
   status              UserStatus      @default(OFFLINE)
   lastSeen            DateTime?
   level               Int             @default(1)
@@ -41,6 +43,7 @@ model User {
   challengesCreated   Challenge[]
   challengeParticipations ChallengeParticipant[]
   challengeResults    ChallengeResult[]
+  adminLogs           AdminLog[]
 
   @@index([status])
   @@index([level])
@@ -344,4 +347,20 @@ model Achievement {
 
   @@index([userId])
   @@map("achievements")
+}
+
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetId   String?
+  targetType String?
+  details    Json?
+  createdAt  DateTime @default(now())
+  admin      User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("admin_logs")
 }

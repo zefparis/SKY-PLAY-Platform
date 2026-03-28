@@ -14,6 +14,7 @@ import { HealthController } from './modules/health.controller';
 import { ChatModule } from './modules/chat/chat.module';
 import { FriendshipsModule } from './modules/friendships/friendships.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     ChatModule,
     FriendshipsModule,
     NotificationsModule,
+    AdminModule,
   ],
   providers: [
     // Active la limitation de débit globalement (les routes peuvent surcharger via @Throttle/@SkipThrottle)

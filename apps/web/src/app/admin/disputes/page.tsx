@@ -4,12 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, CheckCircle, X, ChevronDown, ExternalLink } from 'lucide-react';
 import { formatCFA } from '@/lib/currency';
+import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
-function getToken() {
-  return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-}
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'En attente', color: 'text-orange-400 bg-orange-400/10' },
@@ -18,6 +15,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function AdminDisputesPage() {
+  const idToken = useAuthStore((s) => s.tokens?.idToken);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any>(null);
@@ -27,9 +25,10 @@ export default function AdminDisputesPage() {
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
+    if (!idToken) return;
     try {
       const res = await fetch(`${API}/admin/challenges/disputes`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${idToken}` },
       });
       if (!res.ok) throw new Error('Accès refusé');
       const data = await res.json();
@@ -39,14 +38,15 @@ export default function AdminDisputesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [idToken]);
 
   useEffect(() => { load(); }, [load]);
 
   const openDispute = async (disputeId: string) => {
+    if (!idToken) return;
     try {
       const res = await fetch(`${API}/admin/challenges/disputes/${disputeId}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${idToken}` },
       });
       const data = await res.json();
       setSelected(data);
@@ -56,7 +56,7 @@ export default function AdminDisputesPage() {
   };
 
   const resolveDispute = async () => {
-    if (!selected || !winnerId || !adminNote) return;
+    if (!selected || !winnerId || !adminNote || !idToken) return;
     setResolveLoading(true);
     setError('');
     try {
@@ -64,7 +64,7 @@ export default function AdminDisputesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({ winnerId, adminNote }),
       });
