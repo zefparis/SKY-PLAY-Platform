@@ -10,6 +10,7 @@ import { MatchesModule } from './modules/matches/matches.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { HealthController } from './modules/health.controller';
 
 @Module({
   imports: [
@@ -40,5 +41,6 @@ import { PrismaModule } from './prisma/prisma.module';
       useClass: ThrottlerGuard,
     },
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
