@@ -14,24 +14,14 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
-
   app.enableCors({
-    origin: (origin, callback) => {
-      const fallbackOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://sky-play-platform.vercel.app'];
-      const origins = allowedOrigins.length > 0 ? allowedOrigins : fallbackOrigins;
-
-      if (!origin || origins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`Origin not allowed by CORS: ${origin}`), false);
-    },
+    origin: [
+      'https://sky-play-platform.vercel.app',
+      'http://localhost:3000',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
   });
 
   app.useGlobalPipes(
