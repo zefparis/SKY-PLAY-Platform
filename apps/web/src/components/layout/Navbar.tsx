@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gamepad2, Wallet, Trophy, User, Menu, X, MessageCircle, Moon, Sun } from 'lucide-react'
+import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
 import Container from '@/components/ui/Container'
@@ -17,14 +18,16 @@ import WalletBalance from '@/components/wallet/WalletBalance'
 
 const Navbar = () => {
   const pathname = usePathname()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [superMenuOpen, setSuperMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { t } = useI18n()
   const tokens = useAuthStore((s) => s.tokens)
+  const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const { theme, toggleTheme } = useTheme()
 
   useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { if (superMenuOpen) document.body.style.overflow = 'hidden'; else document.body.style.overflow = '' }, [superMenuOpen])
 
   const navLinks = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
@@ -34,152 +37,271 @@ const Navbar = () => {
     { href: '/wallet', label: t('nav.wallet'), icon: Wallet },
   ]
 
+  const bottomTabs = [
+    { href: '/dashboard', label: 'Jeux',   icon: Gamepad2 },
+    { href: '/challenges', label: 'Défis',  icon: Trophy },
+    { href: '/chat',       label: 'Chat',   icon: MessageCircle },
+    { href: '/wallet',     label: 'Wallet', icon: Wallet },
+  ]
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b dark:border-white/10 border-[#00165F]/15 dark:bg-black/25 bg-white/90 backdrop-blur-md">
-      <Container>
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue">
-              <Gamepad2 className="w-6 h-6 text-secondary" />
-            </span>
-            <span className="text-xl sm:text-2xl font-extrabold title-tech text-gradient">
-              SKY PLAY
-            </span>
-          </Link>
+    <>
+      {/* ═══ TOP NAVBAR ═══════════════════════════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b dark:border-white/10 border-[#00165F]/15 dark:bg-black/25 bg-white/90 backdrop-blur-md">
+        <Container>
+          <div className="flex items-center justify-between h-16">
 
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => {
-              const Icon = link.icon
-              const isActive = pathname === link.href
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
-                    isActive
-                      ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
-                      : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5 dark:hover:border-white/10 hover:border-[#00165F]/10'
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{link.label}</span>
-                </Link>
-              )
-            })}
-          </div>
+            {/* Logo */}
+            <Link href="/" className="flex items-center space-x-2">
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue">
+                <Gamepad2 className="w-6 h-6 text-secondary" />
+              </span>
+              <span className="text-xl sm:text-2xl font-extrabold title-tech text-gradient">
+                SKY PLAY
+              </span>
+            </Link>
 
-          <div className="hidden md:flex items-center space-x-4">
-            <WalletBalance />
-            <NotificationBell />
-            <FriendsList />
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full transition-colors dark:text-white/60 dark:hover:text-white text-[#00165F]/70 hover:text-[#0097FC] hover:bg-black/5 dark:hover:bg-white/10"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </button>
-            <LanguageSwitch />
-            {mounted && tokens ? (
-              <>
-                <Link href="/profile">
-                  <Button variant="outline" size="sm">
-                    <User className="w-4 h-4 mr-2" />
-                    {t('nav.profile')}
-                  </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => logout()}
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <Link href="/login">
-                <Button variant="outline" size="sm">Login</Button>
-              </Link>
-            )}
-          </div>
-
-          <div className="md:hidden flex items-center space-x-2">
-            <WalletBalance />
-            <NotificationBell />
-            <FriendsList />
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full transition-colors dark:text-white/60 dark:hover:text-white text-[#00165F]/70 hover:text-[#0097FC]"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </button>
-            <button
-              className="dark:text-white/90 dark:hover:text-white text-[#00165F] hover:text-[#0097FC] transition"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-2 dark:bg-[#00165F] bg-white rounded-b-xl border-t dark:border-white/10 border-[#00165F]/15">
-            <div className="px-4 pb-2 flex justify-between items-center">
-              <LanguageSwitch className="w-full justify-center" />
-            </div>
-            {navLinks.map((link) => {
-              const Icon = link.icon
-              const isActive = pathname === link.href
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    'flex items-center space-x-2 px-4 py-3 rounded-md border border-transparent transition duration-200 mx-2',
-                    isActive
-                      ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
-                      : 'dark:text-white/75 text-[#00165F]/75 hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5 dark:hover:border-white/10 hover:border-[#00165F]/10'
-                  )}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{link.label}</span>
-                </Link>
-              )
-            })}
-            <div className="px-2 pt-2 space-y-2">
-              {tokens ? (
-                <>
-                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <User className="w-4 h-4 mr-2" />
-                      {t('nav.profile')}
-                    </Button>
+            {/* Desktop nav links */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navLinks.map((link) => {
+                const Icon = link.icon
+                const isActive = pathname === link.href
+                return (
+                  <Link key={link.href} href={link.href}
+                    className={cn(
+                      'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
+                      isActive
+                        ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
+                        : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                    )}>
+                    <Icon className="w-5 h-5" />
+                    <span>{link.label}</span>
                   </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      logout()
-                      setMobileMenuOpen(false)
-                    }}
-                  >
-                    Logout
-                  </Button>
+                )
+              })}
+            </div>
+
+            {/* Desktop right actions */}
+            <div className="hidden md:flex items-center space-x-4">
+              <WalletBalance />
+              <NotificationBell />
+              <FriendsList />
+              <button onClick={toggleTheme} className="p-2 rounded-full transition-colors dark:text-white/60 dark:hover:text-white text-[#00165F]/70 hover:text-[#0097FC] hover:bg-black/5 dark:hover:bg-white/10" aria-label="Toggle theme">
+                {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </button>
+              <LanguageSwitch />
+              {mounted && tokens ? (
+                <>
+                  <Link href="/profile"><Button variant="outline" size="sm"><User className="w-4 h-4 mr-2" />{t('nav.profile')}</Button></Link>
+                  <Button variant="outline" size="sm" onClick={() => logout()}>Logout</Button>
                 </>
               ) : (
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full">Login</Button>
-                </Link>
+                <Link href="/login"><Button variant="outline" size="sm">Login</Button></Link>
               )}
             </div>
+
+            {/* Mobile top-right: theme only */}
+            <div className="md:hidden flex items-center gap-2">
+              <button onClick={toggleTheme} className="p-2 rounded-full transition-colors dark:text-white/60 text-[#00165F]/70 hover:text-[#0097FC]" aria-label="Toggle theme">
+                {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </button>
+            </div>
+
           </div>
+        </Container>
+      </nav>
+
+      {/* ═══ MOBILE BOTTOM TAB BAR ════════════════════════════════ */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 dark:bg-[#00165F]/95 bg-white/95 backdrop-blur-xl border-t dark:border-white/10 border-[#00165F]/10 safe-area-inset-bottom">
+        <div className="flex items-center justify-around h-16 px-2">
+          {bottomTabs.map(tab => {
+            const Icon = tab.icon
+            const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/')
+            return (
+              <Link key={tab.href} href={tab.href}
+                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2 relative group"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="tab-indicator"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-[#0097FC] to-[#003399]"
+                    transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                  />
+                )}
+                <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-[#0097FC]' : 'dark:text-white/50 text-[#00165F]/40 group-hover:text-[#0097FC]'}`} />
+                <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-[#0097FC]' : 'dark:text-white/40 text-[#00165F]/40'}`}>{tab.label}</span>
+              </Link>
+            )
+          })}
+
+          {/* Plus tab */}
+          <button
+            onClick={() => setSuperMenuOpen(true)}
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2 relative group"
+          >
+            {mounted && user?.avatar ? (
+              <img src={user.avatar} alt="" className="w-6 h-6 rounded-full ring-2 ring-[#0097FC]/40" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#0097FC] to-[#003399] flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-white" />
+              </div>
+            )}
+            <span className="text-[10px] font-semibold dark:text-white/40 text-[#00165F]/40 group-hover:text-[#0097FC]">Plus</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ SUPER MENU SLIDE-UP ══════════════════════════════════ */}
+      <AnimatePresence>
+        {superMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSuperMenuOpen(false)}
+              className="md:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+            />
+
+            {/* Drawer */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[70] rounded-t-3xl dark:bg-[#030b1a] bg-white shadow-2xl overflow-hidden"
+              style={{ maxHeight: '88dvh' }}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full dark:bg-white/20 bg-[#00165F]/15" />
+              </div>
+
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(88dvh - 24px)' }}>
+
+                {/* User section */}
+                {mounted && tokens && user ? (
+                  <div className="px-5 py-4 flex items-center gap-4">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.username} className="w-14 h-14 rounded-2xl object-cover ring-2 ring-[#0097FC]/30" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0097FC] to-[#003399] flex items-center justify-center text-white font-black text-xl">
+                        {user.username?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black dark:text-white text-[#00165F] text-base truncate">{user.username}</p>
+                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.email}</p>
+                    </div>
+                    <Link href="/profile" onClick={() => setSuperMenuOpen(false)}
+                      className="p-2 rounded-xl dark:bg-white/8 bg-[#00165F]/6 transition hover:bg-[#0097FC]/10">
+                      <ChevronRight className="w-5 h-5 dark:text-white/50 text-[#00165F]/50" />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="px-5 py-4">
+                    <Link href="/login" onClick={() => setSuperMenuOpen(false)}
+                      className="block w-full py-3 rounded-xl bg-gradient-to-r from-[#0097FC] to-[#003399] text-white font-bold text-center">
+                      Se connecter
+                    </Link>
+                  </div>
+                )}
+
+                {/* Wallet widget */}
+                {mounted && tokens && (
+                  <div className="px-5 pb-3">
+                    <WalletBalance />
+                  </div>
+                )}
+
+                <div className="h-px dark:bg-white/8 bg-[#00165F]/8 mx-5" />
+
+                {/* Social */}
+                {mounted && tokens && (
+                  <div className="px-5 py-3 flex items-center gap-3">
+                    <NotificationBell />
+                    <FriendsList />
+                    <span className="text-xs dark:text-white/40 text-[#00165F]/40">Notifications & Amis</span>
+                  </div>
+                )}
+
+                {/* Nav links */}
+                <div className="px-3 py-2 space-y-0.5">
+                  {[
+                    { href: '/leaderboard', label: 'Classement', icon: Trophy },
+                    { href: '/profile', label: 'Mon profil', icon: User },
+                  ].map(item => {
+                    const Icon = item.icon
+                    return (
+                      <Link key={item.href} href={item.href}
+                        onClick={() => setSuperMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl dark:hover:bg-white/8 hover:bg-[#00165F]/5 transition group">
+                        <div className="w-9 h-9 rounded-xl dark:bg-white/8 bg-[#00165F]/6 flex items-center justify-center">
+                          <Icon className="w-4.5 h-4.5 dark:text-white/60 text-[#00165F]/60 group-hover:text-[#0097FC]" />
+                        </div>
+                        <span className="text-sm font-semibold dark:text-white/80 text-[#00165F]/80">{item.label}</span>
+                        <ChevronRight className="w-4 h-4 dark:text-white/20 text-[#00165F]/20 ml-auto" />
+                      </Link>
+                    )
+                  })}
+                </div>
+
+                <div className="h-px dark:bg-white/8 bg-[#00165F]/8 mx-5 my-1" />
+
+                {/* Settings */}
+                <div className="px-3 py-2 space-y-0.5">
+                  {/* Theme */}
+                  <button onClick={toggleTheme}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl dark:hover:bg-white/8 hover:bg-[#00165F]/5 transition">
+                    <div className="w-9 h-9 rounded-xl dark:bg-white/8 bg-[#00165F]/6 flex items-center justify-center">
+                      {theme === 'dark' ? <Moon className="w-4.5 h-4.5 text-[#0097FC]" /> : <Sun className="w-4.5 h-4.5 text-[#0097FC]" />}
+                    </div>
+                    <span className="text-sm font-semibold dark:text-white/80 text-[#00165F]/80">
+                      {theme === 'dark' ? 'Mode sombre' : 'Mode clair'}
+                    </span>
+                    <div className="ml-auto w-10 h-5 rounded-full bg-[#0097FC]/30 relative">
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-[#0097FC] transition-all ${theme === 'dark' ? 'right-0.5' : 'left-0.5'}`} />
+                    </div>
+                  </button>
+
+                  {/* Language */}
+                  <div className="flex items-center gap-3 px-3 py-3 rounded-xl">
+                    <div className="w-9 h-9 rounded-xl dark:bg-white/8 bg-[#00165F]/6 flex items-center justify-center">
+                      <Globe className="w-4.5 h-4.5 dark:text-white/60 text-[#00165F]/60" />
+                    </div>
+                    <span className="text-sm font-semibold dark:text-white/80 text-[#00165F]/80">Langue</span>
+                    <div className="ml-auto"><LanguageSwitch /></div>
+                  </div>
+                </div>
+
+                {/* Logout */}
+                {mounted && tokens && (
+                  <div className="px-5 py-4 pb-6">
+                    <button
+                      onClick={() => { logout(); setSuperMenuOpen(false) }}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold text-sm hover:bg-red-500/20 transition"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Se déconnecter
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Close button */}
+              <button
+                onClick={() => setSuperMenuOpen(false)}
+                className="absolute top-4 right-4 p-2 rounded-full dark:bg-white/10 bg-[#00165F]/8"
+              >
+                <X className="w-4 h-4 dark:text-white/60 text-[#00165F]/60" />
+              </button>
+            </motion.div>
+          </>
         )}
-      </Container>
-    </nav>
+      </AnimatePresence>
+    </>
   )
 }
 

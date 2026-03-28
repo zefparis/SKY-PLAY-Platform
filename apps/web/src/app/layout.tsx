@@ -35,7 +35,7 @@ export default function RootLayout({
           <I18nProvider>
             <SessionRestorer />
             <Navbar />
-            <div className="pt-20">{children}</div>
+            <div className="pt-20 pb-16 md:pb-0">{children}</div>
           </I18nProvider>
         </ThemeProvider>
       </body>
