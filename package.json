@@ -13,7 +13,9 @@
     "dev:admin": "npm run dev --prefix apps/admin",
     "dev:api": "npm run start:dev --prefix services/api",
     "dev:realtime": "node services/realtime-gateway/src/index.js",
-    "docker:check": "powershell ./scripts/check-docker.ps1"
+    "docker:check": "powershell ./scripts/check-docker.ps1",
+    "build": "npm run build --workspace=api-deploy",
+    "postinstall": "prisma generate --schema=api-deploy/prisma/schema.prisma"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",
