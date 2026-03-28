@@ -154,7 +154,7 @@ export default function ProfilePage() {
               <Card variant="glass" className="flex flex-col sm:flex-row sm:items-start gap-6">
                 <ProfilePhotoUpload
                   username={username}
-                  currentPhoto={user?.avatar ? `${process.env.NEXT_PUBLIC_API_URL}${user.avatar}` : undefined}
+                  currentPhoto={user?.avatar || undefined}
                   onPhotoChange={handlePhotoChange}
                 />
                 

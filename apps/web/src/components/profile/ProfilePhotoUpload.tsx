@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Camera, Upload } from 'lucide-react'
 import Card from '@/components/ui/Card'
 
@@ -18,6 +18,13 @@ export default function ProfilePhotoUpload({
   const [preview, setPreview] = useState<string | null>(currentPhoto || null)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Mettre à jour le preview quand currentPhoto change (après upload ou chargement depuis DB)
+  useEffect(() => {
+    if (currentPhoto) {
+      setPreview(currentPhoto)
+    }
+  }, [currentPhoto])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
