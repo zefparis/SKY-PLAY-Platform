@@ -104,34 +104,34 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>
+          <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>
             Utilisateurs
           </h1>
-          <p className="text-sm dark:text-white/60 text-[#00165F]/60">{total} utilisateurs au total</p>
+          <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">{total} utilisateurs au total</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="flex gap-3">
+      <div className="flex gap-2 sm:gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 dark:text-white/40 text-[#00165F]/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 dark:text-white/40 text-[#00165F]/40" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="Rechercher par nom ou email..."
-            className="w-full pl-10 pr-4 py-3 rounded-xl dark:bg-[#00165F]/40 bg-white border dark:border-white/10 border-[#00165F]/10 dark:text-white text-[#00165F] placeholder:dark:text-white/40 placeholder:text-[#00165F]/40 focus:outline-none focus:border-[#0097FC]"
+            placeholder="Rechercher..."
+            className="w-full pl-9 pr-3 py-2.5 sm:py-3 rounded-xl dark:bg-[#00165F]/40 bg-white border dark:border-white/10 border-[#00165F]/10 dark:text-white text-[#00165F] placeholder:dark:text-white/40 placeholder:text-[#00165F]/40 focus:outline-none focus:border-[#0097FC] text-sm"
           />
         </div>
         <button
           onClick={handleSearch}
-          className="px-6 py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 transition"
+          className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 transition text-sm"
         >
-          Rechercher
+          Chercher
         </button>
       </div>
 
@@ -143,78 +143,75 @@ export default function UsersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-[#00165F]/20 dark:bg-[#00165F]/60">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Utilisateur</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Email</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Rôle</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Statut</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Solde</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Parties</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Inscrit le</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Actions</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Utilisateur</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden md:table-cell">Email</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Statut</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden sm:table-cell">Solde</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden lg:table-cell">Inscrit le</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-white/10 divide-[#00165F]/10">
                 {users.map((user) => (
                   <tr key={user.id} className="dark:hover:bg-white/5 hover:bg-[#00165F]/5 transition">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         {user.avatar ? (
-                          <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full" />
+                          <img src={user.avatar} alt={user.username} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0097FC] to-[#003399] flex items-center justify-center text-white font-bold text-xs">
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-[#0097FC] to-[#003399] flex items-center justify-center text-white font-bold text-xs shrink-0">
                             {user.username[0]?.toUpperCase()}
                           </div>
                         )}
-                        <span className="font-semibold dark:text-white text-[#00165F]">{user.username}</span>
+                        <div className="min-w-0">
+                          <span className="font-semibold dark:text-white text-[#00165F] text-sm block truncate max-w-[100px] sm:max-w-none">{user.username}</span>
+                          <span className="text-xs dark:text-white/40 text-[#00165F]/40 md:hidden truncate block max-w-[100px]">{user.email}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <AdminBadge status={user.role} variant={user.role === 'ADMIN' ? 'danger' : 'default'} />
-                    </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden md:table-cell">{user.email}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
                       {user.isBanned ? (
                         <AdminBadge status="Banni" variant="danger" />
                       ) : user.isVerified ? (
                         <AdminBadge status="Vérifié" variant="success" />
                       ) : (
-                        <AdminBadge status={user.status} variant="default" />
+                        <AdminBadge status={user.role === 'ADMIN' ? 'ADMIN' : user.status} variant={user.role === 'ADMIN' ? 'danger' : 'default'} />
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold dark:text-white text-[#00165F]">{user.balance} CFA</td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60">{user.gamesPlayed}</td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold dark:text-white text-[#00165F] hidden sm:table-cell">{user.balance} CFA</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden lg:table-cell">
                       {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         {!user.isVerified && (
                           <button
                             onClick={() => handleVerify(user.id)}
-                            className="p-2 rounded-lg dark:bg-emerald-500/20 bg-emerald-100 text-emerald-600 hover:bg-emerald-500/30 transition"
+                            className="p-1.5 sm:p-2 rounded-lg dark:bg-emerald-500/20 bg-emerald-100 text-emerald-600 hover:bg-emerald-500/30 transition"
                             title="Vérifier"
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                         )}
                         {user.isBanned ? (
                           <button
                             onClick={() => handleUnban(user.id)}
-                            className="p-2 rounded-lg dark:bg-blue-500/20 bg-blue-100 text-blue-600 hover:bg-blue-500/30 transition"
+                            className="p-1.5 sm:p-2 rounded-lg dark:bg-blue-500/20 bg-blue-100 text-blue-600 hover:bg-blue-500/30 transition"
                             title="Débannir"
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                         ) : (
                           <button
                             onClick={() => { setSelectedUser(user); setBanModalOpen(true) }}
-                            className="p-2 rounded-lg dark:bg-red-500/20 bg-red-100 text-red-600 hover:bg-red-500/30 transition"
+                            className="p-1.5 sm:p-2 rounded-lg dark:bg-red-500/20 bg-red-100 text-red-600 hover:bg-red-500/30 transition"
                             title="Bannir"
                           >
-                            <Ban className="w-4 h-4" />
+                            <Ban className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                         )}
                       </div>
@@ -228,24 +225,24 @@ export default function UsersPage() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm dark:text-white/60 text-[#00165F]/60">
-          Page {page} sur {Math.ceil(total / 20)}
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">
+          Page {page}/{Math.ceil(total / 20)}
         </p>
         <div className="flex gap-2">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 rounded-xl dark:bg-white/10 bg-[#00165F]/10 dark:text-white text-[#00165F] font-semibold disabled:opacity-50 hover:bg-[#0097FC] hover:text-white transition"
+            className="px-3 sm:px-4 py-2 rounded-xl dark:bg-white/10 bg-[#00165F]/10 dark:text-white text-[#00165F] font-semibold disabled:opacity-50 hover:bg-[#0097FC] hover:text-white transition text-sm"
           >
-            Précédent
+            ← Préc.
           </button>
           <button
             onClick={() => setPage(p => p + 1)}
             disabled={page >= Math.ceil(total / 20)}
-            className="px-4 py-2 rounded-xl dark:bg-white/10 bg-[#00165F]/10 dark:text-white text-[#00165F] font-semibold disabled:opacity-50 hover:bg-[#0097FC] hover:text-white transition"
+            className="px-3 sm:px-4 py-2 rounded-xl dark:bg-white/10 bg-[#00165F]/10 dark:text-white text-[#00165F] font-semibold disabled:opacity-50 hover:bg-[#0097FC] hover:text-white transition text-sm"
           >
-            Suivant
+            Suiv. →
           </button>
         </div>
       </div>

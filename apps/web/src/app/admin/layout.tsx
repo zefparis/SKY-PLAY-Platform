@@ -132,14 +132,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="lg:pl-64">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-[#00165F]/80 backdrop-blur-md border-b dark:border-white/10 border-[#00165F]/10 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg dark:bg-white/10 bg-[#00165F]/10"
-            >
-              <Menu className="w-5 h-5 dark:text-white text-[#00165F]" />
-            </button>
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg dark:bg-white/10 bg-[#00165F]/10"
+              >
+                <Menu className="w-5 h-5 dark:text-white text-[#00165F]" />
+              </button>
+              <span className="lg:hidden text-sm font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>SKY PLAY Admin</span>
+            </div>
+            <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0097FC] to-[#003399] flex items-center justify-center text-white font-black text-sm">
                 {user.username?.[0]?.toUpperCase()}
               </div>
@@ -152,7 +155,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-3 sm:p-4 lg:p-6">
           {children}
         </main>
       </div>

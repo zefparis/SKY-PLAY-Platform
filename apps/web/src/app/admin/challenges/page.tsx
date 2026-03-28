@@ -21,8 +21,8 @@ export default function ChallengesPage() {
   }, [idToken])
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>
         Défis
       </h1>
 
@@ -33,33 +33,36 @@ export default function ChallengesPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[500px]">
               <thead className="bg-[#00165F]/20 dark:bg-[#00165F]/60">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Titre</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Type</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Statut</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Joueurs</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Pot</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Date</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Titre</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden sm:table-cell">Type</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Statut</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden md:table-cell">Joueurs</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Pot</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden lg:table-cell">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-white/10 divide-[#00165F]/10">
                 {challenges.map((challenge) => (
                   <tr key={challenge.id} className="dark:hover:bg-white/5 hover:bg-[#00165F]/5 transition">
-                    <td className="px-6 py-4 font-semibold dark:text-white text-[#00165F]">{challenge.title}</td>
-                    <td className="px-6 py-4"><AdminBadge status={challenge.type} variant="info" /></td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <span className="font-semibold dark:text-white text-[#00165F] text-sm block truncate max-w-[120px] sm:max-w-xs">{challenge.title}</span>
+                      <span className="text-xs dark:text-white/40 text-[#00165F]/40 sm:hidden">{challenge.type}</span>
+                    </td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 hidden sm:table-cell"><AdminBadge status={challenge.type} variant="info" /></td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <AdminBadge 
                         status={challenge.status} 
                         variant={challenge.status === 'COMPLETED' ? 'success' : challenge.status === 'DISPUTED' ? 'danger' : 'default'} 
                       />
                     </td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden md:table-cell">
                       {challenge.participants?.length || 0}/{challenge.maxPlayers}
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold dark:text-white text-[#00165F]">{challenge.potTotal} CFA</td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold dark:text-white text-[#00165F]">{challenge.potTotal} CFA</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden lg:table-cell">
                       {new Date(challenge.createdAt).toLocaleDateString('fr-FR')}
                     </td>
                   </tr>

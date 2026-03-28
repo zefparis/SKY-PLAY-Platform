@@ -64,16 +64,16 @@ export default function AdminDashboard() {
   const formatCurrency = (amount: number) => `${amount.toLocaleString('fr-FR')} CFA`
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-black dark:text-white text-[#00165F] mb-2" style={{ fontFamily: 'Dena, sans-serif' }}>
+        <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F] mb-1" style={{ fontFamily: 'Dena, sans-serif' }}>
           Dashboard
         </h1>
-        <p className="text-sm dark:text-white/60 text-[#00165F]/60">Vue d'ensemble de la plateforme SKY PLAY</p>
+        <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">Vue d'ensemble de la plateforme SKY PLAY</p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6">
         <StatCard
           title="Revenus du mois"
           value={formatCurrency(stats.revenue.monthCommissions)}
@@ -105,11 +105,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-6">
         {/* Revenue Chart */}
-        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
-          <h3 className="text-lg font-bold dark:text-white text-[#00165F] mb-4">Revenus (30 derniers jours)</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-4 sm:p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
+          <h3 className="text-sm sm:text-lg font-bold dark:text-white text-[#00165F] mb-3 sm:mb-4">Revenus (30 derniers jours)</h3>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={chartData.revenue}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
               <XAxis dataKey="date" stroke="#ffffff60" fontSize={12} />
@@ -124,9 +124,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* New Users Chart */}
-        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
-          <h3 className="text-lg font-bold dark:text-white text-[#00165F] mb-4">Inscriptions (30 derniers jours)</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-4 sm:p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
+          <h3 className="text-sm sm:text-lg font-bold dark:text-white text-[#00165F] mb-3 sm:mb-4">Inscriptions (30 derniers jours)</h3>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData.newUsers}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
               <XAxis dataKey="date" stroke="#ffffff60" fontSize={12} />
@@ -142,11 +142,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Activity */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-6">
         {/* Recent Disputes */}
-        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold dark:text-white text-[#00165F]">Litiges en attente</h3>
+        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-4 sm:p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-sm sm:text-lg font-bold dark:text-white text-[#00165F]">Litiges en attente</h3>
             <AdminBadge status={`${stats.challenges.disputed}`} variant="danger" />
           </div>
           {stats.challenges.disputed === 0 ? (
@@ -167,8 +167,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Platform Stats */}
-        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
-          <h3 className="text-lg font-bold dark:text-white text-[#00165F] mb-4">Statistiques wallet</h3>
+        <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl p-4 sm:p-6 border dark:border-white/10 border-[#00165F]/10 shadow-sm">
+          <h3 className="text-sm sm:text-lg font-bold dark:text-white text-[#00165F] mb-3 sm:mb-4">Statistiques wallet</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm dark:text-white/60 text-[#00165F]/60">Total déposé</span>

@@ -21,8 +21,8 @@ export default function LogsPage() {
   }, [idToken])
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>
         Logs Admin
       </h1>
 
@@ -33,35 +33,36 @@ export default function LogsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[400px]">
               <thead className="bg-[#00165F]/20 dark:bg-[#00165F]/60">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Admin</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Action</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Cible</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Détails</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Date</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Admin</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Action</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden sm:table-cell">Cible</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden lg:table-cell">Détails</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden md:table-cell">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-white/10 divide-[#00165F]/10">
                 {logs.map((log) => (
                   <tr key={log.id} className="dark:hover:bg-white/5 hover:bg-[#00165F]/5 transition">
-                    <td className="px-6 py-4 font-semibold dark:text-white text-[#00165F]">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-semibold dark:text-white text-[#00165F] text-sm">
                       {log.admin?.username || 'N/A'}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <AdminBadge 
                         status={log.action} 
                         variant={log.action.includes('BAN') ? 'danger' : log.action.includes('VERIFY') ? 'success' : 'info'} 
                       />
+                      <span className="text-xs dark:text-white/40 text-[#00165F]/40 sm:hidden block mt-0.5">{log.targetType || ''}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60">
-                      {log.targetType || 'N/A'} {log.targetId ? `(${log.targetId.substring(0, 8)}...)` : ''}
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden sm:table-cell">
+                      {log.targetType || 'N/A'} {log.targetId ? `(${log.targetId.substring(0, 6)}...)` : ''}
                     </td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60 max-w-xs truncate">
-                      {log.details ? JSON.stringify(log.details).substring(0, 50) : 'N/A'}
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs dark:text-white/60 text-[#00165F]/60 max-w-xs truncate hidden lg:table-cell">
+                      {log.details ? JSON.stringify(log.details).substring(0, 40) : 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-sm dark:text-white/60 text-[#00165F]/60">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden md:table-cell">
                       {new Date(log.createdAt).toLocaleString('fr-FR')}
                     </td>
                   </tr>
