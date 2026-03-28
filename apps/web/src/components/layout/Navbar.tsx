@@ -9,13 +9,13 @@ import Button from '@/components/ui/Button'
 import Container from '@/components/ui/Container'
 import LanguageSwitch from '@/components/i18n/LanguageSwitch'
 import { useI18n } from '@/components/i18n/I18nProvider'
-import { useAuthStore } from '@/features/auth/auth.store'
+import { useAuthStore } from '@/lib/auth-store'
 
 const Navbar = () => {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { t } = useI18n()
-  const status = useAuthStore((s) => s.status)
+  const tokens = useAuthStore((s) => s.tokens)
   const logout = useAuthStore((s) => s.logout)
 
   const navLinks = [
@@ -63,7 +63,7 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center space-x-4">
             <LanguageSwitch />
-            {status === 'authenticated' ? (
+            {tokens ? (
               <>
                 <Link href="/profile">
                   <Button variant="outline" size="sm">
@@ -119,7 +119,7 @@ const Navbar = () => {
                 </Link>
               )
             })}
-            {status === 'authenticated' ? (
+            {tokens ? (
               <>
                 <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="outline" size="sm" className="w-full">

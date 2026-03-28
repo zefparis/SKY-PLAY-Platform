@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import RequireAuth from '@/features/auth/RequireAuth'
 import Container from '@/components/ui/Container'
-import { useAuthStore } from '@/features/auth/auth.store'
+import { useAuthStore } from '@/lib/auth-store'
 import ProfilePhotoUpload from '@/components/profile/ProfilePhotoUpload'
 import ProfileEditForm from '@/components/profile/ProfileEditForm'
 import ProfileWallet from '@/components/profile/ProfileWallet'
@@ -120,7 +120,7 @@ export default function ProfilePage() {
       useAuthStore.setState({ user: result.user })
       
       alert('Photo de profil mise à jour avec succès !')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur upload photo:', error)
       throw error
     } finally {
@@ -151,7 +151,7 @@ export default function ProfilePage() {
       useAuthStore.setState({ user: updatedUser })
       
       alert('Profil mis à jour avec succès !')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur sauvegarde profil:', error)
       throw error
     }

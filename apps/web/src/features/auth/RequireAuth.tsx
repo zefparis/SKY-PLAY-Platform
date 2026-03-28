@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useAuthStore } from '@/features/auth/auth.store'
+import { useAuthStore } from '@/lib/auth-store'
 
 export default function RequireAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const status = useAuthStore((s) => s.status)
   const tokens = useAuthStore((s) => s.tokens)
   const [isHydrating, setIsHydrating] = useState(true)
 
@@ -22,11 +21,10 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
   }, [tokens])
 
   useEffect(() => {
-    // Ne rediriger que si on a fini l'hydratation ET qu'on est anonymous
-    if (!isHydrating && status === 'anonymous') {
+    if (!isHydrating && !tokens) {
       router.replace(`/login?next=${encodeURIComponent(pathname || '/')}`)
     }
-  }, [status, router, pathname, isHydrating])
+  }, [tokens, router, pathname, isHydrating])
 
   // Afficher un loader pendant l'hydratation
   if (isHydrating) {
@@ -37,8 +35,7 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
     )
   }
 
-  // Si pas authentifié après hydratation, ne rien afficher (redirection en cours)
-  if (status !== 'authenticated') return null
+  if (!tokens) return null
   
   return <>{children}</>
 }

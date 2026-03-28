@@ -1,374 +1,146 @@
-// AuthStore Zustand pour gestion complète Cognito
-import { create } from "zustand";
-import type { CognitoUserSession } from "amazon-cognito-identity-js";
-import {
-  CognitoUserPool,
-  CognitoUserAttribute,
-  CognitoUser,
-  AuthenticationDetails,
-} from "amazon-cognito-identity-js";
+'use client'
 
-export type AuthStep =
-  | "login"
-  | "signup"
-  | "pending"
-  | "forgot"
-  | "reset";
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-export type AuthTokens = {
-  accessToken: string;
-  idToken: string;
-  refreshToken: string;
-};
+type AuthTokens = {
+  accessToken: string
+  idToken: string
+  refreshToken: string
+}
 
-export type AuthState = {
-  step: AuthStep;
-  email: string;
-  loading: boolean;
-  error?: string;
-  tokens?: AuthTokens | null;
-  user?: any; // Utilisateur synchronisé (type précis possible si DTO connu)
+type AuthUser = {
+  id: string
+  email: string
+  username: string
+  avatar?: string | null
+  firstName?: string | null
+  lastName?: string | null
+  bio?: string | null
+  discordTag?: string | null
+  twitchUsername?: string | null
+}
 
-  setStep: (step: AuthStep) => void;
-  setEmail: (email: string) => void;
-  setError: (error?: string) => void;
-  setLoading: (loading: boolean) => void;
-  setTokens: (tokens: AuthTokens | null) => void;
-  setUser: (user: any) => void;
+type TokenExchangeResponse = {
+  access_token: string
+  id_token: string
+  refresh_token?: string
+}
 
-  signup: (email: string, password: string) => Promise<void>;
-  confirmSignup: (code: string) => Promise<void>;
-  resendSignupCode: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => void;
-  loginWithDiscord: () => void;
-  forgotPassword: (email: string) => Promise<void>;
-  resetPassword: (code: string, newPassword: string) => Promise<void>;
-  logout: () => void;
-};
+type AuthState = {
+  tokens: AuthTokens | null
+  user: AuthUser | null
+  isLoading: boolean
+  loginWithGoogle: () => void
+  handleOAuthCallback: (code: string) => Promise<void>
+  logout: () => void
+}
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  step: "login",
-  email: "",
-  loading: false,
-  error: undefined,
-  tokens: null,
-  user: undefined,
+const getRequiredEnv = (
+  key:
+    | 'NEXT_PUBLIC_AWS_COGNITO_DOMAIN'
+    | 'NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID'
+    | 'NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN'
+    | 'NEXT_PUBLIC_API_URL',
+): string => {
+  const value = process.env[key]
+  if (!value) {
+    throw new Error(`Variable d'environnement manquante: ${key}`)
+  }
+  return value
+}
 
-  setStep: (step) => set({ step, error: undefined }),
-  setEmail: (email) => set({ email }),
-  setError: (error) => set({ error }),
-  setLoading: (loading) => set({ loading }),
-  setTokens: (tokens) => set({ tokens }),
-  setUser: (user) => set({ user }),
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      tokens: null,
+      user: null,
+      isLoading: false,
 
-  signup: async (email: string, password: string) => {
-    set({ loading: true, error: undefined });
+      loginWithGoogle: () => {
+        const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
+        const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
+        const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
 
-    try {
-      const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
-      });
+        const url = new URL(`${domain}/oauth2/authorize`)
+        url.searchParams.set('client_id', clientId)
+        url.searchParams.set('response_type', 'code')
+        url.searchParams.set('scope', 'email openid profile')
+        url.searchParams.set('redirect_uri', redirectUri)
+        url.searchParams.set('identity_provider', 'Google')
+        window.location.href = url.toString()
+      },
 
-      // 1. Création dans Cognito (on récupère le UserSub)
-      const cognitoResult = await new Promise<any>((resolve, reject) => {
-        userPool.signUp(
-          email,
-          password,
-          [new CognitoUserAttribute({ Name: "email", Value: email })],
-          [],
-          (err, result) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(result);
+      handleOAuthCallback: async (code: string) => {
+        set({ isLoading: true })
+
+        try {
+          const domain = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_DOMAIN').replace(/\/+$/, '')
+          const clientId = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID')
+          const redirectUri = getRequiredEnv('NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN')
+          const apiUrl = getRequiredEnv('NEXT_PUBLIC_API_URL').replace(/\/+$/, '')
+
+          const tokenResponse = await fetch(`${domain}/oauth2/token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              grant_type: 'authorization_code',
+              client_id: clientId,
+              code,
+              redirect_uri: redirectUri,
+            }),
+          })
+
+          if (!tokenResponse.ok) {
+            const details = await tokenResponse.text().catch(() => '')
+            throw new Error(`Échec échange OAuth (${tokenResponse.status}): ${details || tokenResponse.statusText}`)
           }
-        );
-      });
 
-      const cognitoSub = cognitoResult.userSub; // ← C'est ça qu'on veut
-
-      console.log("✅ Cognito UserSub reçu :", cognitoSub);
-
-      // 2. Envoi au backend pour créer l'utilisateur dans Prisma
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:3001';
-
-      const response = await fetch(`${apiUrl}/users/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          cognitoSub,           // ← OBLIGATOIRE
-          // username: email.split('@')[0], // tu peux ajouter si tu veux
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de l'enregistrement en base");
-      }
-
-      // 3. Tout est bon → on passe à l'étape de confirmation email
-      set({
-        email,
-        step: "pending",
-        loading: false,
-        error: undefined,
-      });
-
-      console.log("✅ Utilisateur créé dans Cognito + DB", { cognitoSub, data });
-
-    } catch (e: any) {
-      console.error("❌ Erreur signup :", e);
-      set({
-        error: e?.message || "Impossible de créer le compte",
-        loading: false,
-      });
-    }
-  },
-
-  confirmSignup: async (code) => {
-    set({ loading: true, error: undefined });
-    const email = get().email;
-    try {
-      const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
-      });
-      const user = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        user.confirmRegistration(code, true, async (err) => {
-          if (err) {
-            set({ error: err.message, loading: false });
-            reject(err);
-            return;
+          const tokenData = (await tokenResponse.json()) as TokenExchangeResponse
+          const tokens: AuthTokens = {
+            accessToken: tokenData.access_token,
+            idToken: tokenData.id_token,
+            refreshToken: tokenData.refresh_token ?? '',
           }
-          set({ step: "login", loading: false, error: undefined });
-          resolve();
-        });
-      });
-    } catch (e: any) {
-      set({ error: e?.message || "Erreur inconnue", loading: false });
-      throw e;
-    }
-  },
 
-  resendSignupCode: async () => {
-    set({ loading: true, error: undefined });
-    const email = get().email;
-    try {
-      const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
-      });
-      const user = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
+          const syncResponse = await fetch(`${apiUrl}/users/sync`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${tokens.idToken}`,
+            },
+            body: JSON.stringify({}),
+          })
 
-      await new Promise<void>((resolve, reject) => {
-        user.resendConfirmationCode((err) => {
-          if (err) {
-            set({ error: err.message, loading: false });
-            reject(err);
-            return;
+          if (!syncResponse.ok) {
+            const details = await syncResponse.text().catch(() => '')
+            throw new Error(`Échec synchronisation utilisateur (${syncResponse.status}): ${details || syncResponse.statusText}`)
           }
-          // reste sur pending
-          set({ loading: false, error: undefined });
-          resolve();
-        });
-      });
-    } catch (e: any) {
-      set({ error: e?.message || "Erreur inconnue", loading: false });
-      throw e;
-    }
-  },
 
-  loginWithGoogle: () => {
-    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN;
-    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID;
-    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN;
-    if (!domain || !clientId || !redirectUri) return;
+          const user = (await syncResponse.json()) as AuthUser
+          set({ tokens, user, isLoading: false })
+          window.location.href = '/'
+        } catch (error) {
+          set({ tokens: null, user: null, isLoading: false })
+          throw error instanceof Error ? error : new Error('Échec de connexion OAuth')
+        }
+      },
 
-    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`);
-    url.searchParams.set("client_id", clientId);
-    url.searchParams.set("response_type", "code");
-    url.searchParams.set("scope", "email openid profile");
-    url.searchParams.set("redirect_uri", redirectUri);
-    url.searchParams.set("identity_provider", "Google");
-    window.location.assign(url.toString());
-  },
+      logout: () => {
+        set({ tokens: null, user: null })
+        window.location.href = '/login'
+      },
+    }),
+    {
+      name: 'skyplay-auth-store',
+      partialize: (state) => ({
+        tokens: state.tokens,
+        user: state.user,
+      }),
+    },
+  ),
+)
 
-  loginWithDiscord: () => {
-    const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN;
-    const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID;
-    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN;
-    if (!domain || !clientId || !redirectUri) return;
-
-    const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`);
-    url.searchParams.set("client_id", clientId);
-    url.searchParams.set("response_type", "code");
-    url.searchParams.set("scope", "email openid profile");
-    url.searchParams.set("redirect_uri", redirectUri);
-    url.searchParams.set("identity_provider", "Discord");
-    window.location.assign(url.toString());
-  },
-  login: async (email, password) => {
-    set({ loading: true, error: undefined });
-    try {
-      const userPoolId = process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID;
-      const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID;
-      
-      console.log('🔐 Login attempt:', { email, userPoolId, clientId });
-      
-      if (!userPoolId || !clientId) {
-        throw new Error('Cognito configuration missing');
-      }
-      
-      const userPool = new CognitoUserPool({
-        UserPoolId: userPoolId,
-        ClientId: clientId,
-      });
-      const user = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
-      const authDetails = new AuthenticationDetails({
-        Username: email,
-        Password: password,
-      });
-      await new Promise<void>((resolve, reject) => {
-        user.authenticateUser(authDetails, {
-          onSuccess: async (session) => {
-            set({
-              tokens: {
-                accessToken: session.getAccessToken().getJwtToken(),
-                idToken: session.getIdToken().getJwtToken(),
-                refreshToken: session.getRefreshToken().getToken(),
-              },
-              step: undefined as any, // Redirection vers l'app principale
-              loading: false,
-              error: undefined,
-              email,
-            });
-
-            // Synchronisation Cognito → API Railway
-            try {
-              const idToken = session.getIdToken().getJwtToken();
-              console.log('🔄 Syncing authenticated user to API', {
-                apiUrl: process.env.NEXT_PUBLIC_API_URL,
-                email,
-              });
-              const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/users/sync`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${idToken}`,
-                  },
-                }
-              );
-              if (res.ok) {
-                const user = await res.json();
-                console.log('✅ API sync success', user);
-                get().setUser(user);
-              } else {
-                console.error('❌ API sync failed', res.status, await res.text());
-              }
-            } catch (e) {
-              console.error('❌ API sync exception', e);
-            }
-
-            resolve();
-          },
-          onFailure: (err) => {
-            console.error('❌ Cognito login error:', err);
-            console.error('Error details:', {
-              name: err?.name,
-              message: err?.message,
-              code: err?.code,
-            });
-            set({ error: err.message, loading: false });
-            reject(err);
-          },
-          newPasswordRequired: () => {
-            set({ error: "Nouveau mot de passe requis", loading: false });
-            reject(new Error("Nouveau mot de passe requis"));
-          },
-        });
-      });
-    } catch (e: any) {
-      console.error('❌ Login exception:', e);
-      set({ error: e?.message || "Erreur inconnue", loading: false });
-      throw e;
-    }
-  },
-  forgotPassword: async (email) => {
-    set({ loading: true, error: undefined });
-    try {
-      const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
-      });
-      const user = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
-      await new Promise<void>((resolve, reject) => {
-        user.forgotPassword({
-          onSuccess: () => {
-            set({ step: "reset", email, loading: false, error: undefined });
-            resolve();
-          },
-          onFailure: (err) => {
-            set({ error: err.message, loading: false });
-            reject(err);
-          },
-        });
-      });
-    } catch (e: any) {
-      set({ error: e?.message || "Erreur inconnue", loading: false });
-      throw e;
-    }
-  },
-  resetPassword: async (code, newPassword) => {
-    set({ loading: true, error: undefined });
-    const email = get().email;
-    try {
-      const userPool = new CognitoUserPool({
-        UserPoolId: process.env.NEXT_PUBLIC_AWS_COGNITO_USER_POOL_ID!,
-        ClientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID!,
-      });
-      const user = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
-      await new Promise<void>((resolve, reject) => {
-        user.confirmPassword(code, newPassword, {
-          onSuccess: () => {
-            set({ step: "login", loading: false, error: undefined });
-            resolve();
-          },
-          onFailure: (err) => {
-            set({ error: err.message, loading: false });
-            reject(err);
-          },
-        });
-      });
-    } catch (e: any) {
-      set({ error: e?.message || "Erreur inconnue", loading: false });
-      throw e;
-    }
-  },
-  logout: () => {
-    set({ tokens: null, email: "", step: "login", error: undefined });
-  },
-}));
+export type { AuthTokens, AuthUser }
