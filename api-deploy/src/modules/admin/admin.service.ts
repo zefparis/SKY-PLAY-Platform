@@ -267,8 +267,8 @@ export class AdminService {
   async getChallenges(status?: string, type?: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const where: any = {};
-    if (status) where.status = status;
-    if (type) where.type = type;
+    if (status) where.status = status as any;
+    if (type) where.type = type as any;
 
     const [challenges, total] = await Promise.all([
       this.prisma.challenge.findMany({
@@ -371,7 +371,7 @@ export class AdminService {
 
   async getDisputes(status?: string) {
     return this.prisma.challengeDispute.findMany({
-      where: status ? { status } : undefined,
+      where: status ? { status: status as any } : undefined,
       include: {
         challenge: {
           include: {
@@ -439,8 +439,8 @@ export class AdminService {
       const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
       if (wallet) where.walletId = wallet.id;
     }
-    if (type) where.type = type;
-    if (status) where.status = status;
+    if (type) where.type = type as any;
+    if (status) where.status = status as any;
 
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
