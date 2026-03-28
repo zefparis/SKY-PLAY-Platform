@@ -126,6 +126,18 @@ export default function WalletPage() {
     );
   }
 
+  if (!idToken) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <Wallet className="w-14 h-14 dark:text-white/20 text-[#00165F]/20" />
+        <p className="text-lg font-bold dark:text-white text-[#00165F]">Connectez-vous pour accéder à votre wallet</p>
+        <a href="/login" className="px-6 py-2.5 rounded-xl bg-[#0097FC] text-white font-bold text-sm hover:bg-[#0097FC]/90 transition">
+          Se connecter
+        </a>
+      </div>
+    );
+  }
+
   const balance = wallet?.balance ?? 0;
   const stats = wallet?.stats ?? { totalDeposited: 0, totalWon: 0, totalMised: 0, gainsNets: 0 };
 
@@ -248,7 +260,7 @@ export default function WalletPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold dark:text-white text-[#00165F] truncate">{tx.description || typeInfo.label}</p>
-                      <p className="text-xs dark:text-white/40 text-[#00165F]/40">
+                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">
                         {new Date(tx.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         {tx.paymentMethod && <span className="ml-2 opacity-60">· {tx.paymentMethod}</span>}
                       </p>

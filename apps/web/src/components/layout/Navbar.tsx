@@ -104,7 +104,10 @@ const Navbar = () => {
             )}
           </div>
 
-          <div className="md:hidden flex items-center space-x-4">
+          <div className="md:hidden flex items-center space-x-2">
+            <WalletBalance />
+            <NotificationBell />
+            <FriendsList />
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full transition-colors dark:text-white/60 dark:hover:text-white text-[#00165F]/70 hover:text-[#0097FC]"

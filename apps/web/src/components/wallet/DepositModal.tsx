@@ -138,7 +138,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
               <motion.div key="s1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} className="space-y-4">
                 <div>
                   <p className="text-xs font-semibold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wide mb-2">Montants rapides</p>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {QUICK_AMOUNTS.map(a => (
                       <button
                         key={a}
