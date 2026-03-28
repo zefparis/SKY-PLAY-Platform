@@ -227,26 +227,3 @@ export default function ProfilePage() {
     </RequireAuth>
   )
 }
-                  lastName: user?.lastName || '',
-                  bio: user?.bio || '',
-                  discordTag: user?.discordTag || '',
-                  twitchUsername: user?.twitchUsername || '',
-                }}
-                onSave={handleProfileSave}
-              />
-
-              {/* Stats détaillées */}
-              <StatsGrid stats={stats} />
-
-              {/* Historique et Achievements */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <MatchHistory matches={matches} />
-                <Achievements achievements={achievements} />
-              </div>
-            </div>
-          </Container>
-        </main>
-      </div>
-    </RequireAuth>
-  )
-}
