@@ -7,13 +7,19 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import type { Multer } from 'multer';
 
 @Controller('users')
 export class UsersController {
@@ -122,5 +128,69 @@ export class UsersController {
     );
 
     return updatedUser;
+  }
+
+  /**
+   * Upload de la photo de profil.
+   * Protégé par JwtAuthGuard.
+   */
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard)
+  @Post('avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/avatars',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `avatar-${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+          return cb(new HttpException('Seules les images sont autorisées', HttpStatus.BAD_REQUEST), false);
+        }
+        cb(null, true);
+      },
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB max
+      },
+    }),
+  )
+  async uploadAvatar(
+    @Req() req: Request,
+    @UploadedFile() file: any,
+  ) {
+    const userPayload = req.user as any;
+
+    if (!userPayload?.id) {
+      throw new HttpException(
+        'Utilisateur non authentifié',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    if (!file) {
+      throw new HttpException(
+        'Aucun fichier fourni',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Construire l'URL de l'avatar
+    const avatarUrl = `/uploads/avatars/${file.filename}`;
+
+    // Mettre à jour le profil avec la nouvelle URL d'avatar
+    const updatedUser = await this.usersService.updateProfile(
+      userPayload.id,
+      { avatar: avatarUrl },
+    );
+
+    return {
+      message: 'Avatar uploadé avec succès',
+      avatarUrl,
+      user: updatedUser,
+    };
   }
 }

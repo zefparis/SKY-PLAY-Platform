@@ -35,7 +35,7 @@ export default function ProfilePhotoUpload({
       return
     }
 
-    // Créer un aperçu
+    // Créer un aperçu local immédiat
     const reader = new FileReader()
     reader.onloadend = () => {
       setPreview(reader.result as string)
@@ -47,9 +47,11 @@ export default function ProfilePhotoUpload({
       setIsUploading(true)
       try {
         await onPhotoChange(file)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur upload photo:', error)
-        alert('Erreur lors de l\'upload de la photo')
+        alert(error?.message || 'Erreur lors de l\'upload de la photo')
+        // Réinitialiser l'aperçu en cas d'erreur
+        setPreview(currentPhoto || null)
       } finally {
         setIsUploading(false)
       }

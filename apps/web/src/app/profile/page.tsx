@@ -154,6 +154,7 @@ export default function ProfilePage() {
               <Card variant="glass" className="flex flex-col sm:flex-row sm:items-start gap-6">
                 <ProfilePhotoUpload
                   username={username}
+                  currentPhoto={user?.avatar ? `${process.env.NEXT_PUBLIC_API_URL}${user.avatar}` : undefined}
                   onPhotoChange={handlePhotoChange}
                 />
                 
@@ -203,6 +204,29 @@ export default function ProfilePage() {
                 initialData={{
                   username,
                   firstName: user?.firstName || '',
+                  lastName: user?.lastName || '',
+                  bio: user?.bio || '',
+                  discordTag: user?.discordTag || '',
+                  twitchUsername: user?.twitchUsername || '',
+                }}
+                onSave={handleProfileSave}
+              />
+
+              {/* Stats détaillées */}
+              <StatsGrid stats={stats} />
+
+              {/* Historique et Achievements */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <MatchHistory matches={matches} />
+                <Achievements achievements={achievements} />
+              </div>
+            </div>
+          </Container>
+        </main>
+      </div>
+    </RequireAuth>
+  )
+}
                   lastName: user?.lastName || '',
                   bio: user?.bio || '',
                   discordTag: user?.discordTag || '',
