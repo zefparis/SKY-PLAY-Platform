@@ -74,8 +74,8 @@ export default function ChallengesPage() {
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Challenges</h1>
-              <p className="text-sm sm:text-base text-white/65">Join a challenge and compete for prizes</p>
+              <h1 className="text-3xl sm:text-4xl font-bold text-primary dark:text-white mb-2">Challenges</h1>
+              <p className="text-sm sm:text-base text-primary/70 dark:text-white/65">Join a challenge and compete for prizes</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <Button variant="outline" size="sm" className="flex-1 sm:flex-none">

@@ -31,8 +31,8 @@ export default function LeaderboardPage() {
             <Trophy className="h-6 w-6 text-white sm:h-8 sm:w-8" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-white sm:text-4xl">{t('leaderboard.title')}</h1>
-            <p className="text-sm text-white/65 sm:text-base">{t('leaderboard.subtitle')}</p>
+            <h1 className="text-3xl font-bold text-primary dark:text-white sm:text-4xl">{t('leaderboard.title')}</h1>
+            <p className="text-sm text-primary/70 dark:text-white/65 sm:text-base">{t('leaderboard.subtitle')}</p>
           </div>
         </div>
 
@@ -45,8 +45,8 @@ export default function LeaderboardPage() {
             <div className="w-16 h-16 rounded-full bg-accent/15 border border-accent/25 flex items-center justify-center mx-auto mb-4 shadow-glow-red">
               <Trophy className="w-8 h-8 text-accent" />
             </div>
-            <h3 className="truncate text-xl font-bold text-white mb-2 sm:text-2xl">ProGamer123</h3>
-            <p className="text-white/65 mb-4">{t('leaderboard.topPlayer')}</p>
+            <h3 className="truncate text-xl font-bold text-primary dark:text-white mb-2 sm:text-2xl">ProGamer123</h3>
+            <p className="text-primary/70 dark:text-white/65 mb-4">{t('leaderboard.topPlayer')}</p>
             <p className="text-2xl font-bold text-gradient sm:text-3xl">45 {t('leaderboard.wins')}</p>
           </Card>
 
@@ -54,8 +54,8 @@ export default function LeaderboardPage() {
             <div className="w-16 h-16 rounded-full bg-secondary/20 flex items-center justify-center mx-auto mb-4">
               <Trophy className="w-8 h-8 text-secondary" />
             </div>
-            <h3 className="break-words text-xl font-bold text-white mb-2 tabular-nums sm:text-2xl">2.5M XOF</h3>
-            <p className="text-white/65 mb-4">{t('leaderboard.highestEarnings')}</p>
+            <h3 className="break-words text-xl font-bold text-primary dark:text-white mb-2 tabular-nums sm:text-2xl">2.5M XOF</h3>
+            <p className="text-primary/70 dark:text-white/65 mb-4">{t('leaderboard.highestEarnings')}</p>
             <p className="text-base text-secondary font-semibold sm:text-lg">{t('leaderboard.thisMonth')}</p>
           </Card>
 
@@ -63,8 +63,8 @@ export default function LeaderboardPage() {
             <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
               <Trophy className="w-8 h-8 text-accent" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2 tabular-nums sm:text-2xl">156</h3>
-            <p className="text-white/65 mb-4">{t('leaderboard.activePlayers')}</p>
+            <h3 className="text-xl font-bold text-primary dark:text-white mb-2 tabular-nums sm:text-2xl">156</h3>
+            <p className="text-primary/70 dark:text-white/65 mb-4">{t('leaderboard.activePlayers')}</p>
             <p className="text-base text-accent font-semibold sm:text-lg">{t('leaderboard.competingNow')}</p>
           </Card>
         </div>

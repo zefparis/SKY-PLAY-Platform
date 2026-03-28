@@ -31,14 +31,14 @@ const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
     if (rank === 1) return <Trophy className="w-6 h-6 text-accent" />
     if (rank === 2) return <Medal className="w-6 h-6 text-secondary" />
     if (rank === 3) return <Medal className="w-6 h-6 text-secondary" />
-    return <span className="text-white/65 font-bold">#{rank}</span>
+    return <span className="text-primary/70 dark:text-white/65 font-bold">#{rank}</span>
   }
 
   const getRankBg = (rank: number) => {
     if (rank === 1) return 'bg-gradient-to-r from-accent/18 to-transparent border-accent/25'
     if (rank === 2) return 'bg-gradient-to-r from-secondary/18 to-transparent border-secondary/25'
     if (rank === 3) return 'bg-gradient-to-r from-secondary/12 to-transparent border-secondary/20'
-    return 'bg-white/5 border-white/10'
+    return 'bg-white/40 dark:bg-white/5 border-primary/10 dark:border-white/10'
   }
 
   return (
@@ -59,15 +59,15 @@ const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h3 className="truncate text-sm font-semibold text-white sm:text-base">
+                <h3 className="truncate text-sm font-semibold text-primary dark:text-white sm:text-base">
                   {entry.username}
                 </h3>
-                <p className="text-xs text-white/65 sm:text-sm">{entry.wins} wins</p>
+                <p className="text-xs text-primary/70 dark:text-white/65 sm:text-sm">{entry.wins} wins</p>
               </div>
             </div>
 
-            <div className="flex items-end justify-between gap-3 border-t border-white/10 pt-3 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-white/45 sm:hidden">
+            <div className="flex items-end justify-between gap-3 border-t border-primary/10 dark:border-white/10 pt-3 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-primary/60 dark:text-white/45 sm:hidden">
                 Total Earnings
               </p>
               <div className="min-w-0 sm:max-w-[180px]">
@@ -75,7 +75,7 @@ const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
                   <span className="sm:hidden">{formatCompactEarnings(entry.earnings)}</span>
                   <span className="hidden sm:inline">{formatCurrency(entry.earnings)}</span>
                 </p>
-                <p className="hidden text-xs text-white/60 sm:block">Total Earnings</p>
+                <p className="hidden text-xs text-primary/70 dark:text-white/60 sm:block">Total Earnings</p>
               </div>
             </div>
           </div>

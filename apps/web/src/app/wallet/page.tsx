@@ -86,7 +86,7 @@ export default function WalletPage() {
     <div className="min-h-screen">
       <main className="pb-12">
         <Container>
-        <h1 className="text-4xl font-bold text-white mb-8 title-tech">{t('wallet.title')}</h1>
+        <h1 className="text-4xl font-bold text-primary dark:text-white mb-8 title-tech">{t('wallet.title')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
@@ -96,19 +96,19 @@ export default function WalletPage() {
           <Card>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-white/60 mb-1">Total Deposits</p>
+                <p className="text-sm text-primary/70 dark:text-white/60 mb-1">Total Deposits</p>
                 <p className="text-2xl font-bold text-secondary">
                   {formatCurrency(500000)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-white/60 mb-1">Total Withdrawals</p>
+                <p className="text-sm text-primary/70 dark:text-white/60 mb-1">Total Withdrawals</p>
                 <p className="text-2xl font-bold text-accent">
                   {formatCurrency(250000)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-white/60 mb-1">Total Winnings</p>
+                <p className="text-sm text-primary/70 dark:text-white/60 mb-1">Total Winnings</p>
                 <p className="text-2xl font-bold text-secondary">
                   {formatCurrency(375000)}
                 </p>
@@ -119,26 +119,26 @@ export default function WalletPage() {
 
         <Card>
           <div className="mb-4 flex items-center justify-between sm:mb-6">
-            <h2 className="text-xl font-bold text-white sm:text-2xl">Transaction History</h2>
-            <Clock className="w-4 h-4 text-white/55 sm:w-5 sm:h-5" />
+            <h2 className="text-xl font-bold text-primary dark:text-white sm:text-2xl">Transaction History</h2>
+            <Clock className="w-4 h-4 text-primary/60 dark:text-white/55 sm:w-5 sm:h-5" />
           </div>
 
           <div className="space-y-3">
             {mockTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="rounded-lg bg-white/5 border border-white/10 p-3 sm:p-4 hover:border-white/20 transition duration-200"
+                className="rounded-lg bg-white/40 dark:bg-white/5 border border-primary/10 dark:border-white/10 p-3 sm:p-4 hover:border-primary/20 dark:hover:border-white/20 transition duration-200"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black/25 border border-white/10">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 dark:bg-black/25 border border-primary/20 dark:border-white/10">
                       {getTransactionIcon(transaction.type)}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-base font-semibold text-white sm:text-lg break-words">
+                      <p className="text-base font-semibold text-primary dark:text-white sm:text-lg break-words">
                         {transaction.description}
                       </p>
-                      <p className="text-sm text-white/60">{formatDate(transaction.createdAt)}</p>
+                      <p className="text-sm text-primary/70 dark:text-white/60">{formatDate(transaction.createdAt)}</p>
                     </div>
                   </div>
 
