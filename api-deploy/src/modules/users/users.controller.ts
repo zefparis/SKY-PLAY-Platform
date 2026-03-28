@@ -17,9 +17,9 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { diskStorage } from 'multer';
 import { extname } from 'path';
-import type { Multer } from 'multer';
+import multerS3 from 'multer-s3';
+import { s3Client, getS3BucketName } from '../../common/config/aws.config';
 
 @Controller('users')
 export class UsersController {
@@ -139,12 +139,15 @@ export class UsersController {
   @Post('avatar')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/avatars',
-        filename: (req, file, cb) => {
+      storage: multerS3({
+        s3: s3Client,
+        bucket: getS3BucketName(),
+        acl: 'public-read',
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        key: (req, file, cb) => {
           const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
-          cb(null, `avatar-${uniqueSuffix}${ext}`);
+          cb(null, `avatars/avatar-${uniqueSuffix}${ext}`);
         },
       }),
       fileFilter: (req, file, cb) => {
@@ -181,16 +184,16 @@ export class UsersController {
     }
 
     console.log('[/users/avatar] File received:', {
-      filename: file.filename,
+      key: file.key,
       originalname: file.originalname,
       mimetype: file.mimetype,
       size: file.size,
-      path: file.path,
+      location: file.location,
     });
 
-    // Construire l'URL de l'avatar
-    const avatarUrl = `/uploads/avatars/${file.filename}`;
-    console.log('[/users/avatar] Avatar URL:', avatarUrl);
+    // L'URL de l'avatar est fournie par S3
+    const avatarUrl = file.location;
+    console.log('[/users/avatar] Avatar URL (S3):', avatarUrl);
 
     // Mettre à jour le profil avec la nouvelle URL d'avatar
     const updatedUser = await this.usersService.updateProfile(
