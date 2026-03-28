@@ -8,6 +8,8 @@ import { CognitoJwtPayload } from '../../../common/types/cognito-jwt-payload';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private logger = new Logger(JwtStrategy.name);
+
   constructor(
     private config: ConfigService,
     private usersService: UsersService,
@@ -23,7 +25,32 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req) => {
+        const token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+        if (token) {
+          // Log les 50 premiers caractères du token
+          this.logger.debug(`[JWT] Token reçu (50 premiers chars): ${token.substring(0, 50)}...`);
+          
+          // Décoder le payload sans vérifier (juste pour debug)
+          try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+              this.logger.debug(`[JWT] Payload décodé: ${JSON.stringify({
+                iss: payload.iss,
+                aud: payload.aud,
+                client_id: payload.client_id,
+                token_use: payload.token_use,
+                sub: payload.sub,
+                exp: payload.exp
+              })}`);
+            }
+          } catch (e) {
+            this.logger.warn(`[JWT] Impossible de décoder le token pour debug: ${e.message}`);
+          }
+        }
+        return token;
+      },
       ignoreExpiration: false,
       issuer,
       // `audience` correspond à `client_id` (access token) ou `aud` (id token)
@@ -52,18 +79,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const expectedIssuer = cognito?.issuer;
     const expectedAudience = cognito?.clientId;
 
-    // Debug utile (sans spammer la prod: ce logger peut être filtré via level)
-    Logger.debug(
-      {
+    // Debug détaillé du payload validé
+    this.logger.log(`[JWT validate] Payload validé: ${JSON.stringify({
       sub: payload.sub,
       iss: payload.iss,
       token_use: payload.token_use,
       aud: payload.aud,
       client_id: payload.client_id,
+      email: payload.email,
       exp: payload.exp,
-      } as any,
-      JwtStrategy.name,
-    );
+    })}`);
+    this.logger.log(`[JWT validate] Expected issuer: ${expectedIssuer}, Got: ${payload.iss}`);
+    this.logger.log(`[JWT validate] Expected audience: ${expectedAudience}, Got: ${payload.aud || payload.client_id}`);
 
     if (expectedIssuer && payload.iss !== expectedIssuer) {
       Logger.warn(
