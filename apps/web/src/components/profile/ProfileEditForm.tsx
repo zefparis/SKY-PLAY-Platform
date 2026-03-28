@@ -23,15 +23,15 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
   const [formData, setFormData] = useState(initialData)
 
   const handleSave = async () => {
-    if (!onSave) return
-    
     setIsSaving(true)
     try {
-      await onSave(formData)
+      if (onSave) {
+        await onSave(formData)
+      }
       setIsEditing(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur sauvegarde profil:', error)
-      alert('Erreur lors de la sauvegarde')
+      alert(error?.response?.data?.message || error?.message || 'Erreur lors de la sauvegarde')
     } finally {
       setIsSaving(false)
     }

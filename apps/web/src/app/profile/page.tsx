@@ -106,9 +106,32 @@ export default function ProfilePage() {
   }
 
   const handleProfileSave = async (data: any) => {
-    // TODO: Sauvegarder via l'API
-    console.log('Save profile:', data)
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulation
+    try {
+      const tokens = useAuthStore.getState().tokens
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tokens?.idToken || tokens?.accessToken}`,
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Erreur lors de la sauvegarde')
+      }
+
+      const updatedUser = await response.json()
+      
+      // Mettre à jour le store avec les nouvelles données
+      useAuthStore.setState({ user: updatedUser })
+      
+      alert('Profil mis à jour avec succès !')
+    } catch (error: any) {
+      console.error('Erreur sauvegarde profil:', error)
+      throw error
+    }
   }
 
   const handleDeposit = () => {

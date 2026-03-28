@@ -157,4 +157,53 @@ export class UsersService {
 
     return user;
   }
+
+  /**
+   * Met à jour le profil de l'utilisateur.
+   * Permet de modifier username, firstName, lastName, bio, discordTag, twitchUsername, avatar.
+   */
+  async updateProfile(userId: string, updateData: {
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    bio?: string;
+    discordTag?: string;
+    twitchUsername?: string;
+    avatar?: string;
+  }) {
+    // Vérifier que l'utilisateur existe
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    // Si username est modifié, vérifier qu'il n'est pas déjà pris
+    if (updateData.username && updateData.username !== user.username) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { username: updateData.username },
+      });
+      if (existingUser) {
+        throw new Error('Ce username est déjà utilisé');
+      }
+    }
+
+    // Mettre à jour le profil
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(updateData.username && { username: updateData.username }),
+        ...(updateData.firstName !== undefined && { firstName: updateData.firstName }),
+        ...(updateData.lastName !== undefined && { lastName: updateData.lastName }),
+        ...(updateData.bio !== undefined && { bio: updateData.bio }),
+        ...(updateData.discordTag !== undefined && { discordTag: updateData.discordTag }),
+        ...(updateData.twitchUsername !== undefined && { twitchUsername: updateData.twitchUsername }),
+        ...(updateData.avatar !== undefined && { avatar: updateData.avatar }),
+      },
+      include: {
+        wallet: true,
+      },
+    });
+
+    return updatedUser;
+  }
 }

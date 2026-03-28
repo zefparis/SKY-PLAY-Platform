@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Req,
   Body,
   UseGuards,
@@ -12,6 +13,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('users')
 export class UsersController {
@@ -95,5 +97,30 @@ export class UsersController {
     });
 
     return user;
+  }
+
+  /**
+   * Met à jour le profil de l'utilisateur connecté.
+   * Protégé par JwtAuthGuard.
+   */
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  async updateProfile(@Req() req: Request, @Body() updateDto: UpdateProfileDto) {
+    const userPayload = req.user as any;
+    
+    if (!userPayload?.id) {
+      throw new HttpException(
+        'Utilisateur non authentifié',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const updatedUser = await this.usersService.updateProfile(
+      userPayload.id,
+      updateDto,
+    );
+
+    return updatedUser;
   }
 }
