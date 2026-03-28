@@ -15,7 +15,7 @@ model User {
   password      String?
   firstName     String?
   lastName      String?
-  avatar        String?
+  avatar        String?         @db.Text
   bio           String?
   discordTag    String?
   twitchUsername String?

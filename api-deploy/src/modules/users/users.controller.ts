@@ -18,37 +18,7 @@ import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { extname } from 'path';
-import multerS3 from 'multer-s3';
-import { diskStorage } from 'multer';
-import { s3Client, getS3BucketName, isS3Configured } from '../../common/config/aws.config';
-
-// Configuration du storage pour les avatars (S3 si configuré, sinon local)
-const getStorageConfig = () => {
-  if (isS3Configured() && s3Client) {
-    console.log('[Avatar Storage] Using AWS S3');
-    return multerS3({
-      s3: s3Client,
-      bucket: getS3BucketName(),
-      acl: 'public-read',
-      contentType: multerS3.AUTO_CONTENT_TYPE,
-      key: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = extname(file.originalname);
-        cb(null, `avatars/avatar-${uniqueSuffix}${ext}`);
-      },
-    });
-  } else {
-    console.warn('[Avatar Storage] AWS S3 not configured, using local disk storage (ephemeral on Railway)');
-    return diskStorage({
-      destination: './uploads/avatars',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = extname(file.originalname);
-        cb(null, `avatar-${uniqueSuffix}${ext}`);
-      },
-    });
-  }
-};
+import { memoryStorage } from 'multer';
 
 @Controller('users')
 export class UsersController {
@@ -168,7 +138,7 @@ export class UsersController {
   @Post('avatar')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: getStorageConfig(),
+      storage: memoryStorage(),
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
           return cb(new HttpException('Seules les images sont autorisées', HttpStatus.BAD_REQUEST), false);
@@ -194,7 +164,7 @@ export class UsersController {
       );
     }
 
-    if (!file) {
+    if (!file || !file.buffer) {
       console.error('[/users/avatar] No file provided in request');
       throw new HttpException(
         'Aucun fichier fourni',
@@ -202,39 +172,28 @@ export class UsersController {
       );
     }
 
-    // Construire l'URL de l'avatar selon le storage utilisé
-    let avatarUrl: string;
-    if (isS3Configured() && file.location) {
-      // S3 storage
-      avatarUrl = file.location;
-      console.log('[/users/avatar] File uploaded to S3:', {
-        key: file.key,
-        location: file.location,
-        size: file.size,
-      });
-    } else {
-      // Local disk storage
-      avatarUrl = `/uploads/avatars/${file.filename}`;
-      console.log('[/users/avatar] File uploaded locally (ephemeral):', {
-        filename: file.filename,
-        path: file.path,
-        size: file.size,
-      });
-      console.warn('[/users/avatar] ⚠️  Using local storage - file will be lost on redeploy. Configure AWS S3 for persistence.');
-    }
-    console.log('[/users/avatar] Avatar URL:', avatarUrl);
+    // Convertir l'image en base64 pour stockage en DB
+    const base64Avatar = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    
+    console.log('[/users/avatar] File received:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      base64Length: base64Avatar.length,
+    });
+    console.log('[/users/avatar] Storing avatar as base64 in database (persistent)');
 
-    // Mettre à jour le profil avec la nouvelle URL d'avatar
+    // Mettre à jour le profil avec l'avatar en base64
     const updatedUser = await this.usersService.updateProfile(
       userPayload.id,
-      { avatar: avatarUrl },
+      { avatar: base64Avatar },
     );
 
-    console.log('[/users/avatar] User updated successfully, avatar:', updatedUser.avatar);
+    console.log('[/users/avatar] User updated successfully, avatar stored in DB (length:', base64Avatar.length, ')');
 
     return {
       message: 'Avatar uploadé avec succès',
-      avatarUrl,
+      avatarUrl: base64Avatar,
       user: updatedUser,
     };
   }
