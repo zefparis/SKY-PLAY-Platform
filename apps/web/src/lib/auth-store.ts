@@ -46,6 +46,8 @@ type AuthStoreState = {
   login: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => void
   handleOAuthCallback: (code: string) => Promise<void>
+  forgotPassword: (email: string) => Promise<void>
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<void>
   restoreSession: () => Promise<void>
   clearError: () => void
   setConfirmEmail: (email: string | null) => void
@@ -146,6 +148,10 @@ const translateCognitoError = (error: unknown): string => {
 
   if (code === 'CodeMismatchException') {
     return 'Code invalide'
+  }
+
+  if (code === 'InvalidPasswordException') {
+    return 'Le mot de passe doit contenir 8 caractères, une majuscule et un chiffre'
   }
 
   if (code === 'UserNotConfirmedException') {
@@ -430,6 +436,43 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     } catch {
       set({ tokens: null, user: null, isLoading: false, initialized: true, error: null })
       persistState({ tokens: null, user: null, confirmEmail: get().confirmEmail })
+    }
+  },
+
+  forgotPassword: async (email) => {
+    const normalizedEmail = normalizeEmail(email)
+    set({ isLoading: true, error: null })
+    try {
+      await new Promise<void>((resolve, reject) => {
+        createCognitoUser(normalizedEmail).forgotPassword({
+          onSuccess: () => resolve(),
+          onFailure: (error) => reject(error),
+          inputVerificationCode: () => resolve(),
+        })
+      })
+      set({ isLoading: false, error: null })
+    } catch (error) {
+      const message = translateCognitoError(error)
+      set({ isLoading: false, error: message })
+      throw new Error(message)
+    }
+  },
+
+  resetPassword: async (email, code, newPassword) => {
+    const normalizedEmail = normalizeEmail(email)
+    set({ isLoading: true, error: null })
+    try {
+      await new Promise<void>((resolve, reject) => {
+        createCognitoUser(normalizedEmail).confirmPassword(code, newPassword, {
+          onSuccess: () => resolve(),
+          onFailure: (error) => reject(error),
+        })
+      })
+      set({ isLoading: false, error: null })
+    } catch (error) {
+      const message = translateCognitoError(error)
+      set({ isLoading: false, error: message })
+      throw new Error(message)
     }
   },
 

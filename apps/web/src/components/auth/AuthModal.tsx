@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Eye, EyeOff, Loader2, MailCheck, X } from 'lucide-react'
+import { CheckCircle, Eye, EyeOff, Loader2, MailCheck, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
 
 type AuthModalProps = {
@@ -10,10 +10,10 @@ type AuthModalProps = {
   onClose: () => void
 }
 
-type ViewMode = 'login' | 'signup' | 'confirm'
+type ViewMode = 'login' | 'signup' | 'confirm' | 'forgot' | 'reset'
 
 const GOOGLE_BUTTON =
-  'flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-black/30 transition hover:scale-[1.01] hover:bg-slate-100 active:scale-[0.99]'
+  'flex w-full items-center justify-center gap-3 rounded-2xl bg-[#0097FC] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[#0097FC]/30 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed'
 
 const INPUT_CLASSNAME =
   'w-full rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-white px-4 py-3 text-sm dark:text-white text-[#00165F] outline-none transition dark:placeholder:text-white/35 placeholder:text-[#00165F]/40 focus:border-[#0097FC] focus:bg-white dark:focus:border-sky-400/70 dark:focus:bg-white/10'
@@ -53,14 +53,33 @@ function getPasswordStrength(password: string): { label: string; level: number; 
   return { label: 'Fort', level: 4, color: 'bg-emerald-400' }
 }
 
+const SEPARATOR = (
+  <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
+    <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
+    <span>ou</span>
+    <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
+  </div>
+)
+
+const VIEW_TITLES: Record<ViewMode, string> = {
+  login: 'Connexion',
+  signup: 'Créer un compte',
+  confirm: 'Confirmer le compte',
+  forgot: 'Mot de passe oublié',
+  reset: 'Nouveau mot de passe',
+}
+
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [view, setView] = useState<ViewMode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [otpValues, setOtpValues] = useState<string[]>(Array.from({ length: 6 }, () => ''))
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const otpRefs = useRef<Array<HTMLInputElement | null>>([])
 
   const tokens = useAuthStore((state) => state.tokens)
@@ -70,42 +89,43 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const login = useAuthStore((state) => state.login)
   const signup = useAuthStore((state) => state.signup)
   const confirmSignup = useAuthStore((state) => state.confirmSignup)
+  const forgotPassword = useAuthStore((state) => state.forgotPassword)
+  const resetPassword = useAuthStore((state) => state.resetPassword)
   const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle)
   const clearError = useAuthStore((state) => state.clearError)
   const setConfirmEmail = useAuthStore((state) => state.setConfirmEmail)
 
   const code = otpValues.join('')
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password])
+  const newPasswordStrength = useMemo(() => getPasswordStrength(newPassword), [newPassword])
   const signupPasswordsMatch = password.length > 0 && password === confirmPassword
 
   const resetLocalState = () => {
     setEmail('')
     setPassword('')
+    setNewPassword('')
     setConfirmPassword('')
     setShowPassword(false)
+    setShowNewPassword(false)
     setShowConfirmPassword(false)
     setOtpValues(Array.from({ length: 6 }, () => ''))
+    setSuccessMessage(null)
   }
 
   const switchView = (nextView: ViewMode) => {
     clearError()
+    setSuccessMessage(null)
     setView(nextView)
-    if (nextView !== 'confirm') {
+    if (nextView !== 'confirm' && nextView !== 'reset') {
       setOtpValues(Array.from({ length: 6 }, () => ''))
     }
   }
 
   useEffect(() => {
-    if (!isOpen) {
-      return
-    }
-
+    if (!isOpen) return
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
+      if (event.key === 'Escape') onClose()
     }
-
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
@@ -124,11 +144,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setView(confirmEmail ? 'confirm' : 'login')
       return
     }
-
     setView(confirmEmail ? 'confirm' : 'login')
-    if (confirmEmail) {
-      setEmail(confirmEmail)
-    }
+    if (confirmEmail) setEmail(confirmEmail)
   }, [isOpen, clearError, confirmEmail])
 
   const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -138,7 +155,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const handleSignupSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
     await signup(email, password)
     setConfirmEmail(email)
     setView('confirm')
@@ -151,12 +167,25 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     await confirmSignup(emailToConfirm, code, password || undefined)
   }
 
+  const handleForgotSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    await forgotPassword(email)
+    setView('reset')
+    setOtpValues(Array.from({ length: 6 }, () => ''))
+  }
+
+  const handleResetSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    await resetPassword(email, code, newPassword)
+    setSuccessMessage('Mot de passe réinitialisé ! Connecte-toi.')
+    switchView('login')
+  }
+
   const handleOtpChange = (index: number, value: string) => {
     const nextChar = value.replace(/\D/g, '').slice(-1)
     const nextValues = [...otpValues]
     nextValues[index] = nextChar
     setOtpValues(nextValues)
-
     if (nextChar && index < otpRefs.current.length - 1) {
       otpRefs.current[index + 1]?.focus()
     }
@@ -166,11 +195,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     if (event.key === 'Backspace' && !otpValues[index] && index > 0) {
       otpRefs.current[index - 1]?.focus()
     }
-
     if (event.key === 'ArrowLeft' && index > 0) {
       otpRefs.current[index - 1]?.focus()
     }
-
     if (event.key === 'ArrowRight' && index < otpRefs.current.length - 1) {
       otpRefs.current[index + 1]?.focus()
     }
@@ -178,10 +205,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const handleOtpPaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
     const pastedCode = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
-    if (!pastedCode) {
-      return
-    }
-
+    if (!pastedCode) return
     event.preventDefault()
     const nextValues = Array.from({ length: 6 }, (_, index) => pastedCode[index] ?? '')
     setOtpValues(nextValues)
@@ -189,9 +213,33 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }
 
   const canLogin = email.trim().length > 3 && password.length >= 6 && !isLoading
-  const canSignup =
-    email.trim().length > 3 && password.length >= 8 && confirmPassword.length >= 8 && signupPasswordsMatch && !isLoading
+  const canSignup = email.trim().length > 3 && password.length >= 8 && confirmPassword.length >= 8 && signupPasswordsMatch && !isLoading
   const canConfirm = (confirmEmail ?? email).trim().length > 3 && code.length === 6 && !isLoading
+  const canForgot = email.trim().length > 3 && !isLoading
+  const canReset = code.length === 6 && newPassword.length >= 8 && !isLoading
+
+  const OtpInput = ({ refs }: { refs: React.MutableRefObject<Array<HTMLInputElement | null>> }) => (
+    <div className="grid grid-cols-6 gap-2" onPaste={handleOtpPaste}>
+      {otpValues.map((digit, index) => (
+        <input
+          key={index}
+          ref={(el) => { refs.current[index] = el }}
+          value={digit}
+          onChange={(e) => handleOtpChange(index, e.target.value)}
+          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+          inputMode="numeric"
+          maxLength={1}
+          className="h-12 rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-white text-center text-lg font-semibold dark:text-white text-[#00165F] outline-none transition focus:border-[#0097FC] focus:bg-white dark:focus:border-sky-400/70 dark:focus:bg-white/10"
+        />
+      ))}
+    </div>
+  )
+
+  const ErrorBox = () => error ? (
+    <div className="rounded-2xl border dark:border-red-400/20 border-[#FD2E5F]/20 dark:bg-red-500/10 bg-[#FD2E5F]/10 px-4 py-3 text-sm dark:text-red-200 text-[#FD2E5F]">
+      {error}
+    </div>
+  ) : null
 
   return (
     <AnimatePresence>
@@ -214,7 +262,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           >
             <div
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border dark:border-white/10 border-[#00165F]/15 dark:bg-[#071226] bg-white p-8 shadow-2xl dark:shadow-black/50 shadow-[#00165F]/20"
-              onClick={(event) => event.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent dark:via-sky-400/70 via-[#0097FC]/50 to-transparent" />
 
@@ -227,74 +275,58 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <X className="h-4 w-4" />
               </button>
 
-              <div className="mb-8 flex items-center gap-3">
+              <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 font-black text-white shadow-lg shadow-sky-500/30">
                   SP
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0097FC] dark:text-sky-300/80">SkyPlay</p>
-                  <h2 className="text-2xl font-bold dark:text-white text-[#00165F]">
-                    {view === 'login' ? 'Connexion' : view === 'signup' ? 'Créer un compte' : 'Confirmer le compte'}
-                  </h2>
+                  <h2 className="text-2xl font-bold dark:text-white text-[#00165F]">{VIEW_TITLES[view]}</h2>
                 </div>
               </div>
 
               <AnimatePresence mode="wait" initial={false}>
+                {/* ── LOGIN ── */}
                 {view === 'login' ? (
                   <motion.form key="login" className="space-y-4" onSubmit={handleLoginSubmit} {...viewTransition}>
-                    <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                      <input
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        type="email"
-                        autoComplete="email"
-                        className={INPUT_CLASSNAME}
-                        placeholder="vous@exemple.com"
-                      />
-                    </div>
+                    <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
+                      <GoogleIcon />
+                      <span>Continuer avec Google</span>
+                    </button>
+
+                    {SEPARATOR}
+
+                    {successMessage ? (
+                      <div className="flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-500 dark:text-emerald-300">
+                        <CheckCircle className="h-4 w-4 shrink-0" />
+                        {successMessage}
+                      </div>
+                    ) : null}
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
+                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder="vous@exemple.com" />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
+                        <button type="button" onClick={() => switchView('forgot')} className="text-xs text-[#0097FC] dark:text-sky-300 hover:underline">
+                          Mot de passe oublié ?
+                        </button>
+                      </div>
                       <div className="relative">
-                        <input
-                          value={password}
-                          onChange={(event) => setPassword(event.target.value)}
-                          type={showPassword ? 'text' : 'password'}
-                          autoComplete="current-password"
-                          className={`${INPUT_CLASSNAME} pr-12`}
-                          placeholder="Votre mot de passe"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]"
-                          aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                        >
+                        <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="current-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Votre mot de passe" />
+                        <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showPassword ? 'Masquer' : 'Afficher'}>
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
 
-                    {error ? (
-                      <div className="rounded-2xl border dark:border-red-400/20 border-[#FD2E5F]/20 dark:bg-red-500/10 bg-[#FD2E5F]/10 px-4 py-3 text-sm dark:text-red-200 text-[#FD2E5F]">
-                        {error}
-                      </div>
-                    ) : null}
+                    <ErrorBox />
 
                     <button type="submit" disabled={!canLogin} className={PRIMARY_BUTTON}>
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Se connecter'}
-                    </button>
-
-                    <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
-                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
-                      <span>ou</span>
-                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
-                    </div>
-
-                    <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                      <span>Continuer avec Google</span>
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
@@ -306,74 +338,49 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </motion.form>
                 ) : null}
 
+                {/* ── SIGNUP ── */}
                 {view === 'signup' ? (
                   <motion.form key="signup" className="space-y-4" onSubmit={handleSignupSubmit} {...viewTransition}>
+                    <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
+                      <GoogleIcon />
+                      <span>Continuer avec Google</span>
+                    </button>
+
+                    {SEPARATOR}
+
                     <div className="space-y-2">
                       <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                      <input
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        type="email"
-                        autoComplete="email"
-                        className={INPUT_CLASSNAME}
-                        placeholder="vous@exemple.com"
-                      />
+                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder="vous@exemple.com" />
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
                       <div className="relative">
-                        <input
-                          value={password}
-                          onChange={(event) => setPassword(event.target.value)}
-                          type={showPassword ? 'text' : 'password'}
-                          autoComplete="new-password"
-                          className={`${INPUT_CLASSNAME} pr-12`}
-                          placeholder="Créez un mot de passe"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]"
-                          aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                        >
+                        <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Créez un mot de passe" />
+                        <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showPassword ? 'Masquer' : 'Afficher'}>
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-
-                      <div className="space-y-2 rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-white px-4 py-3">
-                        <div className="flex items-center justify-between text-xs dark:text-white/60 text-[#00165F]/60">
-                          <span>Force du mot de passe</span>
-                          <span>{passwordStrength.label}</span>
+                      {password.length > 0 ? (
+                        <div className="space-y-1 rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-slate-50 px-4 py-3">
+                          <div className="flex items-center justify-between text-xs dark:text-white/60 text-[#00165F]/60">
+                            <span>Force du mot de passe</span>
+                            <span>{passwordStrength.label}</span>
+                          </div>
+                          <div className="grid grid-cols-4 gap-2">
+                            {Array.from({ length: 4 }, (_, i) => (
+                              <div key={i} className={`h-1.5 rounded-full ${i < passwordStrength.level ? passwordStrength.color : 'dark:bg-white/10 bg-[#00165F]/10'}`} />
+                            ))}
+                          </div>
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
-                          {Array.from({ length: 4 }, (_, index) => (
-                            <div
-                              key={index}
-                              className={`h-1.5 rounded-full ${index < passwordStrength.level ? passwordStrength.color : 'dark:bg-white/10 bg-[#00165F]/10'}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                      ) : null}
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-sm dark:text-white/70 text-[#00165F]/70">Confirmer le mot de passe</label>
                       <div className="relative">
-                        <input
-                          value={confirmPassword}
-                          onChange={(event) => setConfirmPassword(event.target.value)}
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          autoComplete="new-password"
-                          className={`${INPUT_CLASSNAME} pr-12`}
-                          placeholder="Répétez votre mot de passe"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword((value) => !value)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]"
-                          aria-label={showConfirmPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                        >
+                        <input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Répétez votre mot de passe" />
+                        <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showConfirmPassword ? 'Masquer' : 'Afficher'}>
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
@@ -382,25 +389,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       ) : null}
                     </div>
 
-                    {error ? (
-                      <div className="rounded-2xl border dark:border-red-400/20 border-[#FD2E5F]/20 dark:bg-red-500/10 bg-[#FD2E5F]/10 px-4 py-3 text-sm dark:text-red-200 text-[#FD2E5F]">
-                        {error}
-                      </div>
-                    ) : null}
+                    <ErrorBox />
 
                     <button type="submit" disabled={!canSignup} className={PRIMARY_BUTTON}>
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Créer mon compte'}
-                    </button>
-
-                    <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
-                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
-                      <span>ou</span>
-                      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
-                    </div>
-
-                    <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                      <span>Continuer avec Google</span>
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
@@ -412,54 +404,99 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </motion.form>
                 ) : null}
 
+                {/* ── CONFIRM ── */}
                 {view === 'confirm' ? (
                   <motion.form key="confirm" className="space-y-5" onSubmit={handleConfirmSubmit} {...viewTransition}>
                     <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-center">
                       <MailCheck className="mx-auto mb-3 h-6 w-6 text-[#0097FC] dark:text-sky-300" />
-                      <p className="text-sm font-medium dark:text-white text-[#00165F]">Vérifie ta boîte mail</p>
-                      <p className="mt-1 text-sm dark:text-white/60 text-[#00165F]/70">Entre le code reçu sur <span className="font-semibold dark:text-white text-[#00165F]">{confirmEmail ?? email}</span>.</p>
+                      <p className="text-sm font-medium dark:text-white text-[#00165F]">Code envoyé à</p>
+                      <p className="mt-1 text-sm font-semibold dark:text-white text-[#00165F]">{confirmEmail ?? email}</p>
                     </div>
 
-                    <div className="space-y-2" onPaste={handleOtpPaste}>
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code de confirmation</label>
-                      <div className="grid grid-cols-6 gap-2">
-                        {otpValues.map((digit, index) => (
-                          <input
-                            key={index}
-                            ref={(element) => {
-                              otpRefs.current[index] = element
-                            }}
-                            value={digit}
-                            onChange={(event) => handleOtpChange(index, event.target.value)}
-                            onKeyDown={(event) => handleOtpKeyDown(index, event)}
-                            inputMode="numeric"
-                            maxLength={1}
-                            className="h-12 rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-white text-center text-lg font-semibold dark:text-white text-[#00165F] outline-none transition focus:border-[#0097FC] focus:bg-white dark:focus:border-sky-400/70 dark:focus:bg-white/10"
-                          />
-                        ))}
-                      </div>
+                    <div className="space-y-2">
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code de confirmation (6 chiffres)</label>
+                      <OtpInput refs={otpRefs} />
                     </div>
 
-                    {error ? (
-                      <div className="rounded-2xl border dark:border-red-400/20 border-[#FD2E5F]/20 dark:bg-red-500/10 bg-[#FD2E5F]/10 px-4 py-3 text-sm dark:text-red-200 text-[#FD2E5F]">
-                        {error}
-                      </div>
-                    ) : null}
+                    <ErrorBox />
 
                     <button type="submit" disabled={!canConfirm} className={PRIMARY_BUTTON}>
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmer'}
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setConfirmEmail(null)
-                          switchView('signup')
-                        }}
-                        className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors"
-                      >
+                      <button type="button" onClick={() => { setConfirmEmail(null); switchView('signup') }} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
                         Retour
+                      </button>
+                    </p>
+                  </motion.form>
+                ) : null}
+
+                {/* ── FORGOT ── */}
+                {view === 'forgot' ? (
+                  <motion.form key="forgot" className="space-y-4" onSubmit={handleForgotSubmit} {...viewTransition}>
+                    <p className="text-sm dark:text-white/60 text-[#00165F]/60">
+                      Saisis ton adresse email et nous t&apos;enverrons un code pour réinitialiser ton mot de passe.
+                    </p>
+
+                    <div className="space-y-2">
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
+                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder="vous@exemple.com" />
+                    </div>
+
+                    <ErrorBox />
+
+                    <button type="submit" disabled={!canForgot} className={PRIMARY_BUTTON}>
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Envoyer le code'}
+                    </button>
+
+                    <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
+                      <button type="button" onClick={() => switchView('login')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
+                        ← Retour à la connexion
+                      </button>
+                    </p>
+                  </motion.form>
+                ) : null}
+
+                {/* ── RESET ── */}
+                {view === 'reset' ? (
+                  <motion.form key="reset" className="space-y-4" onSubmit={handleResetSubmit} {...viewTransition}>
+                    <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-center">
+                      <MailCheck className="mx-auto mb-2 h-5 w-5 text-[#0097FC] dark:text-sky-300" />
+                      <p className="text-sm dark:text-white/70 text-[#00165F]/70">Code envoyé à <span className="font-semibold dark:text-white text-[#00165F]">{email}</span></p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code reçu par email</label>
+                      <OtpInput refs={otpRefs} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Nouveau mot de passe</label>
+                      <div className="relative">
+                        <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} type={showNewPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Nouveau mot de passe" />
+                        <button type="button" onClick={() => setShowNewPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showNewPassword ? 'Masquer' : 'Afficher'}>
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      {newPassword.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {Array.from({ length: 4 }, (_, i) => (
+                            <div key={i} className={`h-1.5 rounded-full ${i < newPasswordStrength.level ? newPasswordStrength.color : 'dark:bg-white/10 bg-[#00165F]/10'}`} />
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <ErrorBox />
+
+                    <button type="submit" disabled={!canReset} className={PRIMARY_BUTTON}>
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Réinitialiser le mot de passe'}
+                    </button>
+
+                    <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
+                      <button type="button" onClick={() => switchView('forgot')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
+                        ← Retour
                       </button>
                     </p>
                   </motion.form>
