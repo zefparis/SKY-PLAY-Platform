@@ -13,6 +13,7 @@ import {
   cognitoResetPassword,
 } from '@/features/auth/cognito'
 import { api, setAuthToken } from '@/lib/api'
+import { getOAuthRedirectUri } from '@/lib/oauth'
 
 export type AuthTokens = {
   accessToken: string
@@ -142,8 +143,8 @@ export const useAuthStore = create<AuthState>()(
       loginWithGoogle: () => {
         const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
         const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
-        const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
-        if (!domain || !clientId || !redirectUri) {
+        const redirectUri = getOAuthRedirectUri()
+        if (!domain || !clientId) {
           console.error('Configuration Cognito manquante pour Google login')
           return
         }

@@ -7,6 +7,7 @@ import {
   ArrowLeft, CheckCircle, AlertCircle, Loader2,
 } from "lucide-react";
 import { useAuthStore } from '@/features/auth/auth.store'
+import { getOAuthRedirectUri } from '@/lib/oauth'
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -118,8 +119,8 @@ function LoginView({ setView }: { setView: (v: View) => void }) {
     // redirection OAuth gérée par la page /auth/callback via Cognito (déjà en place)
     const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
     const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
-    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
-    if (!domain || !clientId || !redirectUri) return
+    const redirectUri = getOAuthRedirectUri()
+    if (!domain || !clientId) return
     const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
     url.searchParams.set('client_id', clientId)
     url.searchParams.set('response_type', 'code')
@@ -130,8 +131,8 @@ function LoginView({ setView }: { setView: (v: View) => void }) {
   const loginWithDiscord = () => {
     const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
     const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
-    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
-    if (!domain || !clientId || !redirectUri) return
+    const redirectUri = getOAuthRedirectUri()
+    if (!domain || !clientId) return
     const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
     url.searchParams.set('client_id', clientId)
     url.searchParams.set('response_type', 'code')
@@ -217,8 +218,8 @@ function SignupView({ setView }: { setView: (v: View) => void }) {
   const loginWithGoogle = () => {
     const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
     const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
-    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
-    if (!domain || !clientId || !redirectUri) return
+    const redirectUri = getOAuthRedirectUri()
+    if (!domain || !clientId) return
     const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
     url.searchParams.set('client_id', clientId)
     url.searchParams.set('response_type', 'code')
@@ -229,8 +230,8 @@ function SignupView({ setView }: { setView: (v: View) => void }) {
   const loginWithDiscord = () => {
     const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
     const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
-    const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
-    if (!domain || !clientId || !redirectUri) return
+    const redirectUri = getOAuthRedirectUri()
+    if (!domain || !clientId) return
     const url = new URL(`${domain.replace(/\/+$/, "")}/oauth2/authorize`)
     url.searchParams.set('client_id', clientId)
     url.searchParams.set('response_type', 'code')

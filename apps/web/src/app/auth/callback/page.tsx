@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/features/auth/auth.store'
+import { getOAuthRedirectUri } from '@/lib/oauth'
 
 type TokenResponse = {
   access_token: string
@@ -25,9 +26,9 @@ export default function AuthCallbackPage() {
       try {
         const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
         const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
-        const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
+        const redirectUri = getOAuthRedirectUri()
 
-        if (!domain || !clientId || !redirectUri) {
+        if (!domain || !clientId) {
           throw new Error(
             'Configuration manquante: NEXT_PUBLIC_AWS_COGNITO_DOMAIN / NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID / NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN'
           )
