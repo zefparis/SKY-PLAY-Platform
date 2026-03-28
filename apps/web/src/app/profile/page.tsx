@@ -202,11 +202,11 @@ export default function ProfilePage() {
               <ProfileEditForm
                 initialData={{
                   username,
-                  firstName: user?.firstName,
-                  lastName: user?.lastName,
-                  bio: '',
-                  discordTag: '',
-                  twitchUsername: '',
+                  firstName: user?.firstName || '',
+                  lastName: user?.lastName || '',
+                  bio: user?.bio || '',
+                  discordTag: user?.discordTag || '',
+                  twitchUsername: user?.twitchUsername || '',
                 }}
                 onSave={handleProfileSave}
               />

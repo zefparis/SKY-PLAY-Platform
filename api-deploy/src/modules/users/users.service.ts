@@ -90,16 +90,29 @@ export class UsersService {
   }) {
     const { cognitoSub, email, username, isVerified } = params;
 
-    // Upsert sur cognitoSub (clé unique)
-    const user = await this.prisma.user.upsert({
-      where: { cognitoSub },
-      update: {
-        email,
-        username,
-        isVerified,
-        // On ne touche jamais au mot de passe (Cognito source de vérité)
-      },
-      create: {
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await this.findByCognitoSub(cognitoSub);
+
+    if (existingUser) {
+      // L'utilisateur existe : ne mettre à jour que email et isVerified
+      // NE PAS écraser username, firstName, lastName, bio, etc.
+      const user = await this.prisma.user.update({
+        where: { cognitoSub },
+        data: {
+          email,
+          isVerified,
+          // On ne touche PAS au username ni aux autres champs du profil
+        },
+        include: {
+          wallet: true,
+        },
+      });
+      return user;
+    }
+
+    // Nouvel utilisateur : créer avec les données de base
+    const user = await this.prisma.user.create({
+      data: {
         cognitoSub,
         email,
         username,
