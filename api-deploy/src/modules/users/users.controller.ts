@@ -41,6 +41,14 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Post('sync')
   async syncUser(@Req() req: Request) {
+    // Debug: afficher le header Authorization reçu
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (authHeader && typeof authHeader === 'string') {
+      console.log('[/users/sync] Authorization header (50 premiers chars):', authHeader.substring(0, 50));
+    } else {
+      console.log('[/users/sync] No Authorization header found');
+    }
+    
     // Le JwtAuthGuard valide déjà le token et place le payload dans req.user
     const userPayload = req.user as any;
     if (!userPayload || !userPayload.sub || !userPayload.email) {

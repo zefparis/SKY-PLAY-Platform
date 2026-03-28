@@ -82,10 +82,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token audience');
     }
 
-    // On accepte principalement l'access token
-    if (payload.token_use && payload.token_use !== 'access') {
+    // On accepte access token ET id token (pour OAuth callback)
+    if (payload.token_use && payload.token_use !== 'access' && payload.token_use !== 'id') {
       Logger.warn(`Invalid token_use: ${payload.token_use}`, JwtStrategy.name);
-      // si vous voulez accepter id token aussi, ajuster ici.
       throw new UnauthorizedException('Invalid token_use');
     }
 
