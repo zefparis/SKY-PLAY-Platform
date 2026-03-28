@@ -75,10 +75,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: CognitoJwtPayload) {
-    const cognito = this.config.get('cognito');
-    const expectedIssuer = cognito?.issuer;
-    const expectedAudience = cognito?.clientId;
-
     // Debug détaillé du payload validé
     this.logger.log(`[JWT validate] Payload validé: ${JSON.stringify({
       sub: payload.sub,
@@ -89,35 +85,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email,
       exp: payload.exp,
     })}`);
-    this.logger.log(`[JWT validate] Expected issuer: ${expectedIssuer}, Got: ${payload.iss}`);
-    this.logger.log(`[JWT validate] Expected audience: ${expectedAudience}, Got: ${payload.aud || payload.client_id}`);
-
-    if (expectedIssuer && payload.iss !== expectedIssuer) {
-      Logger.warn(
-        `JWT issuer mismatch: expected=${expectedIssuer} got=${payload.iss}`,
-        JwtStrategy.name,
-      );
-      throw new UnauthorizedException('Invalid token issuer');
-    }
-
-    const gotAudience = payload.client_id || payload.aud;
-    if (expectedAudience && gotAudience && gotAudience !== expectedAudience) {
-      Logger.warn(
-        `JWT audience mismatch: expected=${expectedAudience} got=${gotAudience}`,
-        JwtStrategy.name,
-      );
-      throw new UnauthorizedException('Invalid token audience');
-    }
-
-    // On accepte access token ET id token (pour OAuth callback)
-    if (payload.token_use && payload.token_use !== 'access' && payload.token_use !== 'id') {
-      Logger.warn(`Invalid token_use: ${payload.token_use}`, JwtStrategy.name);
-      throw new UnauthorizedException('Invalid token_use');
-    }
 
     const cognitoSub = payload.sub;
     const email = payload.email;
-    const username = payload.username || payload['cognito:username'];
+    const username = payload.username || payload.email?.split('@')[0] || payload.sub;
 
     const user = await this.usersService.findOrCreateFromCognito({
       cognitoSub,

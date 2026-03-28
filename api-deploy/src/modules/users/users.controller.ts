@@ -58,31 +58,6 @@ export class UsersController {
     // Le JwtAuthGuard valide déjà le token et place le payload dans req.user
     const userPayload = req.user as any;
     console.log('[/users/sync] req.user après JwtAuthGuard:', JSON.stringify(userPayload));
-    
-    if (!userPayload) {
-      console.error('[/users/sync] req.user est undefined - le JwtAuthGuard a échoué');
-      throw new HttpException(
-        'Token Cognito invalide ou incomplet - req.user undefined',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-    
-    // JwtStrategy.validate() retourne {cognitoSub, email, username, id}
-    if (!userPayload.cognitoSub) {
-      console.error('[/users/sync] req.user.cognitoSub manquant:', userPayload);
-      throw new HttpException(
-        'Token Cognito invalide - cognitoSub manquant',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-    
-    if (!userPayload.email) {
-      console.error('[/users/sync] req.user.email manquant:', userPayload);
-      throw new HttpException(
-        'Token Cognito invalide - email manquant',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
 
     const cognitoSub = userPayload.cognitoSub;
     const email = userPayload.email;
