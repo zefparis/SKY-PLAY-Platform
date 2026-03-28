@@ -63,26 +63,26 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-2xl dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-2xl dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[95dvh] sm:max-h-[90vh]"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b dark:border-white/10 border-gray-100">
+        {/* Header — fixed */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
-            <h2 className="text-xl font-black dark:text-white text-[#00165F]">Créer un défi</h2>
+            <h2 className="text-lg sm:text-xl font-black dark:text-white text-[#00165F]">Créer un défi</h2>
             <p className="text-xs dark:text-white/50 text-[#00165F]/50 mt-0.5">Étape {step}/3</p>
           </div>
-          <button onClick={onClose} className="dark:text-white/50 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors">
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="dark:text-white/50 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors p-1">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Progress */}
-        <div className="px-6 pt-4">
+        <div className="px-4 sm:px-6 pt-3 sm:pt-4 shrink-0">
           <div className="flex gap-2">
             {[1, 2, 3].map(s => (
               <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-[#0097FC]' : 'dark:bg-white/10 bg-gray-200'}`} />
@@ -90,7 +90,8 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
           </div>
         </div>
 
-        <div className="p-6">
+        {/* Scrollable body */}
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           <AnimatePresence mode="wait">
             {/* Step 1 — Type */}
             {step === 1 && (
@@ -223,8 +224,8 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 pb-6 flex justify-between gap-3">
+        {/* Footer — fixed */}
+        <div className="px-4 sm:px-6 py-4 sm:pb-6 flex justify-between gap-3 border-t dark:border-white/10 border-gray-100 shrink-0">
           {step > 1 ? (
             <button
               onClick={() => setStep(s => s - 1)}

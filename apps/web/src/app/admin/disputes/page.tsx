@@ -83,12 +83,12 @@ export default function AdminDisputesPage() {
 
   return (
     <div className="min-h-screen dark:bg-[#00165F]/5 bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-start sm:items-center justify-between gap-3 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-black dark:text-white text-[#00165F] flex items-center gap-3">
-              <AlertTriangle className="w-7 h-7 text-[#FD2E5F]" />
+            <h1 className="text-xl sm:text-2xl font-black dark:text-white text-[#00165F] flex items-center gap-2 sm:gap-3">
+              <AlertTriangle className="w-6 h-6 sm:w-7 sm:h-7 text-[#FD2E5F] shrink-0" />
               Litiges — Admin
             </h1>
             <p className="dark:text-white/50 text-[#00165F]/50 text-sm mt-1">
@@ -97,7 +97,7 @@ export default function AdminDisputesPage() {
           </div>
           <button
             onClick={load}
-            className="text-xs px-3 py-1.5 rounded-lg dark:bg-white/10 bg-white dark:text-white text-[#00165F] border dark:border-white/10 border-gray-200"
+            className="shrink-0 text-xs px-3 py-1.5 rounded-lg dark:bg-white/10 bg-white dark:text-white text-[#00165F] border dark:border-white/10 border-gray-200"
           >
             Actualiser
           </button>
@@ -123,15 +123,15 @@ export default function AdminDisputesPage() {
           </div>
         ) : (
           <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-0">
               <thead>
                 <tr className="border-b dark:border-white/10 border-gray-100">
-                  <th className="text-left px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium">Défi</th>
-                  <th className="text-left px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium hidden sm:table-cell">Joueurs</th>
-                  <th className="text-left px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium hidden md:table-cell">Raison</th>
-                  <th className="text-left px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium hidden md:table-cell">Date</th>
-                  <th className="text-left px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium">Statut</th>
-                  <th className="px-4 py-3" />
+                  <th className="text-left px-3 sm:px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium">Défi</th>
+                  <th className="text-left px-3 sm:px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium hidden sm:table-cell">Joueurs</th>
+                  <th className="text-left px-3 sm:px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium hidden md:table-cell">Raison</th>
+                  <th className="text-left px-3 sm:px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium hidden md:table-cell">Date</th>
+                  <th className="text-left px-3 sm:px-4 py-3 dark:text-white/50 text-[#00165F]/50 font-medium">Statut</th>
+                  <th className="px-3 sm:px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
@@ -139,33 +139,33 @@ export default function AdminDisputesPage() {
                   const statusInfo = STATUS_LABELS[dispute.status] ?? { label: dispute.status, color: 'text-gray-400 bg-gray-400/10' };
                   return (
                     <tr key={dispute.id} className="border-b dark:border-white/5 border-gray-50 last:border-0 hover:dark:bg-white/5 hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <p className="font-semibold dark:text-white text-[#00165F] truncate max-w-[150px]">
+                      <td className="px-3 sm:px-4 py-3">
+                        <p className="font-semibold dark:text-white text-[#00165F] truncate max-w-[120px] sm:max-w-[200px]">
                           {dispute.challenge?.title}
                         </p>
                         <p className="text-xs dark:text-white/40 text-[#00165F]/40">{dispute.challenge?.game}</p>
                       </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
+                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
                         <span className="dark:text-white/60 text-[#00165F]/60">
                           {dispute.challenge?.participants?.length ?? 0} joueurs
                         </span>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
                         <span className="dark:text-white/60 text-[#00165F]/60 truncate max-w-[180px] block">
                           {dispute.reason}
                         </span>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
                         <span className="text-xs dark:text-white/40 text-[#00165F]/40">
                           {new Date(dispute.createdAt).toLocaleDateString('fr-FR')}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
                           {statusInfo.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 sm:px-4 py-3 text-right">
                         {dispute.status !== 'RESOLVED' && (
                           <button
                             onClick={() => openDispute(dispute.id)}
@@ -187,23 +187,23 @@ export default function AdminDisputesPage() {
       {/* Resolve Modal */}
       <AnimatePresence>
         {selected && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-lg dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl overflow-hidden"
+              className="w-full max-w-lg dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[95dvh] sm:max-h-[90vh]"
             >
-              <div className="flex items-center justify-between p-5 border-b dark:border-white/10 border-gray-100">
+              <div className="flex items-center justify-between p-4 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
                 <h3 className="font-black dark:text-white text-[#00165F]">
                   Résoudre le litige
                 </h3>
-                <button onClick={() => setSelected(null)} className="dark:text-white/50 text-[#00165F]/50 hover:text-[#FD2E5F]">
+                <button onClick={() => setSelected(null)} className="dark:text-white/50 text-[#00165F]/50 hover:text-[#FD2E5F] p-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
                 {/* Challenge info */}
                 <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-4">
                   <p className="font-semibold dark:text-white text-[#00165F]">{selected.challenge?.title}</p>
@@ -272,7 +272,7 @@ export default function AdminDisputesPage() {
                 )}
               </div>
 
-              <div className="px-5 pb-5 pt-3 border-t dark:border-white/10 border-gray-100 flex justify-end gap-3">
+              <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3 border-t dark:border-white/10 border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 shrink-0">
                 <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] text-sm font-medium">
                   Annuler
                 </button>

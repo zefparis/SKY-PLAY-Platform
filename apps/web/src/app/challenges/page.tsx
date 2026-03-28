@@ -49,21 +49,21 @@ export default function ChallengesPage() {
 
   return (
     <div className="min-h-screen dark:bg-[#00165F]/5 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-black dark:text-white text-[#00165F] flex items-center gap-3">
-              <Swords className="w-8 h-8 text-[#0097FC]" />
+            <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F] flex items-center gap-2 sm:gap-3">
+              <Swords className="w-6 h-6 sm:w-8 sm:h-8 text-[#0097FC] shrink-0" />
               Défis SKY PLAY
             </h1>
-            <p className="dark:text-white/60 text-[#00165F]/60 mt-1">
+            <p className="dark:text-white/60 text-[#00165F]/60 mt-1 text-sm sm:text-base">
               Rejoins un défi, bats tes adversaires, remporte des CFA
             </p>
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0097FC] hover:bg-[#0097FC]/90 text-white font-bold transition-all hover:scale-105 shadow-lg shadow-[#0097FC]/20"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0097FC] hover:bg-[#0097FC]/90 text-white font-bold transition-all hover:scale-105 shadow-lg shadow-[#0097FC]/20"
           >
             <Plus className="w-5 h-5" />
             Créer un défi
@@ -71,14 +71,14 @@ export default function ChallengesPage() {
         </div>
 
         {/* Filters */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-2 sm:space-y-3 mb-5 sm:mb-6">
           {/* Type */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {TYPE_FILTERS.map(f => (
               <button
                 key={f.key}
                 onClick={() => setTypeFilter(f.key)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                   typeFilter === f.key
                     ? 'bg-[#0097FC] text-white'
                     : 'dark:bg-white/10 bg-white dark:text-white/70 text-[#00165F]/70 hover:bg-[#0097FC]/20'
@@ -89,12 +89,12 @@ export default function ChallengesPage() {
             ))}
           </div>
           {/* Status + Game */}
-          <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
             {['OPEN', 'IN_PROGRESS', 'VALIDATING', 'COMPLETED'].map(s => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s === statusFilter ? '' : s)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                   statusFilter === s
                     ? 'bg-[#FD2E5F] text-white'
                     : 'dark:bg-white/10 bg-white dark:text-white/60 text-[#00165F]/60'
@@ -106,7 +106,7 @@ export default function ChallengesPage() {
             <select
               value={gameFilter}
               onChange={e => setGameFilter(e.target.value)}
-              className="px-3 py-1 rounded-lg text-xs dark:bg-white/10 bg-white dark:text-white text-[#00165F] border dark:border-white/10 border-[#00165F]/10"
+              className="px-2.5 sm:px-3 py-1 rounded-lg text-xs dark:bg-white/10 bg-white dark:text-white text-[#00165F] border dark:border-white/10 border-[#00165F]/10 max-w-[110px] sm:max-w-none"
             >
               {GAMES.map(g => <option key={g} value={g === 'Tous' ? '' : g}>{g}</option>)}
             </select>
@@ -118,7 +118,7 @@ export default function ChallengesPage() {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-64 rounded-xl dark:bg-white/5 bg-white animate-pulse" />
             ))}
@@ -136,7 +136,7 @@ export default function ChallengesPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {challenges.map((c) => (
               <ChallengeCard key={c.id} challenge={c} />
             ))}

@@ -113,7 +113,7 @@ export default function ChallengePage() {
 
   return (
     <div className="min-h-screen dark:bg-[#00165F]/5 bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Back */}
         <button
           onClick={() => router.push('/challenges')}
@@ -123,19 +123,19 @@ export default function ChallengePage() {
         </button>
 
         {/* Section 1 — Header */}
-        <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-6 mb-4">
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div>
-              <h1 className="text-2xl font-black dark:text-white text-[#00165F]">{challenge.title}</h1>
-              <p className="dark:text-white/50 text-[#00165F]/50 text-sm mt-0.5">{challenge.game} · {TYPE_LABELS[challenge.type]}</p>
+        <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-black dark:text-white text-[#00165F] leading-tight">{challenge.title}</h1>
+              <p className="dark:text-white/50 text-[#00165F]/50 text-xs sm:text-sm mt-0.5">{challenge.game} · {TYPE_LABELS[challenge.type]}</p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusInfo.color}`}>
+            <span className={`px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold shrink-0 ${statusInfo.color}`}>
               {statusInfo.label}
             </span>
           </div>
-          <div className="flex items-center gap-3 text-sm dark:text-white/50 text-[#00165F]/50">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm dark:text-white/50 text-[#00165F]/50">
             <span>Créé par <strong className="dark:text-white text-[#00165F]">{challenge.creator?.username}</strong></span>
-            <span>·</span>
+            <span className="hidden sm:inline">·</span>
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
               {challenge.participants?.length ?? 0}/{challenge.maxPlayers} joueurs
@@ -144,10 +144,10 @@ export default function ChallengePage() {
         </div>
 
         {/* Section 2 — Pot & Distribution */}
-        <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-6 mb-4">
+        <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
           <div className="text-center mb-4">
             <p className="text-xs dark:text-white/50 text-[#00165F]/50 mb-1">💰 Pot total</p>
-            <p className="text-4xl font-black text-[#0097FC]">{formatCFA(challenge.potTotal)}</p>
+            <p className="text-3xl sm:text-4xl font-black text-[#0097FC]">{formatCFA(challenge.potTotal)}</p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             {[
@@ -168,7 +168,7 @@ export default function ChallengePage() {
         </div>
 
         {/* Section 3 — Participants */}
-        <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-6 mb-4">
+        <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
           <h2 className="font-bold dark:text-white text-[#00165F] mb-3 flex items-center gap-2">
             <Users className="w-4 h-4 text-[#0097FC]" /> Participants
           </h2>
@@ -209,7 +209,7 @@ export default function ChallengePage() {
 
         {/* OPEN — Rejoindre */}
         {challenge.status === 'OPEN' && !isParticipant && (
-          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-6 mb-4">
+          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
             <h2 className="font-bold dark:text-white text-[#00165F] mb-3">Rejoindre ce défi</h2>
             <div className="rounded-xl dark:bg-[#FD2E5F]/10 bg-red-50 border border-[#FD2E5F]/20 p-3 mb-4">
               <p className="text-sm text-[#FD2E5F] font-semibold text-center">
@@ -228,11 +228,11 @@ export default function ChallengePage() {
 
         {/* IN_PROGRESS — Déclarer résultat */}
         {(challenge.status === 'IN_PROGRESS' || challenge.status === 'VALIDATING') && isParticipant && !myResult && (
-          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-6 mb-4">
+          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
             <h2 className="font-bold dark:text-white text-[#00165F] mb-4">Déclarer mon résultat</h2>
             <div className="mb-4">
               <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-2 block">Mon classement</label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                 {Array.from({ length: Math.min(challenge.participants?.length ?? 10, 10) }, (_, i) => i + 1).map(r => (
                   <button
                     key={r}
@@ -266,7 +266,7 @@ export default function ChallengePage() {
 
         {/* VALIDATING — Résultat soumis */}
         {(challenge.status === 'VALIDATING') && isParticipant && myResult && (
-          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-6 mb-4 text-center">
+          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4 text-center">
             <CheckCircle className="w-10 h-10 text-green-400 mx-auto mb-3" />
             <p className="font-bold dark:text-white text-[#00165F]">Résultat soumis : #{myResult.declaredRank}</p>
             <p className="text-sm dark:text-white/50 text-[#00165F]/50 mt-1">En attente des autres participants...</p>
@@ -275,7 +275,7 @@ export default function ChallengePage() {
 
         {/* COMPLETED — Podium */}
         {challenge.status === 'COMPLETED' && (
-          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-6 mb-4">
+          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
             <h2 className="font-bold dark:text-white text-[#00165F] mb-4 text-center">🏆 Résultats finaux</h2>
             <div className="space-y-3">
               {sortedResults.map((r: any) => (
@@ -302,7 +302,7 @@ export default function ChallengePage() {
 
         {/* DISPUTED */}
         {challenge.status === 'DISPUTED' && (
-          <div className="rounded-2xl dark:bg-red-500/5 bg-red-50 border border-red-500/20 p-6 mb-4">
+          <div className="rounded-2xl dark:bg-red-500/5 bg-red-50 border border-red-500/20 p-4 sm:p-6 mb-4">
             <div className="flex items-center gap-3 mb-2">
               <AlertTriangle className="w-6 h-6 text-red-400" />
               <h2 className="font-bold text-red-400">Litige en cours</h2>
@@ -319,7 +319,7 @@ export default function ChallengePage() {
         {(challenge.status === 'IN_PROGRESS' || challenge.status === 'VALIDATING') && isParticipant && (
           <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 mb-4">
             <p className="text-xs dark:text-white/40 text-[#00165F]/40 mb-2">Résultats incorrects ? Ouvre un litige.</p>
-            <div className="flex gap-2">
+            <div className="flex flex-col xs:flex-row gap-2">
               <input
                 type="text"
                 value={disputeReason}
@@ -330,9 +330,9 @@ export default function ChallengePage() {
               <button
                 onClick={() => doAction('dispute', { reason: disputeReason })}
                 disabled={!disputeReason || actionLoading}
-                className="px-4 py-2 rounded-lg bg-[#FD2E5F]/20 text-[#FD2E5F] font-semibold text-sm disabled:opacity-40 hover:bg-[#FD2E5F]/30"
+                className="w-full xs:w-auto px-4 py-2 rounded-lg bg-[#FD2E5F]/20 text-[#FD2E5F] font-semibold text-sm disabled:opacity-40 hover:bg-[#FD2E5F]/30"
               >
-                Litige
+                Signaler litige
               </button>
             </div>
           </div>
