@@ -45,7 +45,7 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
   return (
     <Card variant="glass">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="title-tech text-white text-xl font-extrabold">Informations personnelles</h2>
+        <h2 className="title-tech text-primary dark:text-white text-xl font-extrabold">Informations personnelles</h2>
         {!isEditing && (
           <Button
             variant="secondary"
@@ -61,96 +61,96 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
       <div className="space-y-4">
         {/* Username */}
         <div>
-          <label className="block text-white/60 text-sm mb-2">Username</label>
+          <label className="block text-primary/70 dark:text-white/60 text-sm mb-2">Username</label>
           {isEditing ? (
             <input
               type="text"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:border-secondary/50 focus:outline-none"
+              className="w-full px-4 py-2 bg-white/40 dark:bg-black/30 border border-primary/20 dark:border-white/10 rounded-lg text-primary dark:text-white focus:border-secondary dark:focus:border-secondary/50 focus:outline-none placeholder:text-primary/50 dark:placeholder:text-white/50"
             />
           ) : (
-            <p className="text-white font-semibold">{formData.username}</p>
+            <p className="text-primary dark:text-white font-semibold">{formData.username}</p>
           )}
         </div>
 
         {/* Prénom */}
         <div>
-          <label className="block text-white/60 text-sm mb-2">Prénom</label>
+          <label className="block text-primary/70 dark:text-white/60 text-sm mb-2">Prénom</label>
           {isEditing ? (
             <input
               type="text"
               value={formData.firstName || ''}
               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               placeholder="Votre prénom"
-              className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:border-secondary/50 focus:outline-none"
+              className="w-full px-4 py-2 bg-white/40 dark:bg-black/30 border border-primary/20 dark:border-white/10 rounded-lg text-primary dark:text-white focus:border-secondary dark:focus:border-secondary/50 focus:outline-none placeholder:text-primary/50 dark:placeholder:text-white/50"
             />
           ) : (
-            <p className="text-white font-semibold">{formData.firstName || 'Non renseigné'}</p>
+            <p className="text-primary dark:text-white font-semibold">{formData.firstName || 'Non renseigné'}</p>
           )}
         </div>
 
         {/* Nom */}
         <div>
-          <label className="block text-white/60 text-sm mb-2">Nom</label>
+          <label className="block text-primary/70 dark:text-white/60 text-sm mb-2">Nom</label>
           {isEditing ? (
             <input
               type="text"
               value={formData.lastName || ''}
               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
               placeholder="Votre nom"
-              className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:border-secondary/50 focus:outline-none"
+              className="w-full px-4 py-2 bg-white/40 dark:bg-black/30 border border-primary/20 dark:border-white/10 rounded-lg text-primary dark:text-white focus:border-secondary dark:focus:border-secondary/50 focus:outline-none placeholder:text-primary/50 dark:placeholder:text-white/50"
             />
           ) : (
-            <p className="text-white font-semibold">{formData.lastName || 'Non renseigné'}</p>
+            <p className="text-primary dark:text-white font-semibold">{formData.lastName || 'Non renseigné'}</p>
           )}
         </div>
 
         {/* Bio */}
         <div>
-          <label className="block text-white/60 text-sm mb-2">Bio</label>
+          <label className="block text-primary/70 dark:text-white/60 text-sm mb-2">Bio</label>
           {isEditing ? (
             <textarea
               value={formData.bio || ''}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               placeholder="Parlez-nous de vous..."
               rows={3}
-              className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:border-secondary/50 focus:outline-none resize-none"
+              className="w-full px-4 py-2 bg-white/40 dark:bg-black/30 border border-primary/20 dark:border-white/10 rounded-lg text-primary dark:text-white focus:border-secondary dark:focus:border-secondary/50 focus:outline-none resize-none placeholder:text-primary/50 dark:placeholder:text-white/50"
             />
           ) : (
-            <p className="text-white/80">{formData.bio || 'Aucune bio'}</p>
+            <p className="text-primary/90 dark:text-white/80">{formData.bio || 'Aucune bio'}</p>
           )}
         </div>
 
         {/* Discord */}
         <div>
-          <label className="block text-white/60 text-sm mb-2">Discord</label>
+          <label className="block text-primary/70 dark:text-white/60 text-sm mb-2">Discord</label>
           {isEditing ? (
             <input
               type="text"
               value={formData.discordTag || ''}
               onChange={(e) => setFormData({ ...formData, discordTag: e.target.value })}
               placeholder="username#1234"
-              className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:border-secondary/50 focus:outline-none"
+              className="w-full px-4 py-2 bg-white/40 dark:bg-black/30 border border-primary/20 dark:border-white/10 rounded-lg text-primary dark:text-white focus:border-secondary dark:focus:border-secondary/50 focus:outline-none placeholder:text-primary/50 dark:placeholder:text-white/50"
             />
           ) : (
-            <p className="text-white font-semibold">{formData.discordTag || 'Non renseigné'}</p>
+            <p className="text-primary dark:text-white font-semibold">{formData.discordTag || 'Non renseigné'}</p>
           )}
         </div>
 
         {/* Twitch */}
         <div>
-          <label className="block text-white/60 text-sm mb-2">Twitch</label>
+          <label className="block text-primary/70 dark:text-white/60 text-sm mb-2">Twitch</label>
           {isEditing ? (
             <input
               type="text"
               value={formData.twitchUsername || ''}
               onChange={(e) => setFormData({ ...formData, twitchUsername: e.target.value })}
               placeholder="votre_pseudo_twitch"
-              className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:border-secondary/50 focus:outline-none"
+              className="w-full px-4 py-2 bg-white/40 dark:bg-black/30 border border-primary/20 dark:border-white/10 rounded-lg text-primary dark:text-white focus:border-secondary dark:focus:border-secondary/50 focus:outline-none placeholder:text-primary/50 dark:placeholder:text-white/50"
             />
           ) : (
-            <p className="text-white font-semibold">{formData.twitchUsername || 'Non renseigné'}</p>
+            <p className="text-primary dark:text-white font-semibold">{formData.twitchUsername || 'Non renseigné'}</p>
           )}
         </div>
 
