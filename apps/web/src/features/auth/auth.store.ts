@@ -162,10 +162,11 @@ export const useAuthStore = create<AuthState>()(
         set({ status: 'authenticating', error: null })
         try {
           const tokens: AuthTokens = { accessToken, idToken, refreshToken }
-          setAuthToken(accessToken)
           
           // Sync avec l'API pour créer/récupérer l'utilisateur
           const { data } = await api.post('/users/sync', { idToken })
+
+          setAuthToken(accessToken)
           
           set({ 
             status: 'authenticated', 
