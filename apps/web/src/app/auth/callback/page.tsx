@@ -1,15 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
 
 export default function AuthCallbackPage() {
   const handleOAuthCallback = useAuthStore((state) => state.handleOAuthCallback)
   const [error, setError] = useState<string | null>(null)
+  const hasCalledRef = useRef(false)
 
   useEffect(() => {
+    if (hasCalledRef.current) return
+    hasCalledRef.current = true
+
     const searchParams = new URLSearchParams(window.location.search)
     const code = searchParams.get('code')
 
