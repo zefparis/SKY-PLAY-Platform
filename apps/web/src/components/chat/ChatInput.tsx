@@ -62,7 +62,7 @@ export default function ChatInput({
         </button>
         {showEmoji && (
           <div className="absolute bottom-full left-0 mb-2 z-20">
-            <EmojiPicker onSelect={insertEmoji} />
+            <EmojiPicker onSelect={insertEmoji} onClose={() => setShowEmoji(false)} />
           </div>
         )}
       </div>
