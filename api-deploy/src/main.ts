@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
@@ -9,8 +8,6 @@ const logger = new Logger('Bootstrap');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Servir les fichiers statiques (avatars)
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
