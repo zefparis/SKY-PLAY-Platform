@@ -16,6 +16,7 @@ function getToken() {
 export default function WalletBalance() {
   const [balance, setBalance] = useState<number | null>(null);
   const [showDeposit, setShowDeposit] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fetchBalance = useCallback(async () => {
     const token = getToken();
@@ -29,6 +30,7 @@ export default function WalletBalance() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     fetchBalance();
   }, [fetchBalance]);
 
@@ -40,7 +42,7 @@ export default function WalletBalance() {
     return () => window.removeEventListener('wallet_update' as any, handleWalletUpdate);
   }, []);
 
-  if (balance === null) return null;
+  if (!mounted || balance === null) return null;
 
   return (
     <>

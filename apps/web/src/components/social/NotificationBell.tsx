@@ -18,6 +18,9 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!tokens?.idToken) return
@@ -71,7 +74,7 @@ export default function NotificationBell() {
     }
   }
 
-  if (!tokens) return null
+  if (!mounted || !tokens) return null
 
   return (
     <div className="relative">

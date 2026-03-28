@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Gamepad2, Wallet, Trophy, User, Menu, X, MessageCircle, Moon, Sun } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
 import Container from '@/components/ui/Container'
@@ -18,10 +18,13 @@ import WalletBalance from '@/components/wallet/WalletBalance'
 const Navbar = () => {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { t } = useI18n()
   const tokens = useAuthStore((s) => s.tokens)
   const logout = useAuthStore((s) => s.logout)
   const { theme, toggleTheme } = useTheme()
+
+  useEffect(() => { setMounted(true) }, [])
 
   const navLinks = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
@@ -78,7 +81,7 @@ const Navbar = () => {
               {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
             <LanguageSwitch />
-            {tokens ? (
+            {mounted && tokens ? (
               <>
                 <Link href="/profile">
                   <Button variant="outline" size="sm">
