@@ -17,7 +17,6 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { extname } from 'path';
 import { memoryStorage } from 'multer';
 
 @Controller('users')
