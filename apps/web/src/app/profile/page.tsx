@@ -1,19 +1,54 @@
+'use client'
+
+import { useState } from 'react'
 import RequireAuth from '@/features/auth/RequireAuth'
 import Container from '@/components/ui/Container'
-import ProfileHeader from '@/components/profile/ProfileHeader'
+import { useAuthStore } from '@/features/auth/auth.store'
+import ProfilePhotoUpload from '@/components/profile/ProfilePhotoUpload'
+import ProfileEditForm from '@/components/profile/ProfileEditForm'
+import ProfileWallet from '@/components/profile/ProfileWallet'
+import ProfileRanking from '@/components/profile/ProfileRanking'
 import StatsGrid from '@/components/profile/StatsGrid'
 import MatchHistory from '@/components/profile/MatchHistory'
 import Achievements from '@/components/profile/Achievements'
+import Card from '@/components/ui/Card'
+import Badge from '@/components/ui/Badge'
 
 export default function ProfilePage() {
-  const username = 'SkyMaster'
-  const rank = 'Diamond'
+  const user = useAuthStore((s) => s.user)
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
 
+  // Données utilisateur réelles ou par défaut
+  const username = user?.username || 'Player'
+  const email = user?.email || ''
+  const rank = 'Diamond' // TODO: récupérer depuis l'API
+
+  // Stats du joueur (TODO: récupérer depuis l'API)
   const stats = {
     gamesPlayed: 128,
     wins: 84,
     losses: 44,
     winRate: 66,
+  }
+
+  // Données du wallet (TODO: récupérer depuis l'API)
+  const walletData = {
+    balance: 15750,
+    transactions: [
+      { id: '1', type: 'win' as const, amount: 500, description: 'Victoire FIFA 24', date: "Aujourd'hui 21:12" },
+      { id: '2', type: 'deposit' as const, amount: 1000, description: 'Dépôt', date: 'Hier 14:30' },
+      { id: '3', type: 'loss' as const, amount: 250, description: 'Défaite Valorant', date: 'Mar 21 18:40' },
+      { id: '4', type: 'win' as const, amount: 750, description: 'Victoire COD Warzone', date: 'Mar 20 22:10' },
+    ],
+  }
+
+  // Données de classement (TODO: récupérer depuis l'API)
+  const rankingData = {
+    globalRank: 342,
+    totalPlayers: 15420,
+    rankName: 'Diamond',
+    points: 2850,
+    nextRankPoints: 3500,
   }
 
   const matches = [
@@ -58,15 +93,105 @@ export default function ProfilePage() {
     },
   ]
 
+  // Handlers
+  const handlePhotoChange = async (file: File) => {
+    setIsUploadingPhoto(true)
+    try {
+      // TODO: Upload vers l'API
+      console.log('Upload photo:', file)
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulation
+    } finally {
+      setIsUploadingPhoto(false)
+    }
+  }
+
+  const handleProfileSave = async (data: any) => {
+    // TODO: Sauvegarder via l'API
+    console.log('Save profile:', data)
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulation
+  }
+
+  const handleDeposit = () => {
+    // TODO: Ouvrir modal de dépôt
+    console.log('Deposit')
+  }
+
+  const handleWithdraw = () => {
+    // TODO: Ouvrir modal de retrait
+    console.log('Withdraw')
+  }
+
   return (
     <RequireAuth>
       <div className="min-h-screen">
         <main className="pb-12">
           <Container>
             <div className="space-y-6 sm:space-y-8">
-              <ProfileHeader username={username} rank={rank} />
+              {/* Header avec photo de profil */}
+              <Card variant="glass" className="flex flex-col sm:flex-row sm:items-start gap-6">
+                <ProfilePhotoUpload
+                  username={username}
+                  onPhotoChange={handlePhotoChange}
+                />
+                
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <div>
+                      <h1 className="title-tech text-white text-3xl font-extrabold">{username}</h1>
+                      <p className="text-white/60 mt-1">{email}</p>
+                    </div>
+                    <Badge variant="danger">{rank}</Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
+                      <p className="text-white/60 text-xs mb-1">Matchs</p>
+                      <p className="text-white text-xl font-bold">{stats.gamesPlayed}</p>
+                    </div>
+                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
+                      <p className="text-white/60 text-xs mb-1">Victoires</p>
+                      <p className="text-white text-xl font-bold">{stats.wins}</p>
+                    </div>
+                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
+                      <p className="text-white/60 text-xs mb-1">Défaites</p>
+                      <p className="text-white text-xl font-bold">{stats.losses}</p>
+                    </div>
+                    <div className="bg-black/20 rounded-lg p-3 border border-white/5">
+                      <p className="text-white/60 text-xs mb-1">Winrate</p>
+                      <p className="text-white text-xl font-bold">{stats.winRate}%</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Wallet et Classement */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <ProfileWallet
+                  balance={walletData.balance}
+                  transactions={walletData.transactions}
+                  onDeposit={handleDeposit}
+                  onWithdraw={handleWithdraw}
+                />
+                <ProfileRanking ranking={rankingData} />
+              </div>
+
+              {/* Formulaire d'édition du profil */}
+              <ProfileEditForm
+                initialData={{
+                  username,
+                  firstName: user?.firstName,
+                  lastName: user?.lastName,
+                  bio: '',
+                  discordTag: '',
+                  twitchUsername: '',
+                }}
+                onSave={handleProfileSave}
+              />
+
+              {/* Stats détaillées */}
               <StatsGrid stats={stats} />
 
+              {/* Historique et Achievements */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <MatchHistory matches={matches} />
                 <Achievements achievements={achievements} />
