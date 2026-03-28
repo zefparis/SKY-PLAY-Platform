@@ -61,10 +61,11 @@ export class UsersController {
       );
     }
     
-    if (!userPayload.sub) {
-      console.error('[/users/sync] req.user.sub manquant:', userPayload);
+    // JwtStrategy.validate() retourne {cognitoSub, email, username, id}
+    if (!userPayload.cognitoSub) {
+      console.error('[/users/sync] req.user.cognitoSub manquant:', userPayload);
       throw new HttpException(
-        'Token Cognito invalide - sub manquant',
+        'Token Cognito invalide - cognitoSub manquant',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -77,7 +78,7 @@ export class UsersController {
       );
     }
 
-    const cognitoSub = userPayload.sub;
+    const cognitoSub = userPayload.cognitoSub;
     const email = userPayload.email;
     const emailVerified =
       userPayload.email_verified === true || userPayload.email_verified === 'true';
