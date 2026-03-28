@@ -1,113 +1,94 @@
-"use client";
+'use client'
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/auth-store";
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/features/auth/auth.store'
 
 type TokenResponse = {
-  access_token: string;
-  id_token: string;
-  refresh_token?: string;
-  token_type: string;
-  expires_in: number;
-};
-
-const normalizeCognitoDomain = (domain: string) => domain.replace(/\/+$/, "");
+  access_token: string
+  id_token: string
+  refresh_token?: string
+  token_type: string
+  expires_in: number
+}
 
 export default function AuthCallbackPage() {
-  const router = useRouter();
-  const setTokens = useAuthStore((s) => s.setTokens);
-  const setUser = useAuthStore((s) => s.setUser);
+  const router = useRouter()
+  const handleOAuthCallback = useAuthStore((s) => s.handleOAuthCallback)
 
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const env = useMemo(() => {
-    return {
-      apiUrl: process.env.NEXT_PUBLIC_API_URL,
-      domain: process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN,
-      clientId: process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID,
-      redirectUri: process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN,
-    };
-  }, []);
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const run = async () => {
       try {
-        if (!env.domain || !env.clientId || !env.redirectUri || !env.apiUrl) {
+        const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
+        const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
+        const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
+
+        if (!domain || !clientId || !redirectUri) {
           throw new Error(
-            "Configuration manquante: NEXT_PUBLIC_AWS_COGNITO_DOMAIN / NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID / NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN / NEXT_PUBLIC_API_URL",
-          );
+            'Configuration manquante: NEXT_PUBLIC_AWS_COGNITO_DOMAIN / NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID / NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN'
+          )
         }
 
-        const sp = new URLSearchParams(window.location.search);
-        const code = sp.get("code");
+        // Lire le code OAuth depuis l'URL
+        const sp = new URLSearchParams(window.location.search)
+        const code = sp.get('code')
+        
         if (!code) {
-          throw new Error("Code OAuth manquant dans l'URL.");
+          throw new Error('Code OAuth manquant dans l\'URL')
         }
 
-        const tokenEndpoint = `${normalizeCognitoDomain(env.domain)}/oauth2/token`;
+        // Échanger le code contre des tokens
+        const tokenEndpoint = `${domain.replace(/\/+$/, '')}/oauth2/token`
         const body = new URLSearchParams({
-          grant_type: "authorization_code",
-          client_id: env.clientId,
+          grant_type: 'authorization_code',
+          client_id: clientId,
           code,
-          redirect_uri: env.redirectUri,
-        });
+          redirect_uri: redirectUri,
+        })
 
         const tokenRes = await fetch(tokenEndpoint, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
           body,
-        });
+        })
 
         if (!tokenRes.ok) {
-          const txt = await tokenRes.text().catch(() => "");
-          throw new Error(`Échec échange token (${tokenRes.status}): ${txt || tokenRes.statusText}`);
+          const txt = await tokenRes.text().catch(() => '')
+          throw new Error(`Échec échange token (${tokenRes.status}): ${txt || tokenRes.statusText}`)
         }
 
-        const tokenJson = (await tokenRes.json()) as TokenResponse;
+        const tokenJson = (await tokenRes.json()) as TokenResponse
 
-        setTokens({
+        // Utiliser le store pour gérer les tokens et sync avec l'API
+        await handleOAuthCallback({
           accessToken: tokenJson.access_token,
           idToken: tokenJson.id_token,
-          refreshToken: tokenJson.refresh_token || "",
-        });
+          refreshToken: tokenJson.refresh_token || '',
+        })
 
-        // Sync Cognito → API
-        try {
-          const res = await fetch(`${env.apiUrl}/users/sync`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${tokenJson.id_token}`,
-            },
-          });
-          if (res.ok) {
-            const user = await res.json();
-            setUser(user);
-          }
-        } catch {
-          // silencieux
-        }
-
-        router.replace("/");
+        // Redirection après succès
+        router.replace('/')
       } catch (e: any) {
-        setError(e?.message || "Erreur inconnue");
+        setError(e?.message || 'Erreur inconnue')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    void run();
-  }, [env, router, setTokens, setUser]);
+    }
+    void run()
+  }, [handleOAuthCallback, router])
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white/80">
         Connexion en cours…
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -121,8 +102,8 @@ export default function AuthCallbackPage() {
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
-  return null;
+  return null
 }

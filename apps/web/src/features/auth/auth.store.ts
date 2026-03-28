@@ -36,6 +36,7 @@ type AuthState = {
   resendSignupCode: () => Promise<void>
   login: (params: { email: string; password: string }) => Promise<void>
   loginWithGoogle: () => void
+  handleOAuthCallback: (params: { accessToken: string; idToken: string; refreshToken: string }) => Promise<void>
   forgotPassword: (params: { email: string }) => Promise<void>
   resetPassword: (params: { email: string; code: string; newPassword: string }) => Promise<void>
   refresh: () => Promise<void>
@@ -154,6 +155,36 @@ export const useAuthStore = create<AuthState>()(
         url.searchParams.set('redirect_uri', redirectUri)
         url.searchParams.set('identity_provider', 'Google')
         window.location.assign(url.toString())
+      },
+
+      handleOAuthCallback: async ({ accessToken, idToken, refreshToken }) => {
+        set({ status: 'authenticating', error: null })
+        try {
+          const tokens: AuthTokens = { accessToken, idToken, refreshToken }
+          setAuthToken(accessToken)
+          
+          // Sync avec l'API pour créer/récupérer l'utilisateur
+          const { data } = await api.post('/users/sync', {}, {
+            headers: { Authorization: `Bearer ${idToken}` }
+          })
+          
+          set({ 
+            status: 'authenticated', 
+            tokens, 
+            user: data, 
+            error: null, 
+            signupStep: 'idle' 
+          })
+        } catch (e: any) {
+          setAuthToken(null)
+          set({ 
+            status: 'anonymous', 
+            tokens: null, 
+            user: null, 
+            error: e?.message || 'OAuth callback failed' 
+          })
+          throw e
+        }
       },
 
       forgotPassword: async ({ email }) => {
