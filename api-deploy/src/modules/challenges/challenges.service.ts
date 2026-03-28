@@ -1,94 +1,494 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
-import { CreateChallengeDto } from './dto/challenge.dto';
+import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION } from './challenges.constants';
+
+type ChallengeTypeKey = keyof typeof CHALLENGE_TYPES;
+
+const PARTICIPANT_SELECT = {
+  id: true,
+  userId: true,
+  joinedAt: true,
+  hasPaid: true,
+  rank: true,
+  winnings: true,
+  user: {
+    select: { id: true, username: true, avatar: true },
+  },
+};
 
 @Injectable()
 export class ChallengesService {
+  private server: any = null; // Set by ChatGateway via setServer()
+
   constructor(
     private prisma: PrismaService,
     private walletService: WalletService,
   ) {}
 
-  async create(dto: CreateChallengeDto) {
-    // Temporairement désactivé - à implémenter avec le nouveau schéma
-    throw new BadRequestException('Create challenge not yet implemented');
+  setServer(server: any) {
+    this.server = server;
   }
 
-  async findAll() {
-    return this.prisma.challenge.findMany({
+  private notifyChallenge(challengeId: string, event: string, data: any) {
+    if (this.server) {
+      this.server.to(`challenge_${challengeId}`).emit(event, data);
+    }
+  }
+
+  // ─── CREATE ──────────────────────────────────────────────────────────────────
+
+  async create(userId: string, title: string, game: string, type: string) {
+    const config = CHALLENGE_TYPES[type as ChallengeTypeKey];
+    if (!config) throw new BadRequestException('Type de défi invalide');
+
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const challenge = await this.prisma.challenge.create({
+      data: {
+        title,
+        game,
+        type: type as any,
+        entryFee: config.entryFee,
+        maxPlayers: config.maxPlayers,
+        commission: config.commission,
+        creatorId: userId,
+        expiresAt,
+      },
+    });
+
+    // Creator joins automatically
+    await this.walletService.debit(
+      userId,
+      config.entryFee,
+      'CHALLENGE_ENTRY',
+      `Entrée défi: ${title}`,
+    );
+
+    await this.prisma.challengeParticipant.create({
+      data: { challengeId: challenge.id, userId, hasPaid: true },
+    });
+
+    await this.prisma.challenge.update({
+      where: { id: challenge.id },
+      data: { potTotal: config.entryFee },
+    });
+
+    return this.findOne(challenge.id);
+  }
+
+  // ─── FIND ALL ─────────────────────────────────────────────────────────────────
+
+  async findAll(filters?: {
+    status?: string;
+    game?: string;
+    type?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(1, filters?.page ?? 1);
+    const limit = Math.min(50, filters?.limit ?? 20);
+
+    const where: any = {};
+    if (filters?.status) where.status = filters.status;
+    if (filters?.game) where.game = { contains: filters.game, mode: 'insensitive' };
+    if (filters?.type) where.type = filters.type;
+
+    const [challenges, total] = await Promise.all([
+      this.prisma.challenge.findMany({
+        where,
+        include: {
+          creator: { select: { id: true, username: true, avatar: true } },
+          _count: { select: { participants: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.challenge.count({ where }),
+    ]);
+
+    return { challenges, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  // ─── FIND ONE ────────────────────────────────────────────────────────────────
+
+  async findOne(id: string) {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id },
       include: {
+        creator: { select: { id: true, username: true, avatar: true } },
         participants: {
+          select: PARTICIPANT_SELECT,
+          orderBy: { joinedAt: 'asc' },
+        },
+        results: {
           include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                avatar: true,
+            user: { select: { id: true, username: true, avatar: true } },
+          },
+        },
+        dispute: true,
+      },
+    });
+
+    if (!challenge) throw new NotFoundException('Défi introuvable');
+    return challenge;
+  }
+
+  // ─── JOIN ────────────────────────────────────────────────────────────────────
+
+  async join(challengeId: string, userId: string) {
+    const challenge = await this.findOne(challengeId);
+
+    if (challenge.status !== 'OPEN') {
+      throw new BadRequestException('Ce défi n\'est plus ouvert');
+    }
+
+    const alreadyJoined = challenge.participants.some((p) => p.userId === userId);
+    if (alreadyJoined) throw new BadRequestException('Tu es déjà inscrit à ce défi');
+
+    if (challenge.participants.length >= challenge.maxPlayers) {
+      throw new BadRequestException('Ce défi est complet');
+    }
+
+    await this.walletService.debit(
+      userId,
+      challenge.entryFee,
+      'CHALLENGE_ENTRY',
+      `Entrée défi: ${challenge.title}`,
+    );
+
+    await this.prisma.challengeParticipant.create({
+      data: { challengeId, userId, hasPaid: true },
+    });
+
+    const newPot = challenge.potTotal + challenge.entryFee;
+    const newCount = challenge.participants.length + 1;
+
+    const isFull = newCount >= challenge.maxPlayers;
+
+    await this.prisma.challenge.update({
+      where: { id: challengeId },
+      data: {
+        potTotal: newPot,
+        ...(isFull ? { status: 'FULL' as any } : {}),
+      },
+    });
+
+    const updated = await this.findOne(challengeId);
+    this.notifyChallenge(challengeId, 'challenge_update', { challengeId, status: updated.status, participants: updated.participants });
+
+    if (isFull) {
+      setTimeout(() => this.startChallenge(challengeId), 3000);
+    }
+
+    return updated;
+  }
+
+  // ─── START ───────────────────────────────────────────────────────────────────
+
+  async startChallenge(challengeId: string) {
+    await this.prisma.challenge.update({
+      where: { id: challengeId },
+      data: { status: 'IN_PROGRESS' as any, startedAt: new Date() },
+    });
+
+    this.notifyChallenge(challengeId, 'challenge_started', { challengeId });
+  }
+
+  // ─── SUBMIT RESULT ───────────────────────────────────────────────────────────
+
+  async submitResult(
+    challengeId: string,
+    userId: string,
+    rank: number,
+    screenshotUrl?: string,
+  ) {
+    const challenge = await this.findOne(challengeId);
+
+    if (challenge.status !== 'IN_PROGRESS' && challenge.status !== 'VALIDATING') {
+      throw new BadRequestException('Le défi n\'est pas en cours');
+    }
+
+    const isParticipant = challenge.participants.some((p) => p.userId === userId);
+    if (!isParticipant) throw new ForbiddenException('Tu n\'es pas participant à ce défi');
+
+    const alreadySubmitted = challenge.results.some((r) => r.userId === userId);
+    if (alreadySubmitted) throw new BadRequestException('Tu as déjà soumis un résultat');
+
+    await this.prisma.challengeResult.create({
+      data: { challengeId, userId, declaredRank: rank, screenshotUrl },
+    });
+
+    await this.prisma.challenge.update({
+      where: { id: challengeId },
+      data: { status: 'VALIDATING' as any },
+    });
+
+    const updatedChallenge = await this.findOne(challengeId);
+    if (updatedChallenge.results.length >= updatedChallenge.participants.length) {
+      await this.checkConsensus(challengeId);
+    }
+
+    return updatedChallenge;
+  }
+
+  // ─── CHECK CONSENSUS ─────────────────────────────────────────────────────────
+
+  async checkConsensus(challengeId: string) {
+    const challenge = await this.findOne(challengeId);
+    const ranks = challenge.results.map((r) => r.declaredRank).sort((a, b) => a - b);
+    const uniqueRanks = new Set(ranks);
+
+    const hasConsensus = uniqueRanks.size === ranks.length;
+
+    if (hasConsensus) {
+      await this.distributeWinnings(challengeId);
+    } else {
+      await this.createDispute(challengeId, 'Résultats contradictoires entre les joueurs');
+    }
+  }
+
+  // ─── DISTRIBUTE WINNINGS ─────────────────────────────────────────────────────
+
+  async distributeWinnings(challengeId: string) {
+    const challenge = await this.findOne(challengeId);
+
+    const commission = Math.floor(challenge.potTotal * challenge.commission);
+    const netPot = challenge.potTotal - commission;
+
+    // Credit commission to first admin
+    const admin = await this.prisma.user.findFirst({ where: { role: 'ADMIN' } });
+    if (admin) {
+      await this.walletService.credit(admin.id, commission, 'COMMISSION', `Commission défi: ${challenge.title}`);
+    }
+
+    // Sort results by rank
+    const sorted = [...challenge.results].sort((a, b) => a.declaredRank - b.declaredRank);
+
+    const prizes: Record<number, number> = {
+      1: Math.floor(netPot * PRIZE_DISTRIBUTION.FIRST),
+      2: Math.floor(netPot * PRIZE_DISTRIBUTION.SECOND),
+      3: Math.floor(netPot * PRIZE_DISTRIBUTION.THIRD),
+    };
+
+    const participantIds = challenge.participants.map((p) => p.userId);
+
+    for (const result of sorted) {
+      const winnings = prizes[result.declaredRank] ?? 0;
+
+      if (winnings > 0) {
+        await this.walletService.credit(
+          result.userId,
+          winnings,
+          'CHALLENGE_WIN',
+          `Gain défi ${result.declaredRank === 1 ? '🥇' : result.declaredRank === 2 ? '🥈' : '🥉'}: ${challenge.title}`,
+        );
+      }
+
+      await this.prisma.challengeParticipant.update({
+        where: { challengeId_userId: { challengeId, userId: result.userId } },
+        data: { rank: result.declaredRank, winnings },
+      });
+
+      // Notifications
+      await this.prisma.notification.create({
+        data: {
+          userId: result.userId,
+          type: winnings > 0 ? ('CHALLENGE_WON' as any) : ('CHALLENGE_LOST' as any),
+          title: winnings > 0 ? `🏆 Tu as gagné ${winnings.toLocaleString('fr-FR')} CFA !` : 'Défi terminé',
+          body: winnings > 0
+            ? `Tu as terminé ${result.declaredRank === 1 ? '1er' : result.declaredRank === 2 ? '2ème' : '3ème'} dans "${challenge.title}"`
+            : `Tu n'as pas remporté de gains dans "${challenge.title}"`,
+          data: { challengeId },
+        },
+      });
+
+      // Update stats
+      await this.prisma.user.update({
+        where: { id: result.userId },
+        data: {
+          gamesPlayed: { increment: 1 },
+          ...(result.declaredRank === 1 ? { gamesWon: { increment: 1 } } : {}),
+        },
+      });
+    }
+
+    // Notify participants who didn't submit
+    for (const userId of participantIds) {
+      if (!sorted.find((r) => r.userId === userId)) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { gamesPlayed: { increment: 1 } },
+        });
+      }
+    }
+
+    await this.prisma.challenge.update({
+      where: { id: challengeId },
+      data: { status: 'COMPLETED' as any, endedAt: new Date() },
+    });
+
+    const final = await this.findOne(challengeId);
+    this.notifyChallenge(challengeId, 'challenge_completed', { challengeId, results: final.results });
+    return final;
+  }
+
+  // ─── CREATE DISPUTE ──────────────────────────────────────────────────────────
+
+  async createDispute(challengeId: string, reason: string) {
+    const challenge = await this.findOne(challengeId);
+
+    await this.prisma.challengeDispute.create({
+      data: { challengeId, reason },
+    });
+
+    await this.prisma.challenge.update({
+      where: { id: challengeId },
+      data: { status: 'DISPUTED' as any },
+    });
+
+    // Notify all participants
+    for (const p of challenge.participants) {
+      await this.prisma.notification.create({
+        data: {
+          userId: p.userId,
+          type: 'CHALLENGE_DISPUTED' as any,
+          title: 'Litige en cours',
+          body: `Un litige a été ouvert pour le défi "${challenge.title}". L'admin va trancher.`,
+          data: { challengeId },
+        },
+      });
+    }
+
+    this.notifyChallenge(challengeId, 'challenge_disputed', { challengeId, reason });
+  }
+
+  async forceDispute(challengeId: string, userId: string, reason: string) {
+    const challenge = await this.findOne(challengeId);
+
+    const isParticipant = challenge.participants.some((p) => p.userId === userId);
+    if (!isParticipant) throw new ForbiddenException('Tu n\'es pas participant à ce défi');
+
+    if (challenge.dispute) throw new BadRequestException('Un litige existe déjà');
+
+    await this.createDispute(challengeId, reason);
+    return this.findOne(challengeId);
+  }
+
+  // ─── RESOLVE DISPUTE ─────────────────────────────────────────────────────────
+
+  async resolveDispute(
+    disputeId: string,
+    winnerId: string,
+    adminNote: string,
+    adminId: string,
+  ) {
+    const dispute = await this.prisma.challengeDispute.findUnique({
+      where: { id: disputeId },
+    });
+    if (!dispute) throw new NotFoundException('Litige introuvable');
+
+    // Force result: set rank=1 for winner and rank=2 for others
+    const challenge = await this.findOne(dispute.challengeId);
+    let rank = 2;
+    for (const p of challenge.participants) {
+      await this.prisma.challengeResult.upsert({
+        where: { challengeId_userId: { challengeId: dispute.challengeId, userId: p.userId } },
+        create: {
+          challengeId: dispute.challengeId,
+          userId: p.userId,
+          declaredRank: p.userId === winnerId ? 1 : rank++,
+        },
+        update: { declaredRank: p.userId === winnerId ? 1 : rank++ },
+      });
+    }
+
+    await this.prisma.challengeDispute.update({
+      where: { id: disputeId },
+      data: { status: 'RESOLVED', adminNote, resolvedBy: adminId, resolvedAt: new Date() },
+    });
+
+    await this.distributeWinnings(dispute.challengeId);
+
+    // Notify participants
+    for (const p of challenge.participants) {
+      await this.prisma.notification.create({
+        data: {
+          userId: p.userId,
+          type: 'CHALLENGE_RESOLVED' as any,
+          title: 'Litige résolu',
+          body: `Le litige pour le défi "${challenge.title}" a été résolu par un admin.`,
+          data: { challengeId: dispute.challengeId },
+        },
+      });
+    }
+
+    return this.findOne(dispute.challengeId);
+  }
+
+  // ─── MY CHALLENGES ───────────────────────────────────────────────────────────
+
+  async getMyChallenges(userId: string) {
+    const [created, participated] = await Promise.all([
+      this.prisma.challenge.findMany({
+        where: { creatorId: userId },
+        include: { _count: { select: { participants: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.challenge.findMany({
+        where: { participants: { some: { userId } } },
+        include: { _count: { select: { participants: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return { created, participated };
+  }
+
+  // ─── ADMIN DISPUTES ──────────────────────────────────────────────────────────
+
+  async getDisputes(status?: string) {
+    return this.prisma.challengeDispute.findMany({
+      where: status ? { status: status as any } : { status: 'PENDING' },
+      include: {
+        challenge: {
+          include: {
+            participants: { select: PARTICIPANT_SELECT },
+            results: {
+              include: {
+                user: { select: { id: true, username: true, avatar: true } },
               },
             },
           },
         },
-        _count: {
-          select: {
-            participants: true,
-          },
-        },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: string) {
-    return this.prisma.challenge.findUnique({
+  async getDisputeById(id: string) {
+    const dispute = await this.prisma.challengeDispute.findUnique({
       where: { id },
       include: {
-        participants: {
+        challenge: {
           include: {
-            user: true,
+            participants: { select: PARTICIPANT_SELECT },
+            results: {
+              include: {
+                user: { select: { id: true, username: true, avatar: true } },
+              },
+            },
           },
         },
       },
     });
-  }
-
-  async join(challengeId: string, userId: string) {
-    const challenge = await this.findOne(challengeId);
-    
-    if (!challenge) {
-      throw new BadRequestException('Challenge not found');
-    }
-
-    if (challenge.status !== 'OPEN') {
-      throw new BadRequestException('Challenge is not open');
-    }
-
-    const participantCount = challenge.participants.length;
-    if (participantCount >= challenge.maxPlayers) {
-      throw new BadRequestException('Challenge is full');
-    }
-
-    const alreadyJoined = challenge.participants.some(p => p.userId === userId);
-    if (alreadyJoined) {
-      throw new BadRequestException('Already joined this challenge');
-    }
-
-    await this.walletService.debit(userId, Number(challenge.entryFee), 'CHALLENGE_ENTRY', `Joined challenge: ${challenge.title}`);
-
-    const participant = await this.prisma.participant.create({
-      data: {
-        challengeId,
-        userId,
-        status: 'JOINED',
-      },
-    });
-
-    if (participantCount + 1 >= challenge.maxPlayers) {
-      await this.prisma.challenge.update({
-        where: { id: challengeId },
-        data: { status: 'FULL' },
-      });
-    }
-
-    return participant;
+    if (!dispute) throw new NotFoundException('Litige introuvable');
+    return dispute;
   }
 }

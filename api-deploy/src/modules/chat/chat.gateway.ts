@@ -15,6 +15,7 @@ import { verify } from 'jsonwebtoken';
 import { CognitoJwtPayload } from '../../common/types/cognito-jwt-payload';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ChallengesService } from '../challenges/challenges.service';
 
 interface ConnectedUser {
   id: string;
@@ -77,6 +78,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
+  onModuleInit() {
+    this.challengesService.setServer(this.server);
+  }
+
   private logger = new Logger(ChatGateway.name);
   private connectedUsers = new Map<string, ConnectedUser>();
   private userLastMessage = new Map<string, number>();
@@ -88,6 +93,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private config: ConfigService,
     private usersService: UsersService,
     private prisma: PrismaService,
+    private challengesService: ChallengesService,
   ) {
     const cognito = config.get('cognito');
     const jwksUri = cognito?.jwksUri;
@@ -654,5 +660,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.removeUserFromVoiceRoom(socketId, room);
       }
     });
+  }
+
+  // ===== CHALLENGE ROOM HANDLERS =====
+
+  @SubscribeMessage('join_challenge_room')
+  handleJoinChallengeRoom(
+    @MessageBody() data: { challengeId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+    client.join(`challenge_${data.challengeId}`);
+  }
+
+  @SubscribeMessage('leave_challenge_room')
+  handleLeaveChallengeRoom(
+    @MessageBody() data: { challengeId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.leave(`challenge_${data.challengeId}`);
   }
 }
