@@ -219,4 +219,158 @@ export class UsersService {
 
     return updatedUser;
   }
+
+  async getLeaderboard(limit = 100) {
+    return this.prisma.user.findMany({
+      where: {
+        isBanned: false,
+      },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+        level: true,
+        xp: true,
+        gamesWon: true,
+        gamesPlayed: true,
+      },
+      orderBy: {
+        xp: 'desc',
+      },
+      take: limit,
+    });
+  }
+
+  async getOnlineUsers(currentUserId: string, limit = 50) {
+    const friends = await this.prisma.friendship.findMany({
+      where: {
+        OR: [
+          { senderId: currentUserId, status: 'ACCEPTED' },
+          { receiverId: currentUserId, status: 'ACCEPTED' },
+        ],
+      },
+      select: {
+        senderId: true,
+        receiverId: true,
+      },
+    });
+
+    const friendIds = friends.map((f) =>
+      f.senderId === currentUserId ? f.receiverId : f.senderId,
+    );
+
+    const onlineFriends = await this.prisma.user.findMany({
+      where: {
+        id: { in: friendIds },
+        status: 'ONLINE',
+      },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+        status: true,
+        level: true,
+      },
+      take: limit,
+    });
+
+    const otherOnlineUsers = await this.prisma.user.findMany({
+      where: {
+        status: 'ONLINE',
+        id: { notIn: [...friendIds, currentUserId] },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+        status: true,
+        level: true,
+      },
+      take: Math.max(0, limit - onlineFriends.length),
+    });
+
+    return [...onlineFriends, ...otherOnlineUsers];
+  }
+
+  async getPublicProfile(username: string, currentUserId?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+        bio: true,
+        level: true,
+        xp: true,
+        fairPlayScore: true,
+        gamesPlayed: true,
+        gamesWon: true,
+        status: true,
+        lastSeen: true,
+        createdAt: true,
+        achievements: {
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            description: true,
+            icon: true,
+            unlockedAt: true,
+          },
+          orderBy: {
+            unlockedAt: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    let friendshipStatus = 'NONE';
+    if (currentUserId && currentUserId !== user.id) {
+      const friendship = await this.prisma.friendship.findFirst({
+        where: {
+          OR: [
+            { senderId: currentUserId, receiverId: user.id },
+            { senderId: user.id, receiverId: currentUserId },
+          ],
+        },
+      });
+
+      if (friendship) {
+        if (friendship.status === 'BLOCKED') {
+          friendshipStatus =
+            friendship.senderId === currentUserId ? 'BLOCKED_BY_YOU' : 'BLOCKED_BY_THEM';
+        } else if (friendship.status === 'PENDING') {
+          friendshipStatus =
+            friendship.senderId === currentUserId ? 'PENDING_SENT' : 'PENDING_RECEIVED';
+        } else {
+          friendshipStatus = 'ACCEPTED';
+        }
+      }
+    }
+
+    return {
+      ...user,
+      friendshipStatus,
+    };
+  }
+
+  async updateStatus(userId: string, status: 'ONLINE' | 'OFFLINE' | 'IN_GAME' | 'AWAY') {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        status,
+        ...(status === 'OFFLINE' && { lastSeen: new Date() }),
+      },
+      select: {
+        id: true,
+        username: true,
+        status: true,
+        lastSeen: true,
+      },
+    });
+  }
 }

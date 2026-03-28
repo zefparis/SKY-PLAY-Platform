@@ -8,27 +8,40 @@ datasource db {
 }
 
 model User {
-  id            String          @id @default(uuid())
-  cognitoSub    String?         @unique
-  email         String          @unique
-  username      String          @unique
-  password      String?
-  firstName     String?
-  lastName      String?
-  avatar        String?         @db.Text
-  bio           String?
-  discordTag    String?
-  twitchUsername String?
-  role          UserRole        @default(PLAYER)
-  isVerified    Boolean         @default(false)
-  isBanned      Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  wallet        Wallet?
-  participants  Participant[]
-  matchResults  MatchResult[]
-  notifications Notification[]
+  id                  String          @id @default(uuid())
+  cognitoSub          String?         @unique
+  email               String          @unique
+  username            String          @unique
+  password            String?
+  firstName           String?
+  lastName            String?
+  avatar              String?         @db.Text
+  bio                 String?
+  discordTag          String?
+  twitchUsername      String?
+  role                UserRole        @default(PLAYER)
+  isVerified          Boolean         @default(false)
+  isBanned            Boolean         @default(false)
+  status              UserStatus      @default(OFFLINE)
+  lastSeen            DateTime?
+  level               Int             @default(1)
+  xp                  Int             @default(0)
+  fairPlayScore       Float           @default(100.0)
+  gamesPlayed         Int             @default(0)
+  gamesWon            Int             @default(0)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  wallet              Wallet?
+  participants        Participant[]
+  matchResults        MatchResult[]
+  notifications       Notification[]
+  sentFriendships     Friendship[]    @relation("SentFriendships")
+  receivedFriendships Friendship[]    @relation("ReceivedFriendships")
+  achievements        Achievement[]
 
+  @@index([status])
+  @@index([level])
+  @@index([xp])
   @@map("users")
 }
 
@@ -36,6 +49,13 @@ enum UserRole {
   PLAYER
   ADMIN
   MODERATOR
+}
+
+enum UserStatus {
+  ONLINE
+  OFFLINE
+  IN_GAME
+  AWAY
 }
 
 model Wallet {
@@ -182,19 +202,61 @@ model Notification {
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
   title     String
-  message   String
-  isRead    Boolean            @default(false)
-  metadata  Json?
+  body      String
+  read      Boolean            @default(false)
+  data      Json?
   createdAt DateTime           @default(now())
 
+  @@index([userId, read])
+  @@index([createdAt])
   @@map("notifications")
 }
 
 enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
   CHALLENGE_INVITE
   CHALLENGE_START
   MATCH_RESULT
   PAYMENT_SUCCESS
   PAYMENT_FAILED
+  PRIVATE_MESSAGE
+  ACHIEVEMENT
   SYSTEM
+}
+
+model Friendship {
+  id         String           @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  sender     User             @relation("SentFriendships", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User             @relation("ReceivedFriendships", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([senderId, status])
+  @@index([receiverId, status])
+  @@map("friendships")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  title       String
+  description String
+  icon        String
+  unlockedAt  DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("achievements")
 }

@@ -299,7 +299,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       Pas de compte ?{' '}
-                      <button type="button" onClick={() => switchView('signup')} className="font-semibold text-sky-300 dark:hover:text-sky-200 text-[#0097FC] hover:text-[#00165F] transition-colors">
+                      <button type="button" onClick={() => switchView('signup')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
                         S&apos;inscrire
                       </button>
                     </p>
@@ -405,7 +405,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       Déjà un compte ?{' '}
-                      <button type="button" onClick={() => switchView('login')} className="font-semibold text-sky-300 dark:hover:text-sky-200 text-[#0097FC] hover:text-[#00165F] transition-colors">
+                      <button type="button" onClick={() => switchView('login')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
                         Se connecter
                       </button>
                     </p>
@@ -457,7 +457,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                           setConfirmEmail(null)
                           switchView('signup')
                         }}
-                        className="font-semibold text-sky-300 dark:hover:text-sky-200 text-[#0097FC] hover:text-[#00165F] transition-colors"
+                        className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors"
                       >
                         Retour
                       </button>

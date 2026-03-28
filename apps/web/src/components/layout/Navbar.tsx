@@ -11,6 +11,8 @@ import LanguageSwitch from '@/components/i18n/LanguageSwitch'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { useAuthStore } from '@/lib/auth-store'
 import { useTheme } from '@/components/providers/ThemeProvider'
+import NotificationBell from '@/components/social/NotificationBell'
+import FriendsList from '@/components/social/FriendsList'
 
 const Navbar = () => {
   const pathname = usePathname()
@@ -64,6 +66,8 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <NotificationBell />
+            <FriendsList />
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full transition-colors dark:text-white/60 dark:hover:text-white text-[#00165F]/70 hover:text-[#0097FC] hover:bg-black/5 dark:hover:bg-white/10"

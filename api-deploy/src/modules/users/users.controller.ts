@@ -1,14 +1,19 @@
 import {
   Controller,
+  Get,
   Post,
   Patch,
   Req,
   Body,
+  Param,
+  Query,
+  ParseIntPipe,
   UseGuards,
   HttpException,
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
@@ -170,5 +175,73 @@ export class UsersController {
       avatarUrl: base64Avatar,
       user: updatedUser,
     };
+  }
+
+  /**
+   * Leaderboard public - top 100 par XP
+   */
+  @Get('leaderboard')
+  async getLeaderboard(
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    return this.usersService.getLeaderboard(limit || 100);
+  }
+
+  /**
+   * Liste des utilisateurs en ligne (amis en premier)
+   * Protégé par JwtAuthGuard
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('online')
+  async getOnlineUsers(
+    @Req() req: Request,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    const userPayload = req.user as any;
+    return this.usersService.getOnlineUsers(userPayload.id, limit || 50);
+  }
+
+  /**
+   * Profil public par username
+   * Public mais enrichi si authentifié (friendshipStatus)
+   */
+  @Get(':username')
+  async getPublicProfile(
+    @Param('username') username: string,
+    @Req() req: Request,
+  ) {
+    const userPayload = req.user as any;
+    const profile = await this.usersService.getPublicProfile(
+      username,
+      userPayload?.id,
+    );
+
+    if (!profile) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    return profile;
+  }
+
+  /**
+   * Mise à jour du statut de l'utilisateur connecté
+   * Protégé par JwtAuthGuard
+   */
+  @UseGuards(JwtAuthGuard)
+  @Patch('status')
+  async updateStatus(
+    @Req() req: Request,
+    @Body() body: { status: 'ONLINE' | 'OFFLINE' | 'IN_GAME' | 'AWAY' },
+  ) {
+    const userPayload = req.user as any;
+    
+    if (!userPayload?.id) {
+      throw new HttpException(
+        'Utilisateur non authentifié',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return this.usersService.updateStatus(userPayload.id, body.status);
   }
 }

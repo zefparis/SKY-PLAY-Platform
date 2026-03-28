@@ -11,6 +11,9 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './modules/health.controller';
+import { ChatModule } from './modules/chat/chat.module';
+import { FriendshipsModule } from './modules/friendships/friendships.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -33,6 +36,9 @@ import { HealthController } from './modules/health.controller';
     MatchesModule,
     WalletModule,
     PaymentsModule,
+    ChatModule,
+    FriendshipsModule,
+    NotificationsModule,
   ],
   providers: [
     // Active la limitation de débit globalement (les routes peuvent surcharger via @Throttle/@SkipThrottle)
