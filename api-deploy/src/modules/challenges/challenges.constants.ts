@@ -1,0 +1,14 @@
+export const CHALLENGE_TYPES = {
+  DUEL: { maxPlayers: 2, entryFee: 2000, commission: 0.25 },
+  SMALL_CHALLENGE: { maxPlayers: 5, entryFee: 2000, commission: 0.20 },
+  STANDARD: { maxPlayers: 10, entryFee: 2000, commission: 0.10 },
+  MEDIUM_TOURNAMENT: { maxPlayers: 20, entryFee: 2000, commission: 0.15 },
+  BIG_TOURNAMENT: { maxPlayers: 50, entryFee: 2000, commission: 0.10 },
+  PREMIUM_TOURNAMENT: { maxPlayers: 100, entryFee: 5000, commission: 0.10 },
+} as const;
+
+export const PRIZE_DISTRIBUTION = {
+  FIRST: 0.50,
+  SECOND: 0.25,
+  THIRD: 0.15,
+} as const;

@@ -23,35 +23,9 @@ export class MatchesService {
     return result;
   }
 
-  async distributeWinnings(challengeId: string) {
-    const challenge = await this.prisma.challenge.findUnique({
-      where: { id: challengeId },
-      include: {
-        participants: {
-          orderBy: { rank: 'asc' },
-        },
-      },
-    });
-
-    if (!challenge) return;
-
-    const prizePool = Number(challenge.prizePool);
-    const commission = prizePool * 0.1;
-    const netPrize = prizePool - commission;
-
-    if (challenge.participants.length > 0 && challenge.participants[0].rank === 1) {
-      const winner = challenge.participants[0];
-      await this.walletService.credit(
-        winner.userId,
-        netPrize,
-        'CHALLENGE_WIN',
-        `Won challenge: ${challenge.title}`
-      );
-
-      await this.prisma.participant.update({
-        where: { id: winner.id },
-        data: { prize: netPrize },
-      });
-    }
+  private async distributePrizes(challengeId: string) {
+    // Temporairement désactivé - à réimplémenter avec le nouveau système de challenges
+    console.log('Prize distribution not yet implemented for new challenge system');
+    return;
   }
 }

@@ -38,6 +38,9 @@ model User {
   sentFriendships     Friendship[]    @relation("SentFriendships")
   receivedFriendships Friendship[]    @relation("ReceivedFriendships")
   achievements        Achievement[]
+  challengesCreated   Challenge[]
+  challengeParticipations ChallengeParticipant[]
+  challengeResults    ChallengeResult[]
 
   @@index([status])
   @@index([level])
@@ -94,6 +97,8 @@ enum TransactionType {
   CHALLENGE_WIN
   REFUND
   COMMISSION
+  DEBIT
+  CREDIT
 }
 
 enum TransactionStatus {
@@ -104,40 +109,106 @@ enum TransactionStatus {
 }
 
 model Challenge {
-  id           String            @id @default(uuid())
-  title        String
-  game         String
-  gameMode     String
-  platform     String
-  region       String            @default("EU")
-  entryFee     Decimal           @db.Decimal(10, 2)
-  prizePool    Decimal           @db.Decimal(10, 2)
-  maxPlayers   Int
-  minPlayers   Int               @default(2)
-  status       ChallengeStatus   @default(OPEN)
-  rules        String?
-  startTime    DateTime?
-  endTime      DateTime?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  participants Participant[]
-  matches      Match[]
+  id          String                @id @default(cuid())
+  title       String
+  game        String
+  type        ChallengeType
+  status      ChallengeStatus       @default(OPEN)
+  entryFee    Int
+  maxPlayers  Int
+  commission  Float
+  potTotal    Int                   @default(0)
+  creatorId   String
+  creator     User                  @relation(fields: [creatorId], references: [id])
+  participants ChallengeParticipant[]
+  results     ChallengeResult[]
+  dispute     ChallengeDispute?
+  createdAt   DateTime              @default(now())
+  startedAt   DateTime?
+  endedAt     DateTime?
+  expiresAt   DateTime
 
+  @@index([status])
+  @@index([game])
+  @@index([type])
+  @@index([createdAt])
   @@map("challenges")
+}
+
+model ChallengeParticipant {
+  id          String    @id @default(cuid())
+  challengeId String
+  userId      String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime  @default(now())
+  hasPaid     Boolean   @default(false)
+  rank        Int?
+  winnings    Int?
+
+  @@unique([challengeId, userId])
+  @@index([userId])
+  @@map("challenge_participants")
+}
+
+model ChallengeResult {
+  id            String    @id @default(cuid())
+  challengeId   String
+  userId        String
+  challenge     Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  declaredRank  Int
+  screenshotUrl String?
+  submittedAt   DateTime  @default(now())
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@map("challenge_results")
+}
+
+model ChallengeDispute {
+  id          String        @id @default(cuid())
+  challengeId String        @unique
+  challenge   Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  reason      String
+  status      DisputeStatus @default(PENDING)
+  adminNote   String?
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([status])
+  @@map("challenge_disputes")
+}
+
+enum ChallengeType {
+  DUEL
+  SMALL_CHALLENGE
+  STANDARD
+  MEDIUM_TOURNAMENT
+  BIG_TOURNAMENT
+  PREMIUM_TOURNAMENT
 }
 
 enum ChallengeStatus {
   OPEN
   FULL
   IN_PROGRESS
+  VALIDATING
   COMPLETED
+  DISPUTED
   CANCELLED
+}
+
+enum DisputeStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
 }
 
 model Participant {
   id          String              @id @default(uuid())
   challengeId String
-  challenge   Challenge           @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   userId      String
   user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   status      ParticipantStatus   @default(JOINED)
@@ -160,8 +231,6 @@ enum ParticipantStatus {
 
 model Match {
   id          String        @id @default(uuid())
-  challengeId String
-  challenge   Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   status      MatchStatus   @default(PENDING)
   startTime   DateTime?
   endTime     DateTime?
@@ -223,6 +292,11 @@ enum NotificationType {
   PRIVATE_MESSAGE
   ACHIEVEMENT
   SYSTEM
+  CHALLENGE_FULL
+  CHALLENGE_WON
+  CHALLENGE_LOST
+  CHALLENGE_DISPUTED
+  CHALLENGE_RESOLVED
 }
 
 model Friendship {

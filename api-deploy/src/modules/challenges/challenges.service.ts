@@ -11,9 +11,8 @@ export class ChallengesService {
   ) {}
 
   async create(dto: CreateChallengeDto) {
-    return this.prisma.challenge.create({
-      data: dto,
-    });
+    // Temporairement désactivé - à implémenter avec le nouveau schéma
+    throw new BadRequestException('Create challenge not yet implemented');
   }
 
   async findAll() {
