@@ -6,8 +6,12 @@ import { MessageCircle, Send, Users, Hash, Globe, Languages, Menu, X, Smile } fr
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/lib/auth-store'
 import { useChat } from '@/hooks/useChat'
+import { useVoiceChat } from '@/hooks/useVoiceChat'
 import { Message } from '@/types/chat'
 import EmojiPicker from '@/components/chat/EmojiPicker'
+import VoiceChannelList from '@/components/voice/VoiceChannelList'
+import VoiceRoom from '@/components/voice/VoiceRoom'
+import VoiceIndicator from '@/components/voice/VoiceIndicator'
 
 const ROOMS = [
   { id: 'global', name: 'Global', icon: Globe },
@@ -31,10 +35,28 @@ export default function ChatPage() {
     connectedUsers,
     currentRoom,
     isConnected,
+    socket,
     sendMessage,
     sendPrivate,
     joinRoom,
   } = useChat()
+
+  const {
+    isInVoice,
+    currentVoiceRoom,
+    voiceUsers,
+    isMuted,
+    error: voiceError,
+    joinVoiceRoom,
+    leaveVoiceRoom,
+    toggleMute,
+  } = useVoiceChat({ socket, isConnected })
+
+  const voiceChannels = [
+    { id: 'voice_global', name: 'Global', userCount: 0, maxUsers: 10 },
+    { id: 'voice_fr', name: 'Français', userCount: 0, maxUsers: 10 },
+    { id: 'voice_en', name: 'English', userCount: 0, maxUsers: 10 },
+  ]
 
   useEffect(() => {
     if (!tokens) {
@@ -201,6 +223,22 @@ export default function ChatPage() {
                   ))}
                 </div>
               </div>
+
+              <VoiceChannelList
+                channels={voiceChannels}
+                currentVoiceRoom={currentVoiceRoom}
+                onJoin={joinVoiceRoom}
+              />
+
+              {isInVoice && currentVoiceRoom && (
+                <VoiceRoom
+                  room={currentVoiceRoom}
+                  users={voiceUsers}
+                  isMuted={isMuted}
+                  onToggleMute={toggleMute}
+                  onLeave={leaveVoiceRoom}
+                />
+              )}
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto p-4">
@@ -328,6 +366,26 @@ export default function ChatPage() {
           </div>
         </main>
       </div>
+
+      {isInVoice && currentVoiceRoom && (
+        <VoiceIndicator
+          roomName={currentVoiceRoom.replace('voice_', '').replace('_', ' ')}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          onLeave={leaveVoiceRoom}
+        />
+      )}
+
+      {voiceError && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="fixed bottom-20 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50"
+        >
+          {voiceError}
+        </motion.div>
+      )}
     </div>
   )
 }

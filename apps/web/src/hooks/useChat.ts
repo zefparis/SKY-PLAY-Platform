@@ -12,6 +12,7 @@ type UseChatReturn = {
   connectedUsers: User[]
   currentRoom: string
   isConnected: boolean
+  socket: Socket | null
   sendMessage: (content: string) => void
   sendPrivate: (toUserId: string, content: string) => void
   joinRoom: (room: string) => void
@@ -169,6 +170,7 @@ export const useChat = (): UseChatReturn => {
     connectedUsers,
     currentRoom,
     isConnected,
+    socket,
     sendMessage,
     sendPrivate,
     joinRoom,

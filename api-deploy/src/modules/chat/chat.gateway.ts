@@ -51,9 +51,20 @@ interface PrivateMessage {
   timestamp: Date;
 }
 
+interface VoiceUser {
+  socketId: string;
+  userId: string;
+  username: string;
+  avatar?: string;
+  muted: boolean;
+  speaking: boolean;
+}
+
 const AVAILABLE_ROOMS = ['global', 'fr', 'en'];
+const VOICE_ROOMS = ['voice_global', 'voice_fr', 'voice_en'];
 const MAX_MESSAGE_LENGTH = 500;
 const RATE_LIMIT_MS = 1000;
+const MAX_VOICE_USERS = 10;
 
 @WebSocketGateway({
   cors: {
@@ -69,6 +80,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger(ChatGateway.name);
   private connectedUsers = new Map<string, ConnectedUser>();
   private userLastMessage = new Map<string, number>();
+  private voiceRooms = new Map<string, Map<string, VoiceUser>>();
+  private userLastVoiceAction = new Map<string, number>();
   private jwksClient: jwksRsa.JwksClient;
 
   constructor(
@@ -213,6 +226,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Émettre le changement de statut aux amis connectés
       await this.emitStatusChangeToFriends(user.id, 'OFFLINE');
+
+      // Retirer l'utilisateur de tous les salons vocaux
+      this.removeUserFromAllVoiceRooms(client.id);
 
       this.connectedUsers.delete(client.id);
       this.userLastMessage.delete(user.id);
@@ -449,5 +465,194 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error) {
       this.logger.error(`Failed to emit status change: ${error.message}`);
     }
+  }
+
+  // ===== VOICE CHAT HANDLERS =====
+
+  @SubscribeMessage('voice_join')
+  handleVoiceJoin(
+    @MessageBody() data: { room: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+
+    const { room } = data;
+
+    // Rate limiting
+    const now = Date.now();
+    const lastAction = this.userLastVoiceAction.get(user.id) || 0;
+    if (now - lastAction < 1000) {
+      client.emit('error', { message: 'Too many voice actions' });
+      return;
+    }
+    this.userLastVoiceAction.set(user.id, now);
+
+    // Validate room
+    if (!VOICE_ROOMS.includes(room) && !room.startsWith('voice_match_')) {
+      client.emit('error', { message: 'Invalid voice room' });
+      return;
+    }
+
+    // Initialize room if needed
+    if (!this.voiceRooms.has(room)) {
+      this.voiceRooms.set(room, new Map());
+    }
+
+    const voiceRoom = this.voiceRooms.get(room);
+
+    // Check max users
+    if (voiceRoom.size >= MAX_VOICE_USERS) {
+      client.emit('error', { message: 'Voice room is full' });
+      return;
+    }
+
+    // Add user to voice room
+    const voiceUser: VoiceUser = {
+      socketId: client.id,
+      userId: user.id,
+      username: user.username,
+      avatar: user.avatar,
+      muted: false,
+      speaking: false,
+    };
+
+    voiceRoom.set(client.id, voiceUser);
+    client.join(room);
+
+    // Notify existing users about new user
+    client.to(room).emit('voice_user_joined', {
+      socketId: client.id,
+      userId: user.id,
+      username: user.username,
+      avatar: user.avatar,
+    });
+
+    // Send current room users to the new user
+    const roomUsers = Array.from(voiceRoom.values());
+    client.emit('voice_room_users', { room, users: roomUsers });
+
+    this.logger.log(`User ${user.username} joined voice room ${room}`);
+  }
+
+  @SubscribeMessage('voice_leave')
+  handleVoiceLeave(
+    @MessageBody() data: { room: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+
+    const { room } = data;
+    this.removeUserFromVoiceRoom(client.id, room);
+  }
+
+  @SubscribeMessage('voice_offer')
+  handleVoiceOffer(
+    @MessageBody() data: { targetSocketId: string; offer: any },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { targetSocketId, offer } = data;
+    this.server.to(targetSocketId).emit('voice_offer', {
+      fromSocketId: client.id,
+      offer,
+    });
+  }
+
+  @SubscribeMessage('voice_answer')
+  handleVoiceAnswer(
+    @MessageBody() data: { targetSocketId: string; answer: any },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { targetSocketId, answer } = data;
+    this.server.to(targetSocketId).emit('voice_answer', {
+      fromSocketId: client.id,
+      answer,
+    });
+  }
+
+  @SubscribeMessage('voice_ice_candidate')
+  handleVoiceIceCandidate(
+    @MessageBody() data: { targetSocketId: string; candidate: any },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { targetSocketId, candidate } = data;
+    this.server.to(targetSocketId).emit('voice_ice_candidate', {
+      fromSocketId: client.id,
+      candidate,
+    });
+  }
+
+  @SubscribeMessage('voice_speaking')
+  handleVoiceSpeaking(
+    @MessageBody() data: { room: string; speaking: boolean },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+
+    const { room, speaking } = data;
+    const voiceRoom = this.voiceRooms.get(room);
+    if (!voiceRoom) return;
+
+    const voiceUser = voiceRoom.get(client.id);
+    if (voiceUser) {
+      voiceUser.speaking = speaking;
+      client.to(room).emit('voice_speaking', {
+        userId: user.id,
+        speaking,
+      });
+    }
+  }
+
+  @SubscribeMessage('voice_mute')
+  handleVoiceMute(
+    @MessageBody() data: { room: string; muted: boolean },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+
+    const { room, muted } = data;
+    const voiceRoom = this.voiceRooms.get(room);
+    if (!voiceRoom) return;
+
+    const voiceUser = voiceRoom.get(client.id);
+    if (voiceUser) {
+      voiceUser.muted = muted;
+      client.to(room).emit('voice_mute_update', {
+        userId: user.id,
+        muted,
+      });
+    }
+  }
+
+  private removeUserFromVoiceRoom(socketId: string, room: string) {
+    const voiceRoom = this.voiceRooms.get(room);
+    if (!voiceRoom) return;
+
+    const voiceUser = voiceRoom.get(socketId);
+    if (voiceUser) {
+      voiceRoom.delete(socketId);
+      this.server.to(room).emit('voice_user_left', {
+        socketId,
+        userId: voiceUser.userId,
+      });
+
+      // Clean up empty rooms
+      if (voiceRoom.size === 0) {
+        this.voiceRooms.delete(room);
+      }
+
+      this.logger.log(`User ${voiceUser.username} left voice room ${room}`);
+    }
+  }
+
+  private removeUserFromAllVoiceRooms(socketId: string) {
+    this.voiceRooms.forEach((voiceRoom, room) => {
+      if (voiceRoom.has(socketId)) {
+        this.removeUserFromVoiceRoom(socketId, room);
+      }
+    });
   }
 }
