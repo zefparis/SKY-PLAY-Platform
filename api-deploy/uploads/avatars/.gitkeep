@@ -1,0 +1,3 @@
+# This directory stores user avatar uploads
+# Note: On Railway, this is ephemeral storage - files are lost on redeploy
+# TODO: Migrate to cloud storage (Cloudinary, AWS S3, etc.) for production

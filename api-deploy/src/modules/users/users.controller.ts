@@ -163,6 +163,7 @@ export class UsersController {
     @UploadedFile() file: any,
   ) {
     const userPayload = req.user as any;
+    console.log('[/users/avatar] Upload request from user:', userPayload?.id);
 
     if (!userPayload?.id) {
       throw new HttpException(
@@ -172,20 +173,32 @@ export class UsersController {
     }
 
     if (!file) {
+      console.error('[/users/avatar] No file provided in request');
       throw new HttpException(
         'Aucun fichier fourni',
         HttpStatus.BAD_REQUEST,
       );
     }
 
+    console.log('[/users/avatar] File received:', {
+      filename: file.filename,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      path: file.path,
+    });
+
     // Construire l'URL de l'avatar
     const avatarUrl = `/uploads/avatars/${file.filename}`;
+    console.log('[/users/avatar] Avatar URL:', avatarUrl);
 
     // Mettre à jour le profil avec la nouvelle URL d'avatar
     const updatedUser = await this.usersService.updateProfile(
       userPayload.id,
       { avatar: avatarUrl },
     );
+
+    console.log('[/users/avatar] User updated successfully, avatar:', updatedUser.avatar);
 
     return {
       message: 'Avatar uploadé avec succès',
