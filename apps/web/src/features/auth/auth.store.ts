@@ -35,6 +35,7 @@ type AuthState = {
   confirmSignup: (params: { code: string }) => Promise<void>
   resendSignupCode: () => Promise<void>
   login: (params: { email: string; password: string }) => Promise<void>
+  loginWithGoogle: () => void
   forgotPassword: (params: { email: string }) => Promise<void>
   resetPassword: (params: { email: string; code: string; newPassword: string }) => Promise<void>
   refresh: () => Promise<void>
@@ -135,6 +136,24 @@ export const useAuthStore = create<AuthState>()(
           set({ status: 'anonymous', tokens: null, user: null, error: e?.message || 'Login failed' })
           throw e
         }
+      },
+
+      loginWithGoogle: () => {
+        const domain = process.env.NEXT_PUBLIC_AWS_COGNITO_DOMAIN
+        const clientId = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID
+        const redirectUri = process.env.NEXT_PUBLIC_AWS_COGNITO_REDIRECT_SIGN_IN
+        if (!domain || !clientId || !redirectUri) {
+          console.error('Configuration Cognito manquante pour Google login')
+          return
+        }
+
+        const url = new URL(`${domain.replace(/\/+$/, '')}/oauth2/authorize`)
+        url.searchParams.set('client_id', clientId)
+        url.searchParams.set('response_type', 'code')
+        url.searchParams.set('scope', 'email openid profile')
+        url.searchParams.set('redirect_uri', redirectUri)
+        url.searchParams.set('identity_provider', 'Google')
+        window.location.assign(url.toString())
       },
 
       forgotPassword: async ({ email }) => {
