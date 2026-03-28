@@ -18,16 +18,16 @@ export default function ChatLayout({
   return (
     <div className={cn('grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6', className)}>
       <Card variant="glass" className="hidden lg:block p-0 overflow-hidden">
-        <div className="p-5 border-b border-white/10">
-          <h2 className="title-tech text-white text-sm">Rooms</h2>
-          <p className="text-white/60 text-sm mt-1">
+        <div className="p-5 border-b border-primary/10 dark:border-white/10">
+          <h2 className="title-tech text-primary dark:text-white text-sm">Rooms</h2>
+          <p className="text-primary/70 dark:text-white/60 text-sm mt-1">
             Placeholder — intégration realtime plus tard.
           </p>
         </div>
         <div className="p-3 space-y-2">
           {sidebar ?? (
-            <div className="rounded-md border border-white/10 bg-black/25 p-4">
-              <p className="text-white/70 text-sm"># general</p>
+            <div className="rounded-md border border-primary/10 dark:border-white/10 bg-white/30 dark:bg-black/25 p-4">
+              <p className="text-primary dark:text-white/70 text-sm"># general</p>
             </div>
           )}
         </div>
@@ -35,7 +35,7 @@ export default function ChatLayout({
 
       <div className="min-h-[70vh] relative">
         {header && (
-          <div className="sticky top-0 z-10 bg-gradient-to-b from-black/40 to-transparent px-6 py-4 border-b border-white/10 shadow-[0_2px_12px_0_rgba(59,130,246,0.08)] backdrop-blur-md">
+          <div className="sticky top-0 z-10 bg-gradient-to-b from-white/40 dark:from-black/40 to-transparent px-6 py-4 border-b border-primary/10 dark:border-white/10 shadow-[0_2px_12px_0_rgba(59,130,246,0.08)] backdrop-blur-md">
             {header}
           </div>
         )}

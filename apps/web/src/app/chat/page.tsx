@@ -45,8 +45,8 @@ export default function ChatPage() {
           <MessageCircle className="w-5 h-5 text-secondary" />
         </div>
         <div>
-          <h1 className="title-tech text-white text-2xl font-extrabold">Chat</h1>
-          <p className="text-white/60">Team up, trash talk, coordinate.</p>
+          <h1 className="title-tech text-primary dark:text-white text-2xl font-extrabold">Chat</h1>
+          <p className="text-primary/70 dark:text-white/60">Team up, trash talk, coordinate.</p>
         </div>
       </div>
     )
@@ -77,8 +77,8 @@ export default function ChatPage() {
 
             <ChatLayout>
               <Card variant="glass" className="p-0 overflow-hidden">
-                <div className="px-6 py-5 border-b border-white/10">
-                  <p className="title-tech text-sm text-white/85"># general</p>
+                <div className="px-6 py-5 border-b border-primary/10 dark:border-white/10">
+                  <p className="title-tech text-sm text-primary dark:text-white/85"># general</p>
                 </div>
 
                 <div ref={listRef} className="h-[55vh] overflow-y-auto px-6 py-5 space-y-4">
@@ -90,7 +90,7 @@ export default function ChatPage() {
                   />
                 </div>
 
-                <div className="px-6 py-5 border-t border-white/10 bg-black/15">
+                <div className="px-6 py-5 border-t border-primary/10 dark:border-white/10 bg-white/20 dark:bg-black/15">
                   <ChatInput onSend={send} />
                 </div>
               </Card>

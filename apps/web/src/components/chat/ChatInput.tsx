@@ -53,7 +53,7 @@ export default function ChatInput({
       <div className="relative">
         <button
           type="button"
-          className="text-xl text-white/70 hover:text-primary transition"
+          className="text-xl text-primary/70 dark:text-white/70 hover:text-secondary dark:hover:text-primary transition"
           onClick={() => setShowEmoji((v) => !v)}
           tabIndex={-1}
           aria-label="Ouvrir le sélecteur d’emojis"
@@ -74,7 +74,7 @@ export default function ChatInput({
         placeholder="Écris ton message…"
         disabled={disabled}
         rows={1}
-        className="bg-black/20 resize-none rounded-lg px-3 py-2 text-white text-sm w-full focus:outline-none border border-white/10 focus:border-primary/60 transition"
+        className="bg-white/40 dark:bg-black/20 resize-none rounded-lg px-3 py-2 text-primary dark:text-white text-sm w-full focus:outline-none border border-primary/20 dark:border-white/10 focus:border-secondary dark:focus:border-primary/60 transition placeholder:text-primary/50 dark:placeholder:text-white/50"
         style={{ minHeight: 40, maxHeight: 120 }}
       />
       <motion.button

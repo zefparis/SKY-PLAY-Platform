@@ -48,7 +48,7 @@ export default function MessageBubble({
     return (
       <div className="flex justify-center my-2">
         <motion.div
-          className="px-4 py-2 text-center italic text-white/60 text-sm"
+          className="px-4 py-2 text-center italic text-primary/70 dark:text-white/60 text-sm"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -90,7 +90,7 @@ export default function MessageBubble({
               </span>
             )}
           </div>
-          <div className="mt-1 text-right text-xs text-white/55 flex flex-col items-end gap-1">
+          <div className="mt-1 text-right text-xs text-primary/60 dark:text-white/55 flex flex-col items-end gap-1">
             <span>{message.createdAt}</span>
             {message.readBy && message.readBy.length > 1 && (
               <motion.div
@@ -135,10 +135,10 @@ export default function MessageBubble({
           )}
         >
           <div className="flex items-center justify-between gap-4 mb-1">
-            <p className="text-white font-semibold text-sm">{message.author}</p>
-            <p className="text-xs text-white/55">{message.createdAt}</p>
+            <p className="text-primary dark:text-white font-semibold text-sm">{message.author}</p>
+            <p className="text-xs text-primary/60 dark:text-white/55">{message.createdAt}</p>
           </div>
-          <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-primary/90 dark:text-white/80 leading-relaxed whitespace-pre-wrap">
             {message.content}
           </p>
           <ReactionBar
