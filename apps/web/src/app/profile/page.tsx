@@ -97,9 +97,32 @@ export default function ProfilePage() {
   const handlePhotoChange = async (file: File) => {
     setIsUploadingPhoto(true)
     try {
-      // TODO: Upload vers l'API
-      console.log('Upload photo:', file)
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulation
+      const tokens = useAuthStore.getState().tokens
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/avatar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${tokens?.idToken || tokens?.accessToken}`,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Erreur lors de l\'upload')
+      }
+
+      const result = await response.json()
+      
+      // Mettre à jour le store avec le nouvel avatar
+      useAuthStore.setState({ user: result.user })
+      
+      alert('Photo de profil mise à jour avec succès !')
+    } catch (error: any) {
+      console.error('Erreur upload photo:', error)
+      throw error
     } finally {
       setIsUploadingPhoto(false)
     }
