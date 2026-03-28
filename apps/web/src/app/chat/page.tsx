@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Globe, Languages, Mic, MicOff, PhoneOff, ChevronDown, Smile, Zap } from 'lucide-react'
+import { Send, Smile, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/lib/auth-store'
 import { useChat } from '@/hooks/useChat'
 import { useVoiceChat } from '@/hooks/useVoiceChat'
 import EmojiPicker from '@/components/chat/EmojiPicker'
 import VoiceChannelList from '@/components/voice/VoiceChannelList'
+import VoiceRoom from '@/components/voice/VoiceRoom'
+import VoiceIndicator from '@/components/voice/VoiceIndicator'
 
 const ROOMS = [
   { id: 'global', label: '🌍 Global' },
@@ -63,7 +65,7 @@ export default function ChatPage() {
   if (!tokens || !currentUser) return null
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-64px)] dark:bg-[#030b1a] bg-[#f0f4ff] overflow-hidden">
+    <div className={`flex flex-col dark:bg-[#030b1a] bg-[#f0f4ff] overflow-hidden ${isInVoice ? 'h-[calc(100dvh-64px-48px)]' : 'h-[calc(100dvh-64px)]'}`}>
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
       <div className="shrink-0 px-3 sm:px-5 py-2.5 dark:bg-[#00165F]/40 bg-white/80 backdrop-blur-md border-b dark:border-white/8 border-[#00165F]/8">
@@ -161,26 +163,19 @@ export default function ChatPage() {
             className="overflow-hidden shrink-0"
           >
             <div className="px-4 py-3 dark:bg-[#00165F]/20 bg-white/60 border-b dark:border-white/8 border-[#00165F]/8">
-              {isInVoice && currentVoiceRoom ? (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#0097FC] animate-pulse" />
-                    <span className="text-sm font-bold dark:text-white text-[#00165F]">🎙 {currentVoiceRoom.replace('voice_', '')}</span>
-                    <div className="flex -space-x-1.5">
-                      {voiceUsers.map(u => <Avatar key={u.socketId} name={u.username} src={u.avatar} size={6} />)}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={toggleMute} className={`p-2 rounded-full transition ${isMuted ? 'bg-red-500/20 text-red-400' : 'dark:bg-white/10 bg-[#00165F]/8 dark:text-white text-[#00165F]'}`}>
-                      {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    </button>
-                    <button onClick={leaveVoiceRoom} className="p-2 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/30 transition">
-                      <PhoneOff className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <VoiceChannelList channels={VOICE_CHANNELS} currentVoiceRoom={currentVoiceRoom} onJoin={(id) => { joinVoiceRoom(id); setShowVoice(false) }} />
+              <VoiceChannelList
+                channels={VOICE_CHANNELS}
+                currentVoiceRoom={currentVoiceRoom}
+                onJoin={(id) => { joinVoiceRoom(id); setShowVoice(false) }}
+              />
+              {isInVoice && currentVoiceRoom && (
+                <VoiceRoom
+                  room={currentVoiceRoom}
+                  users={voiceUsers}
+                  isMuted={isMuted}
+                  onToggleMute={toggleMute}
+                  onLeave={leaveVoiceRoom}
+                />
               )}
             </div>
           </motion.div>
@@ -324,6 +319,16 @@ export default function ChatPage() {
           </motion.p>
         )}
       </div>
+
+      {/* Barre vocale persistante */}
+      {isInVoice && currentVoiceRoom && (
+        <VoiceIndicator
+          roomName={currentVoiceRoom.replace('voice_', '').replace('_', ' ')}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          onLeave={leaveVoiceRoom}
+        />
+      )}
 
       {/* Voice error toast */}
       <AnimatePresence>
