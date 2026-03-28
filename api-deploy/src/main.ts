@@ -22,6 +22,10 @@ async function bootstrap() {
       ? allowedOrigins
       : ['http://localhost:3000', 'http://localhost:3001', 'https://sky-play-platform.vercel.app'],
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   app.useGlobalPipes(
