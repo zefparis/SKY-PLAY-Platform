@@ -12,7 +12,7 @@ export default function Achievements({ achievements }: { achievements: Achieveme
   return (
     <Card variant="glass">
       <div className="flex items-center justify-between gap-4 mb-6">
-        <h2 className="title-tech text-white text-xl font-extrabold">Achievements</h2>
+        <h2 className="title-tech text-primary dark:text-white text-xl font-extrabold">Achievements</h2>
         <Badge variant="info">Unlocked</Badge>
       </div>
 
@@ -20,12 +20,12 @@ export default function Achievements({ achievements }: { achievements: Achieveme
         {achievements.map((a) => (
           <div
             key={a.id}
-            className="rounded-lg border border-white/10 bg-black/20 p-4 transition duration-200 hover:border-secondary/35 hover:shadow-glow-blue"
+            className="rounded-lg border border-primary/10 dark:border-white/10 bg-white/40 dark:bg-black/20 p-4 transition duration-200 hover:border-secondary/35 hover:shadow-glow-blue"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-white font-semibold">{a.title}</p>
-                <p className="text-white/60 text-sm mt-1">{a.description}</p>
+                <p className="text-primary dark:text-white font-semibold">{a.title}</p>
+                <p className="text-primary/70 dark:text-white/60 text-sm mt-1">{a.description}</p>
               </div>
               <Badge variant={a.highlight ? 'danger' : 'info'}>
                 {a.highlight ? 'PRO' : 'OK'}

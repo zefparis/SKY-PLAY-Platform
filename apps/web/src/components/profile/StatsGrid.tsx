@@ -25,8 +25,8 @@ export default function StatsGrid({ stats }: { stats: ProfileStats }) {
               <it.icon className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
             </div>
             <div className="min-w-0">
-              <p className="text-white/60 text-xs sm:text-sm title-tech truncate">{it.label}</p>
-              <p className="text-white text-xl sm:text-2xl font-extrabold tabular-nums truncate">{it.value}</p>
+              <p className="text-primary/70 dark:text-white/60 text-xs sm:text-sm title-tech truncate">{it.label}</p>
+              <p className="text-primary dark:text-white text-xl sm:text-2xl font-extrabold tabular-nums truncate">{it.value}</p>
             </div>
           </div>
         </Card>
