@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+
+const logger = new Logger('Bootstrap');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -43,6 +45,10 @@ async function bootstrap() {
   );
 
   await app.listen(process.env.PORT || 4000);
+  logger.log(`Application is listening on port ${process.env.PORT || 4000}`);
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  logger.error('Application failed during bootstrap', error instanceof Error ? error.stack : String(error));
+  process.exit(1);
+});
