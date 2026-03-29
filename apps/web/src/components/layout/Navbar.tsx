@@ -85,7 +85,6 @@ const Navbar = () => {
 
             {/* Desktop right actions */}
             <div className="hidden md:flex items-center space-x-4">
-              <WalletBalance />
               <NotificationBell />
               <FriendsList />
               <button onClick={toggleTheme} className="p-2 rounded-full transition-colors dark:text-white/60 dark:hover:text-white text-[#00165F]/70 hover:text-[#0097FC] hover:bg-black/5 dark:hover:bg-white/10" aria-label="Toggle theme">
