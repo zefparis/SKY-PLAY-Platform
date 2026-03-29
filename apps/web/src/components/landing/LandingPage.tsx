@@ -450,10 +450,13 @@ export default function LandingPage() {
   const [lang, setLang] = useState<Lang>('fr')
   const [authOpen, setAuthOpen] = useState(false)
   const [authView, setAuthView] = useState<ViewMode>('login')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    if (tokens) router.replace('/dashboard')
-  }, [tokens, router])
+    if (mounted && tokens) router.replace('/dashboard')
+  }, [mounted, tokens, router])
 
   useEffect(() => {
     try {
@@ -471,6 +474,8 @@ export default function LandingPage() {
   const openSignup = () => { setAuthView('signup'); setAuthOpen(true) }
 
   const t = translations[lang]
+
+  if (!mounted || tokens) return null
 
   return (
     <>
