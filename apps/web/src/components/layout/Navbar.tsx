@@ -113,7 +113,7 @@ const Navbar = () => {
       </nav>
 
       {/* ═══ MOBILE BOTTOM TAB BAR ════════════════════════════════ */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 dark:bg-[#00165F]/95 bg-white/95 backdrop-blur-xl border-t dark:border-white/10 border-[#00165F]/10 safe-area-inset-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[9999] dark:bg-[#00165F]/95 bg-white/95 backdrop-blur-xl border-t dark:border-white/10 border-[#00165F]/10 safe-area-inset-bottom">
         <div className="flex items-center justify-around h-16 px-2">
           {bottomTabs.map(tab => {
             const Icon = tab.icon
