@@ -45,7 +45,9 @@ type AuthStoreState = {
   confirmSignup: (email: string, code: string, password?: string) => Promise<void>
   login: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => void
+  loginWithDiscord: () => void
   handleOAuthCallback: (code: string) => Promise<void>
+  handleDiscordCallback: (code: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
   resetPassword: (email: string, code: string, newPassword: string) => Promise<void>
   restoreSession: () => Promise<void>
@@ -361,6 +363,64 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
     set({ error: null })
     window.location.assign(url.toString())
+  },
+
+  loginWithDiscord: () => {
+    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1487774336126554273'
+    const redirectUri = process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || 'https://sky-play-platform.vercel.app/auth/discord/callback'
+
+    const url = new URL('https://discord.com/oauth2/authorize')
+    url.searchParams.set('client_id', clientId)
+    url.searchParams.set('redirect_uri', redirectUri)
+    url.searchParams.set('response_type', 'code')
+    url.searchParams.set('scope', 'identify email')
+
+    set({ error: null })
+    window.location.assign(url.toString())
+  },
+
+  handleDiscordCallback: async (code) => {
+    set({ isLoading: true, error: null })
+
+    try {
+      const apiUrl = COGNITO_CONFIG.apiUrl.replace(/\/+$/, '')
+      
+      const response = await fetch(`${apiUrl}/auth/discord`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      })
+
+      if (!response.ok) {
+        const details = await response.text().catch(() => '')
+        throw new Error(`Échec authentification Discord (${response.status}): ${details || response.statusText}`)
+      }
+
+      const data = await response.json()
+      const tokens: AuthTokens = {
+        accessToken: data.tokens.accessToken,
+        idToken: data.tokens.idToken,
+        refreshToken: data.tokens.refreshToken || '',
+      }
+
+      set({
+        tokens,
+        user: data.user,
+        isLoading: false,
+        error: null,
+        confirmEmail: null,
+      })
+
+      persistState({ tokens, user: data.user, confirmEmail: null })
+      window.location.assign('/')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur lors de l\'authentification Discord'
+      set({ isLoading: false, error: message, tokens: null, user: null })
+      persistState({ tokens: null, user: null, confirmEmail: get().confirmEmail })
+      throw new Error(message)
+    }
   },
 
   handleOAuthCallback: async (code) => {
