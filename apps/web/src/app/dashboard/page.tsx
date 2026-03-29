@@ -86,9 +86,9 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
         <Gamepad2 className="w-14 h-14 dark:text-white/20 text-[#00165F]/20" />
-        <p className="text-lg font-bold dark:text-white text-[#00165F]">Connectez-vous pour accéder au dashboard</p>
+        <p className="text-lg font-bold dark:text-white text-[#00165F]">{t('dashboard.loginRequired')}</p>
         <Link href="/login" className="px-6 py-2.5 rounded-xl bg-[#0097FC] text-white font-bold text-sm hover:bg-[#0097FC]/90 transition">
-          Se connecter
+          {t('wallet.signIn')}
         </Link>
       </div>
     )
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl sm:text-4xl font-bold dark:text-white text-[#00165F] title-tech">{t('dashboard.title')}</h1>
           <button onClick={handleRefresh} className="flex items-center gap-2 px-4 py-2 rounded-xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] hover:border-[#0097FC] transition">
             <RefreshCw className="w-4 h-4" />
-            <span className="hidden sm:inline text-sm font-medium">Actualiser</span>
+            <span className="hidden sm:inline text-sm font-medium">{t('wallet.refresh')}</span>
           </button>
         </div>
 
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                     <Wallet className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-white/70">Solde disponible</p>
+                    <p className="text-sm text-white/70">{t('wallet.balance')}</p>
                     <motion.p key={balance} initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-4xl font-black text-white">
                       {formatCFA(balance)}
                     </motion.p>
@@ -132,19 +132,19 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setShowDeposit(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#00165F] font-bold text-sm hover:bg-white/90 transition shadow-lg">
-                    <Plus className="w-4 h-4" /> Déposer
+                    <Plus className="w-4 h-4" /> {t('wallet.deposit')}
                   </button>
                   <button onClick={() => setShowWithdraw(true)} disabled={balance < 1000} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/20 text-white font-bold text-sm hover:bg-white/30 transition border border-white/30 disabled:opacity-40">
-                    <ArrowUpRight className="w-4 h-4" /> Retirer
+                    <ArrowUpRight className="w-4 h-4" /> {t('wallet.withdraw')}
                   </button>
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: 'Total déposé', value: stats.totalDeposited, color: 'text-green-300' },
-                  { label: 'Total gagné', value: stats.totalWon, color: 'text-yellow-300' },
-                  { label: 'Total misé', value: stats.totalMised, color: 'text-blue-300' },
-                  { label: 'Gains nets', value: stats.gainsNets, color: stats.gainsNets >= 0 ? 'text-green-300' : 'text-red-300' },
+                  { label: t('wallet.totalDeposited'), value: stats.totalDeposited, color: 'text-green-300' },
+                  { label: t('wallet.totalWon'), value: stats.totalWon, color: 'text-yellow-300' },
+                  { label: t('wallet.totalBet'), value: stats.totalMised, color: 'text-blue-300' },
+                  { label: t('wallet.netGains'), value: stats.gainsNets, color: stats.gainsNets >= 0 ? 'text-green-300' : 'text-red-300' },
                 ].map((s, i) => (
                   <div key={i} className="rounded-xl bg-white/10 p-3">
                     <p className="text-xs text-white/60 mb-1">{s.label}</p>
@@ -182,15 +182,15 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold dark:text-white text-[#00165F]">{t('dashboard.section.activeChallenges')}</h2>
             <Link href="/challenges" className="flex items-center gap-1 text-sm font-medium text-[#0097FC] hover:underline">
-              Voir tout <ArrowUpRight className="w-4 h-4" />
+              {t('dashboard.seeAll')} <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
           {challenges.length === 0 ? (
             <Card className="text-center py-12">
               <Zap className="w-12 h-12 mx-auto dark:text-white/20 text-[#00165F]/20 mb-3" />
-              <p className="dark:text-white/50 text-[#00165F]/50 mb-4">Aucun défi actif pour le moment</p>
+              <p className="dark:text-white/50 text-[#00165F]/50 mb-4">{t('dashboard.noActiveChallenge')}</p>
               <Link href="/challenges" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0097FC] text-white font-bold text-sm hover:bg-[#0097FC]/90 transition">
-                <Plus className="w-4 h-4" /> Créer un défi
+                <Plus className="w-4 h-4" /> {t('challenges.create')}
               </Link>
             </Card>
           ) : (
@@ -204,13 +204,13 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div>
-          <h2 className="text-2xl font-bold dark:text-white text-[#00165F] mb-4">Actions rapides</h2>
+          <h2 className="text-2xl font-bold dark:text-white text-[#00165F] mb-4">{t('dashboard.quickActions')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Créer un défi', icon: Plus, href: '/challenges', color: 'bg-[#0097FC]' },
-              { label: 'Mes défis', icon: Gamepad2, href: '/challenges?filter=mine', color: 'bg-purple-500' },
-              { label: 'Classement', icon: Trophy, href: '/leaderboard', color: 'bg-yellow-500' },
-              { label: 'Mon wallet', icon: Wallet, href: '/wallet', color: 'bg-green-500' },
+              { label: t('challenges.create'), icon: Plus, href: '/challenges', color: 'bg-[#0097FC]' },
+              { label: t('dashboard.action.myChallenges'), icon: Gamepad2, href: '/challenges?filter=mine', color: 'bg-purple-500' },
+              { label: t('nav.leaderboard'), icon: Trophy, href: '/leaderboard', color: 'bg-yellow-500' },
+              { label: t('dashboard.action.wallet'), icon: Wallet, href: '/wallet', color: 'bg-green-500' },
             ].map((action, i) => (
               <Link key={i} href={action.href}>
                 <Card className="group hover:scale-105 transition-transform cursor-pointer">

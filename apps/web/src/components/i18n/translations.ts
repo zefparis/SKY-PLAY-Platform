@@ -47,6 +47,12 @@ export const translations: Record<SupportedLang, Translations> = {
     'dashboard.section.recentMatches': 'Recent Matches',
     'dashboard.match.ago': '2 hours ago',
     'dashboard.match.won': 'Won',
+    'dashboard.loginRequired': 'Sign in to access your dashboard',
+    'dashboard.seeAll': 'See all',
+    'dashboard.noActiveChallenge': 'No active challenge for now',
+    'dashboard.quickActions': 'Quick Actions',
+    'dashboard.action.myChallenges': 'My Challenges',
+    'dashboard.action.wallet': 'My Wallet',
 
     // Leaderboard
     'leaderboard.title': 'Leaderboard',
@@ -255,6 +261,12 @@ export const translations: Record<SupportedLang, Translations> = {
     'dashboard.section.recentMatches': 'Matchs récents',
     'dashboard.match.ago': 'il y a 2 heures',
     'dashboard.match.won': 'Gagné',
+    'dashboard.loginRequired': 'Connectez-vous pour accéder au tableau de bord',
+    'dashboard.seeAll': 'Voir tout',
+    'dashboard.noActiveChallenge': 'Aucun défi actif pour le moment',
+    'dashboard.quickActions': 'Actions rapides',
+    'dashboard.action.myChallenges': 'Mes défis',
+    'dashboard.action.wallet': 'Mon portefeuille',
 
     // Leaderboard
     'leaderboard.title': 'Classement',
