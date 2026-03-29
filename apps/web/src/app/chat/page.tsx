@@ -167,12 +167,13 @@ export default function ChatPage() {
               className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
             />
             {/* Modal */}
+            <div className="fixed top-20 inset-x-0 z-[100] flex justify-center px-4 pointer-events-none">
             <motion.div
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl mx-auto px-4"
+              className="w-full max-w-2xl pointer-events-auto"
             >
               <div className="dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl border dark:border-white/10 border-gray-200 overflow-hidden">
                 <div className="px-5 py-4 border-b dark:border-white/10 border-gray-200 flex items-center justify-between">
@@ -201,6 +202,7 @@ export default function ChatPage() {
                 </div>
               </div>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
