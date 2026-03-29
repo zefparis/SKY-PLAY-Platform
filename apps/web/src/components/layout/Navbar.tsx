@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -54,13 +55,8 @@ const Navbar = () => {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/15 border border-secondary/30 shadow-glow-blue">
-                <Gamepad2 className="w-6 h-6 text-secondary" />
-              </span>
-              <span className="text-xl sm:text-2xl font-extrabold title-tech text-gradient">
-                SKY PLAY
-              </span>
+            <Link href="/" className="flex items-center">
+              <Image src="/logo.png" alt="SKY PLAY" width={120} height={60} style={{ objectFit: 'contain' }} priority />
             </Link>
 
             {/* Desktop nav links */}
