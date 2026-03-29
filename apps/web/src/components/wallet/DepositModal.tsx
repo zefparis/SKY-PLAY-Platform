@@ -103,10 +103,10 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-md dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[90vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
             <h2 className="text-lg font-black dark:text-white text-[#00165F]">Déposer des fonds</h2>
             <p className="text-xs dark:text-white/50 text-[#00165F]/50 mt-0.5">
@@ -120,7 +120,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
 
         {/* Progress */}
         {step < 3 && (
-          <div className="px-4 sm:px-5 pt-3 shrink-0">
+          <div className="px-4 sm:px-5 pt-2 pb-1 shrink-0">
             <div className="flex gap-1.5">
               {[1, 2].map(s => (
                 <div key={s} className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-[#0097FC]' : 'dark:bg-white/10 bg-gray-200'}`} />
@@ -130,7 +130,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
         )}
 
         {/* Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto flex-1">
+        <div className="px-4 py-3 sm:p-5 overflow-y-auto flex-1 min-h-0">
           <AnimatePresence mode="wait">
 
             {/* Step 1 — Montant */}
