@@ -55,8 +55,8 @@ const Navbar = () => {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="SKY PLAY" width={120} height={40} className="h-10 w-auto object-contain" priority />
+            <Link href="/" className="relative flex-shrink-0 h-14 w-40">
+              <Image src="/logo.png" alt="SKY PLAY" fill className="object-contain object-left" priority />
             </Link>
 
             {/* Desktop nav links */}
