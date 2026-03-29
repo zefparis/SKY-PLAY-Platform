@@ -127,20 +127,50 @@ export class AuthService {
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
       : null;
 
-    const user = await this.prisma.user.upsert({
+    // Vérifier si un user avec ce discordId existe déjà
+    let user = await this.prisma.user.findUnique({
       where: { discordId: discordUser.id },
-      create: {
+    });
+
+    if (user) {
+      // Mettre à jour le user existant avec discordId
+      user = await this.prisma.user.update({
+        where: { discordId: discordUser.id },
+        data: {
+          avatar: avatarUrl,
+          discordTag: `${discordUser.username}#${discordUser.discriminator}`,
+        },
+      });
+      return user;
+    }
+
+    // Vérifier si un user avec cet email existe déjà
+    user = await this.prisma.user.findUnique({
+      where: { email: discordUser.email },
+    });
+
+    if (user) {
+      // Lier Discord à un compte existant
+      user = await this.prisma.user.update({
+        where: { email: discordUser.email },
+        data: {
+          discordId: discordUser.id,
+          avatar: avatarUrl,
+          discordTag: `${discordUser.username}#${discordUser.discriminator}`,
+        },
+      });
+      return user;
+    }
+
+    // Créer un nouveau user
+    user = await this.prisma.user.create({
+      data: {
         email: discordUser.email,
         username: discordUser.username,
         discordId: discordUser.id,
         avatar: avatarUrl,
         isVerified: discordUser.verified,
         cognitoSub: `discord_${discordUser.id}`,
-        discordTag: `${discordUser.username}#${discordUser.discriminator}`,
-      },
-      update: {
-        discordId: discordUser.id,
-        avatar: avatarUrl,
         discordTag: `${discordUser.username}#${discordUser.discriminator}`,
       },
     });
