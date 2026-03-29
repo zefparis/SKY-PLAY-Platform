@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
 import { Loader2 } from 'lucide-react'
 
-export default function DiscordCallbackPage() {
+function DiscordCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const handleDiscordCallback = useAuthStore((s) => s.handleDiscordCallback)
@@ -59,5 +59,20 @@ export default function DiscordCallbackPage() {
         <p className="dark:text-white/60 text-[#00165F]/60">Authentification en cours...</p>
       </div>
     </div>
+  )
+}
+
+export default function DiscordCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center dark:bg-[#030b1a] bg-[#f0f4ff]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 mx-auto mb-4 dark:text-[#0097FC] text-[#0097FC] animate-spin" />
+          <h2 className="text-xl font-bold dark:text-white text-[#00165F] mb-2">Chargement...</h2>
+        </div>
+      </div>
+    }>
+      <DiscordCallbackContent />
+    </Suspense>
   )
 }
