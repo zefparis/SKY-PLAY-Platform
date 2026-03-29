@@ -60,6 +60,15 @@ const translations = {
         { type: 'Tournoi premium', players: '100', stake: '5 000 CFA', pot: '500 000 CFA', winner: '225 000 CFA', fee: '10%', highlight: true },
       ],
     },
+    apk: {
+      title: "Télécharge l'app SKY PLAY",
+      subtitle: 'Disponible sur Android — Installation directe',
+      button: '📱 Télécharger l\'APK Android',
+      note: "⚠️ Activez 'Sources inconnues' dans Paramètres → Sécurité pour installer",
+      size: '~15 MB',
+      version: 'v1.0.0',
+      navButton: '📱 App Android',
+    },
     footer: {
       tagline: 'La plateforme de défis gaming #1 en Afrique centrale',
       sections: [
@@ -118,6 +127,15 @@ const translations = {
         { type: 'Big tournament', players: '50', stake: '2,000 XAF', pot: '100,000 XAF', winner: '45,000 XAF', fee: '10%', highlight: false },
         { type: 'Premium tournament', players: '100', stake: '5,000 XAF', pot: '500,000 XAF', winner: '225,000 XAF', fee: '10%', highlight: true },
       ],
+    },
+    apk: {
+      title: 'Download SKY PLAY App',
+      subtitle: 'Available on Android — Direct install',
+      button: '📱 Download Android APK',
+      note: "⚠️ Enable 'Unknown sources' in Settings → Security to install",
+      size: '~15 MB',
+      version: 'v1.0.0',
+      navButton: '📱 Android App',
     },
     footer: {
       tagline: 'The #1 gaming challenge platform in Central Africa',
@@ -203,6 +221,10 @@ function PublicNavbar({ lang, setLang, openLogin, openSignup, t }: {
             <span className="opacity-40 mx-0.5">|</span>
             <span className="opacity-60 uppercase">{lang === 'fr' ? 'en' : 'fr'}</span>
           </button>
+          <a href="#download"
+            className="hidden rounded-xl border border-[#3DDC84]/40 bg-[#3DDC84]/8 px-3 py-1.5 text-xs font-bold text-[#3DDC84] transition hover:bg-[#3DDC84]/15 sm:block">
+            {t.apk.navButton}
+          </a>
           <button onClick={openLogin}
             className="hidden rounded-xl border border-white/25 bg-white/5 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/15 sm:block">
             {t.nav.login}
@@ -411,6 +433,64 @@ function PricingSection({ t }: { t: Trans }) {
   )
 }
 
+// ─── APK Download ────────────────────────────────────────────────────────────
+function ApkDownloadSection({ t }: { t: Trans }) {
+  const apkUrl = process.env.NEXT_PUBLIC_APK_URL || '#'
+
+  return (
+    <section id="download" className="border-t border-white/8 py-24"
+      style={{ background: 'linear-gradient(160deg, #00165F 0%, #000d3d 60%, #000820 100%)' }}>
+      <div className="mx-auto max-w-4xl px-4 text-center">
+        <FadeUp>
+          {/* Android robot icon */}
+          <div className="mb-8 flex justify-center">
+            <div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-[#3DDC84]/30 bg-[#3DDC84]/10 shadow-2xl shadow-[#3DDC84]/20">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path d="M6 18 L6 36 Q6 40 10 40 L38 40 Q42 40 42 36 L42 18 Q42 14 38 14 L10 14 Q6 14 6 18Z" fill="#3DDC84"/>
+                <circle cx="17" cy="27" r="3" fill="#00165F"/>
+                <circle cx="31" cy="27" r="3" fill="#00165F"/>
+                <path d="M15 14 L10 6" stroke="#3DDC84" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M33 14 L38 6" stroke="#3DDC84" strokeWidth="2.5" strokeLinecap="round"/>
+                <circle cx="10" cy="5" r="2" fill="#3DDC84"/>
+                <circle cx="38" cy="5" r="2" fill="#3DDC84"/>
+                <rect x="2" y="20" width="4" height="12" rx="2" fill="#3DDC84"/>
+                <rect x="42" y="20" width="4" height="12" rx="2" fill="#3DDC84"/>
+              </svg>
+            </div>
+          </div>
+
+          <h2 className="mb-4 text-4xl font-black text-white sm:text-5xl">{t.apk.title}</h2>
+          <p className="mb-10 text-lg text-white/60">{t.apk.subtitle}</p>
+
+          <a
+            href={apkUrl}
+            download="skyplay.apk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 rounded-2xl bg-[#3DDC84] px-10 py-5 text-lg font-extrabold text-black shadow-2xl shadow-[#3DDC84]/30 transition hover:brightness-110 active:scale-[0.98]"
+          >
+            <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+              <path d="M6 18 L6 36 Q6 40 10 40 L38 40 Q42 40 42 36 L42 18 Q42 14 38 14 L10 14 Q6 14 6 18Z" fill="black" opacity="0.75"/>
+              <circle cx="17" cy="27" r="3" fill="#3DDC84"/>
+              <circle cx="31" cy="27" r="3" fill="#3DDC84"/>
+            </svg>
+            {t.apk.button}
+          </a>
+
+          <div className="mt-4 flex items-center justify-center gap-6 text-sm text-white/40">
+            <span>📦 {t.apk.size}</span>
+            <span>🏷️ {t.apk.version}</span>
+          </div>
+
+          <p className="mx-auto mt-8 max-w-lg rounded-2xl border border-yellow-500/25 bg-yellow-500/8 px-6 py-4 text-sm text-yellow-300/80">
+            {t.apk.note}
+          </p>
+        </FadeUp>
+      </div>
+    </section>
+  )
+}
+
 // ─── Discord Widget ──────────────────────────────────────────────────────────
 function DiscordWidget() {
   const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID || ''
@@ -531,6 +611,7 @@ export default function LandingPage() {
         <HowItWorksSection t={t} openSignup={openSignup} />
         <GamesSection t={t} />
         <PricingSection t={t} />
+        <ApkDownloadSection t={t} />
         <DiscordWidget />
         <FooterSection t={t} />
       </div>
