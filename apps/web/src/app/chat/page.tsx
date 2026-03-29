@@ -51,6 +51,11 @@ export default function ChatPage() {
 
   useEffect(() => { if (!tokens) router.push('/') }, [tokens, router])
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+  
+  useEffect(() => {
+    document.body.classList.add('chat-page')
+    return () => document.body.classList.remove('chat-page')
+  }, [])
 
   const handleSend = () => {
     if (!input.trim() || !isConnected) return
@@ -65,7 +70,7 @@ export default function ChatPage() {
   if (!tokens || !currentUser) return null
 
   return (
-    <div className={`flex flex-col dark:bg-[#030b1a] bg-[#f0f4ff] overflow-hidden ${isInVoice ? 'h-[calc(100dvh-64px-48px)]' : 'h-[calc(100dvh-64px)]'}`}>
+    <div data-page="chat" className={`flex flex-col dark:bg-[#030b1a] bg-[#f0f4ff] overflow-hidden ${isInVoice ? 'h-[calc(100dvh-64px-48px)]' : 'h-[calc(100dvh-64px)]'}`}>
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
       <div className="shrink-0 px-3 sm:px-5 py-2.5 dark:bg-[#00165F]/40 bg-white/80 backdrop-blur-md border-b dark:border-white/8 border-[#00165F]/8">

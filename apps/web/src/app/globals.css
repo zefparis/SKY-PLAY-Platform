@@ -62,6 +62,13 @@ html.dark body > * {
   z-index: 1;
 }
 
+/* Force navbar mobile en bas sur page chat */
+body.chat-page nav .md\:hidden.fixed {
+  bottom: 0 !important;
+  top: auto !important;
+  transform: none !important;
+}
+
 @layer utilities {
   /* Glow + gradients derived strictly from brand colors */
   .glow-blue { box-shadow: 0 0 24px rgba(0, 151, 252, 0.45); }
