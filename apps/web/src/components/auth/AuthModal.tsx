@@ -123,10 +123,6 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
   }
 
   useEffect(() => {
-    if (isOpen) setView(initialView)
-  }, [isOpen, initialView])
-
-  useEffect(() => {
     if (!isOpen) return
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
@@ -146,12 +142,15 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
     if (!isOpen) {
       clearError()
       resetLocalState()
-      setView(confirmEmail ? 'confirm' : 'login')
       return
     }
-    setView(confirmEmail ? 'confirm' : 'login')
-    if (confirmEmail) setEmail(confirmEmail)
-  }, [isOpen, clearError, confirmEmail])
+    if (confirmEmail) {
+      setView('confirm')
+      setEmail(confirmEmail)
+    } else {
+      setView(initialView)
+    }
+  }, [isOpen, clearError, confirmEmail, initialView])
 
   const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()

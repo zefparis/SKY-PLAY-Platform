@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
 import { AuthModal } from '@/components/auth/AuthModal'
+import { useAuthStore } from '@/lib/auth-store'
 
 type Lang = 'fr' | 'en'
 type ViewMode = 'login' | 'signup'
@@ -443,9 +445,15 @@ function FooterSection({ t }: { t: Trans }) {
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const router = useRouter()
+  const tokens = useAuthStore((s) => s.tokens)
   const [lang, setLang] = useState<Lang>('fr')
   const [authOpen, setAuthOpen] = useState(false)
   const [authView, setAuthView] = useState<ViewMode>('login')
+
+  useEffect(() => {
+    if (tokens) router.replace('/dashboard')
+  }, [tokens, router])
 
   useEffect(() => {
     try {
