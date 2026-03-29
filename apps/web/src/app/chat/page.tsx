@@ -152,33 +152,54 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
-      {/* ── VOICE PANEL (slide-down) ───────────────────────────── */}
+      {/* ── VOICE PANEL (modal overlay) ───────────────────────────── */}
       <AnimatePresence>
         {showVoice && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-            className="overflow-hidden shrink-0"
-          >
-            <div className="px-4 py-3 dark:bg-[#00165F]/20 bg-white/60 border-b dark:border-white/8 border-[#00165F]/8">
-              <VoiceChannelList
-                channels={VOICE_CHANNELS}
-                currentVoiceRoom={currentVoiceRoom}
-                onJoin={(id) => { joinVoiceRoom(id); setShowVoice(false) }}
-              />
-              {isInVoice && currentVoiceRoom && (
-                <VoiceRoom
-                  room={currentVoiceRoom}
-                  users={voiceUsers}
-                  isMuted={isMuted}
-                  onToggleMute={toggleMute}
-                  onLeave={leaveVoiceRoom}
-                />
-              )}
-            </div>
-          </motion.div>
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowVoice(false)}
+              className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
+            />
+            {/* Modal */}
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl mx-auto px-4"
+            >
+              <div className="dark:bg-[#00165F] bg-white rounded-2xl shadow-2xl border dark:border-white/10 border-gray-200 overflow-hidden">
+                <div className="px-5 py-4 border-b dark:border-white/10 border-gray-200 flex items-center justify-between">
+                  <h3 className="text-lg font-bold dark:text-white text-[#00165F]">🎙 Salons vocaux</h3>
+                  <button onClick={() => setShowVoice(false)} className="p-2 rounded-lg dark:text-white/50 text-[#00165F]/50 hover:dark:bg-white/10 hover:bg-gray-100 transition">
+                    ✕
+                  </button>
+                </div>
+                <div className="px-5 py-4">
+                  <VoiceChannelList
+                    channels={VOICE_CHANNELS}
+                    currentVoiceRoom={currentVoiceRoom}
+                    onJoin={(id) => { joinVoiceRoom(id); setShowVoice(false) }}
+                  />
+                  {isInVoice && currentVoiceRoom && (
+                    <div className="mt-4 pt-4 border-t dark:border-white/10 border-gray-200">
+                      <VoiceRoom
+                        room={currentVoiceRoom}
+                        users={voiceUsers}
+                        isMuted={isMuted}
+                        onToggleMute={toggleMute}
+                        onLeave={leaveVoiceRoom}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
