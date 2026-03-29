@@ -244,4 +244,13 @@ export class UsersController {
 
     return this.usersService.updateStatus(userPayload.id, body.status);
   }
+
+  /**
+   * Récupère le statut Discord d'un utilisateur
+   * Public avec cache 60s
+   */
+  @Get(':id/discord-status')
+  async getDiscordStatus(@Param('id') userId: string) {
+    return this.usersService.getDiscordStatus(userId);
+  }
 }

@@ -398,4 +398,59 @@ export class UsersService {
       },
     });
   }
+
+  private discordStatusCache = new Map<string, { status: string; timestamp: number }>();
+
+  async getDiscordStatus(userId: string) {
+    // Vérifier le cache (60s)
+    const cached = this.discordStatusCache.get(userId);
+    if (cached && Date.now() - cached.timestamp < 60000) {
+      return { status: cached.status };
+    }
+
+    try {
+      // Récupérer l'utilisateur pour obtenir son discordId
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { discordId: true },
+      });
+
+      if (!user?.discordId) {
+        return { status: 'offline' };
+      }
+
+      const botToken = process.env.DISCORD_BOT_TOKEN;
+      const guildId = process.env.DISCORD_GUILD_ID;
+
+      if (!botToken || !guildId) {
+        console.warn('Discord bot token or guild ID not configured');
+        return { status: 'offline' };
+      }
+
+      // Appeler l'API Discord pour récupérer le membre du serveur
+      const response = await fetch(
+        `https://discord.com/api/guilds/${guildId}/members/${user.discordId}`,
+        {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return { status: 'offline' };
+      }
+
+      const member = await response.json();
+      const status = member.status || 'offline';
+
+      // Mettre en cache
+      this.discordStatusCache.set(userId, { status, timestamp: Date.now() });
+
+      return { status };
+    } catch (error) {
+      console.error('Error fetching Discord status:', error);
+      return { status: 'offline' };
+    }
+  }
 }
