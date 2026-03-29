@@ -113,7 +113,7 @@ const Navbar = () => {
       </nav>
 
       {/* ═══ MOBILE BOTTOM TAB BAR ════════════════════════════════ */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 dark:bg-[#00165F]/95 bg-white/95 backdrop-blur-xl border-t dark:border-white/10 border-[#00165F]/10 safe-area-inset-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-[#00165F]/10 safe-area-inset-bottom">
         <div className="flex items-center justify-around h-16 px-2">
           {bottomTabs.map(tab => {
             const Icon = tab.icon
@@ -129,8 +129,8 @@ const Navbar = () => {
                     transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                   />
                 )}
-                <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-[#0097FC]' : 'dark:text-white/50 text-[#00165F]/40 group-hover:text-[#0097FC]'}`} />
-                <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-[#0097FC]' : 'dark:text-white/40 text-[#00165F]/40'}`}>{tab.label}</span>
+                <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-[#0097FC]' : 'text-[#00165F]/40 group-hover:text-[#0097FC]'}`} />
+                <span className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-[#0097FC]' : 'text-[#00165F]/40'}`}>{tab.label}</span>
               </Link>
             )
           })}
@@ -147,7 +147,7 @@ const Navbar = () => {
                 <User className="w-3.5 h-3.5 text-white" />
               </div>
             )}
-            <span className="text-[10px] font-semibold dark:text-white/40 text-[#00165F]/40 group-hover:text-[#0097FC]">Plus</span>
+            <span className="text-[10px] font-semibold text-[#00165F]/40 group-hover:text-[#0097FC]">Plus</span>
           </button>
         </div>
       </div>
