@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import RequireAuth from '@/features/auth/RequireAuth'
 import Container from '@/components/ui/Container'
 import { useAuthStore } from '@/lib/auth-store'
@@ -14,114 +14,138 @@ import Achievements from '@/components/profile/Achievements'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { useI18n } from '@/components/i18n/I18nProvider'
+import DepositModal from '@/components/wallet/DepositModal'
+import WithdrawModal from '@/components/wallet/WithdrawModal'
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+
+function mapTxType(type: string): 'deposit' | 'withdraw' | 'win' | 'loss' {
+  switch (type) {
+    case 'DEPOSIT': return 'deposit'
+    case 'WITHDRAWAL': case 'WITHDRAW': return 'withdraw'
+    case 'CHALLENGE_CREDIT': case 'CHALLENGE_WIN': return 'win'
+    default: return 'loss'
+  }
+}
+
+function getRankName(level: number): string {
+  if (level >= 50) return 'Legend'
+  if (level >= 40) return 'Grand Master'
+  if (level >= 30) return 'Master'
+  if (level >= 20) return 'Diamond'
+  if (level >= 10) return 'Gold'
+  if (level >= 5) return 'Silver'
+  return 'Bronze'
+}
 
 export default function ProfilePage() {
   const { t } = useI18n()
   const user = useAuthStore((s) => s.user)
+  const tokens = useAuthStore((s) => s.tokens)
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [showDeposit, setShowDeposit] = useState(false)
+  const [showWithdraw, setShowWithdraw] = useState(false)
+  const [profileData, setProfileData] = useState<any>(null)
+  const [walletData, setWalletData] = useState<any>(null)
+  const [challengeData, setChallengeData] = useState<any>(null)
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Données utilisateur réelles ou par défaut
   const username = user?.username || 'Player'
   const email = user?.email || ''
-  const rank = 'Diamond' // TODO: récupérer depuis l'API
+  const token = tokens?.idToken || tokens?.accessToken
 
-  // Stats du joueur (TODO: récupérer depuis l'API)
-  const stats = {
-    gamesPlayed: 128,
-    wins: 84,
-    losses: 44,
-    winRate: 66,
-  }
+  const loadData = useCallback(async () => {
+    if (!user || !token) { setLoading(false); return }
+    const auth = { Authorization: `Bearer ${token}` }
+    try {
+      const [profileRes, walletRes, challengesRes, lbRes] = await Promise.allSettled([
+        fetch(`${API}/users/${username}`),
+        fetch(`${API}/wallet`, { headers: auth }),
+        fetch(`${API}/challenges/my`, { headers: auth }),
+        fetch(`${API}/users/leaderboard?limit=100`),
+      ])
+      if (profileRes.status === 'fulfilled' && profileRes.value.ok)
+        setProfileData(await profileRes.value.json())
+      if (walletRes.status === 'fulfilled' && walletRes.value.ok)
+        setWalletData(await walletRes.value.json())
+      if (challengesRes.status === 'fulfilled' && challengesRes.value.ok)
+        setChallengeData(await challengesRes.value.json())
+      if (lbRes.status === 'fulfilled' && lbRes.value.ok)
+        setLeaderboard(await lbRes.value.json())
+    } catch {}
+    finally { setLoading(false) }
+  }, [user, token, username])
 
-  // Données du wallet (TODO: récupérer depuis l'API)
-  const walletData = {
-    balance: 15750,
-    transactions: [
-      { id: '1', type: 'win' as const, amount: 500, description: 'Victoire FIFA 24', date: "Aujourd'hui 21:12" },
-      { id: '2', type: 'deposit' as const, amount: 1000, description: 'Dépôt', date: 'Hier 14:30' },
-      { id: '3', type: 'loss' as const, amount: 250, description: 'Défaite Valorant', date: 'Mar 21 18:40' },
-      { id: '4', type: 'win' as const, amount: 750, description: 'Victoire COD Warzone', date: 'Mar 20 22:10' },
-    ],
-  }
+  useEffect(() => { loadData() }, [loadData])
 
-  // Données de classement (TODO: récupérer depuis l'API)
+  // ── Derived data ──────────────────────────────────────────────────────────
+  const gamesPlayed = profileData?.gamesPlayed ?? 0
+  const wins        = profileData?.gamesWon ?? 0
+  const losses      = Math.max(0, gamesPlayed - wins)
+  const winRate     = gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0
+  const level       = profileData?.level ?? 1
+  const xp          = profileData?.xp ?? 0
+  const stats       = { gamesPlayed, wins, losses, winRate }
+
+  const balance  = walletData?.balance ?? 0
+  const recentTx = (walletData?.recentTransactions ?? []).map((tx: any) => ({
+    id: tx.id,
+    type: mapTxType(tx.type),
+    amount: Math.abs(Number(tx.amount)),
+    description: tx.description ?? tx.type,
+    date: new Date(tx.createdAt).toLocaleDateString(),
+  }))
+
+  const lbArray    = Array.isArray(leaderboard) ? leaderboard : []
+  const myRankIdx  = lbArray.findIndex((p: any) => p.id === user?.id || p.username === username)
+  const globalRank = myRankIdx >= 0 ? myRankIdx + 1 : 0
+  const rankName   = getRankName(level)
   const rankingData = {
-    globalRank: 342,
-    totalPlayers: 15420,
-    rankName: 'Diamond',
-    points: 2850,
-    nextRankPoints: 3500,
+    globalRank,
+    totalPlayers: lbArray.length,
+    rankName,
+    points: xp,
+    nextRankPoints: (level + 1) * 500,
   }
 
-  const matches = [
-    { id: '1', game: 'FIFA 24', opponent: 'ProGamer123', result: 'WIN' as const, date: 'Today 21:12' },
-    { id: '2', game: 'Valorant', opponent: 'TopFragger', result: 'LOSS' as const, date: 'Yesterday 18:40' },
-    { id: '3', game: 'COD Warzone', opponent: 'ClutchMaster', result: 'WIN' as const, date: 'Mar 21 14:05' },
-    { id: '4', game: 'Rocket League', opponent: 'NinjaWarrior', result: 'WIN' as const, date: 'Mar 20 22:10' },
+  const allChallenges = [
+    ...(challengeData?.created ?? []),
+    ...(challengeData?.participated ?? []),
   ]
+  const unique = Array.from(new Map(allChallenges.map((c: any) => [c.id, c])).values())
+  const matches = unique
+    .filter((c: any) => c.status === 'COMPLETED' || c.status === 'RESOLVED' || c.winnerId)
+    .slice(0, 5)
+    .map((c: any) => ({
+      id: c.id,
+      game: c.game ?? c.title ?? '—',
+      opponent: '—',
+      result: (c.winnerId === user?.id ? 'WIN' : 'LOSS') as 'WIN' | 'LOSS',
+      date: new Date(c.updatedAt ?? c.createdAt).toLocaleDateString(),
+    }))
 
-  const achievements = [
-    {
-      id: 'a1',
-      title: 'First Blood',
-      description: 'Win your first match on SKY PLAY.',
-    },
-    {
-      id: 'a2',
-      title: 'Win Streak',
-      description: 'Win 5 matches in a row.',
-      highlight: true,
-    },
-    {
-      id: 'a3',
-      title: 'Challenger',
-      description: 'Join 10 challenges.',
-    },
-    {
-      id: 'a4',
-      title: 'High Roller',
-      description: 'Win a prize pool over 100k.',
-      highlight: true,
-    },
-    {
-      id: 'a5',
-      title: 'Consistent',
-      description: 'Maintain >60% winrate over 50 games.',
-    },
-    {
-      id: 'a6',
-      title: 'Arena Ready',
-      description: 'Complete your profile and link a gaming account.',
-    },
-  ]
+  const achievements = (profileData?.achievements ?? []).map((a: any) => ({
+    id: a.id,
+    title: a.title,
+    description: a.description,
+    highlight: false,
+  }))
 
-  // Handlers
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handlePhotoChange = async (file: File) => {
     setIsUploadingPhoto(true)
     try {
-      const tokens = useAuthStore.getState().tokens
       const formData = new FormData()
       formData.append('file', file)
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/avatar`, {
+      const res = await fetch(`${API}/users/avatar`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tokens?.idToken || tokens?.accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Erreur lors de l\'upload')
-      }
-
-      const result = await response.json()
-      
-      // Mettre à jour le store avec le nouvel avatar
+      if (!res.ok) throw new Error('Upload failed')
+      const result = await res.json()
       useAuthStore.setState({ user: result.user })
-      
-      alert('Photo de profil mise à jour avec succès !')
     } catch (error: unknown) {
       console.error('Erreur upload photo:', error)
       throw error
@@ -132,41 +156,18 @@ export default function ProfilePage() {
 
   const handleProfileSave = async (data: any) => {
     try {
-      const tokens = useAuthStore.getState().tokens
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
+      const res = await fetch(`${API}/users/profile`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokens?.idToken || tokens?.accessToken}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(data),
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Erreur lors de la sauvegarde')
-      }
-
-      const updatedUser = await response.json()
-      
-      // Mettre à jour le store avec les nouvelles données
+      if (!res.ok) throw new Error('Save failed')
+      const updatedUser = await res.json()
       useAuthStore.setState({ user: updatedUser })
-      
-      alert('Profil mis à jour avec succès !')
     } catch (error: unknown) {
       console.error('Erreur sauvegarde profil:', error)
       throw error
     }
-  }
-
-  const handleDeposit = () => {
-    // TODO: Ouvrir modal de dépôt
-    console.log('Deposit')
-  }
-
-  const handleWithdraw = () => {
-    // TODO: Ouvrir modal de retrait
-    console.log('Withdraw')
   }
 
   return (
@@ -175,56 +176,49 @@ export default function ProfilePage() {
         <main className="pb-12">
           <Container>
             <div className="space-y-6 sm:space-y-8">
-              {/* Header avec photo de profil */}
+              {/* Header */}
               <Card variant="glass" className="flex flex-col sm:flex-row sm:items-start gap-6">
                 <ProfilePhotoUpload
                   username={username}
                   currentPhoto={user?.avatar || undefined}
                   onPhotoChange={handlePhotoChange}
                 />
-                
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                     <div>
                       <h1 className="title-tech dark:text-white text-[#00165F] text-3xl font-extrabold">{username}</h1>
                       <p className="dark:text-white/60 text-[#00165F]/60 mt-1">{email}</p>
                     </div>
-                    <Badge variant="danger">{rank}</Badge>
+                    <Badge variant="danger">{rankName}</Badge>
                   </div>
-                  
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.games')}</p>
-                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.gamesPlayed}</p>
-                    </div>
-                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.wins')}</p>
-                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.wins}</p>
-                    </div>
-                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.losses')}</p>
-                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.losses}</p>
-                    </div>
-                    <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.winrate')}</p>
-                      <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.winRate}%</p>
-                    </div>
+                    {[
+                      { label: t('stats.games'),   value: stats.gamesPlayed },
+                      { label: t('stats.wins'),    value: stats.wins },
+                      { label: t('stats.losses'),  value: stats.losses },
+                      { label: t('stats.winrate'), value: `${stats.winRate}%` },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
+                        <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{label}</p>
+                        <p className="dark:text-white text-[#00165F] text-xl font-bold">{loading ? '…' : value}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </Card>
 
-              {/* Wallet et Classement */}
+              {/* Wallet & Ranking */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <ProfileWallet
-                  balance={walletData.balance}
-                  transactions={walletData.transactions}
-                  onDeposit={handleDeposit}
-                  onWithdraw={handleWithdraw}
+                  balance={balance}
+                  transactions={recentTx}
+                  onDeposit={() => setShowDeposit(true)}
+                  onWithdraw={() => setShowWithdraw(true)}
                 />
                 <ProfileRanking ranking={rankingData} />
               </div>
 
-              {/* Formulaire d'édition du profil */}
+              {/* Edit form */}
               <ProfileEditForm
                 initialData={{
                   username,
@@ -237,10 +231,10 @@ export default function ProfilePage() {
                 onSave={handleProfileSave}
               />
 
-              {/* Stats détaillées */}
+              {/* Stats grid */}
               <StatsGrid stats={stats} />
 
-              {/* Historique et Achievements */}
+              {/* Match history & Achievements */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <MatchHistory matches={matches} />
                 <Achievements achievements={achievements} />
@@ -249,6 +243,12 @@ export default function ProfilePage() {
           </Container>
         </main>
       </div>
+      {showDeposit && (
+        <DepositModal onClose={() => setShowDeposit(false)} onSuccess={() => { setShowDeposit(false); loadData() }} />
+      )}
+      {showWithdraw && (
+        <WithdrawModal balance={balance} onClose={() => setShowWithdraw(false)} onSuccess={() => { setShowWithdraw(false); loadData() }} />
+      )}
     </RequireAuth>
   )
 }
