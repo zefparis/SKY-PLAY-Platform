@@ -57,7 +57,7 @@ html.dark body::before {
 }
 
 /* Keep app content above overlay */
-html.dark body > * {
+html.dark body > *:not(nav) {
   position: relative;
   z-index: 1;
 }
