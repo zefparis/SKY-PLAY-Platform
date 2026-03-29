@@ -1,5 +1,7 @@
+'use client'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 export type Achievement = {
   id: string
@@ -9,11 +11,12 @@ export type Achievement = {
 }
 
 export default function Achievements({ achievements }: { achievements: Achievement[] }) {
+  const { t } = useI18n()
   return (
     <Card variant="glass">
       <div className="flex items-center justify-between gap-4 mb-6">
-        <h2 className="title-tech text-primary dark:text-white text-xl font-extrabold">Achievements</h2>
-        <Badge variant="info">Unlocked</Badge>
+        <h2 className="title-tech text-primary dark:text-white text-xl font-extrabold">{t('achievements.title')}</h2>
+        <Badge variant="info">{t('achievements.unlocked')}</Badge>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

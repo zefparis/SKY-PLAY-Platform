@@ -4,21 +4,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, RefreshCw, Swords, Trophy, Gamepad2 } from 'lucide-react';
 import ChallengeCard from '@/components/challenges/ChallengeCard';
 import CreateChallengeModal from '@/components/challenges/CreateChallengeModal';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-const GAMES = ['Tous', 'FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobile Legends', 'Autre'];
-const TYPE_FILTERS = [
-  { key: '', label: 'Tous' },
-  { key: 'DUEL', label: '1v1' },
-  { key: 'SMALL_CHALLENGE', label: 'Challenge' },
-  { key: 'STANDARD', label: 'Standard' },
-  { key: 'MEDIUM_TOURNAMENT', label: 'Tournoi M' },
-  { key: 'BIG_TOURNAMENT', label: 'Tournoi L' },
-  { key: 'PREMIUM_TOURNAMENT', label: 'Premium' },
-];
+const GAMES_EN = ['All', 'FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobile Legends', 'Other'];
+const GAMES_FR = ['Tous', 'FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobile Legends', 'Autre'];
 
 export default function ChallengesPage() {
+  const { t, lang } = useI18n();
+  const GAMES = lang === 'fr' ? GAMES_FR : GAMES_EN;
+  const TYPE_FILTERS = [
+    { key: '', label: t('challenges.filter.all') },
+    { key: 'DUEL', label: '1v1' },
+    { key: 'SMALL_CHALLENGE', label: 'Challenge' },
+    { key: 'STANDARD', label: 'Standard' },
+    { key: 'MEDIUM_TOURNAMENT', label: lang === 'fr' ? 'Tournoi M' : 'Tournament M' },
+    { key: 'BIG_TOURNAMENT', label: lang === 'fr' ? 'Tournoi L' : 'Tournament L' },
+    { key: 'PREMIUM_TOURNAMENT', label: 'Premium' },
+  ];
   const [challenges, setChallenges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -55,10 +59,10 @@ export default function ChallengesPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F] flex items-center gap-2 sm:gap-3">
               <Swords className="w-6 h-6 sm:w-8 sm:h-8 text-[#0097FC] shrink-0" />
-              Défis SKY PLAY
+              {t('challenges.title')}
             </h1>
             <p className="dark:text-white/60 text-[#00165F]/60 mt-1 text-sm sm:text-base">
-              Rejoins un défi, bats tes adversaires, remporte des CFA
+              {t('challenges.subtitle')}
             </p>
           </div>
           <button
@@ -66,7 +70,7 @@ export default function ChallengesPage() {
             className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0097FC] hover:bg-[#0097FC]/90 text-white font-bold transition-all hover:scale-105 shadow-lg shadow-[#0097FC]/20"
           >
             <Plus className="w-5 h-5" />
-            Créer un défi
+            {t('challenges.create')}
           </button>
         </div>
 
@@ -100,7 +104,7 @@ export default function ChallengesPage() {
                     : 'dark:bg-white/10 bg-white dark:text-white/60 text-[#00165F]/60'
                 }`}
               >
-                {s === 'OPEN' ? 'Ouverts' : s === 'IN_PROGRESS' ? 'En cours' : s === 'VALIDATING' ? 'Validation' : 'Terminés'}
+                {s === 'OPEN' ? t('challenges.filter.open') : s === 'IN_PROGRESS' ? t('challenges.filter.inProgress') : s === 'VALIDATING' ? t('challenges.filter.validating') : t('challenges.filter.completed')}
               </button>
             ))}
             <select
@@ -108,7 +112,7 @@ export default function ChallengesPage() {
               onChange={e => setGameFilter(e.target.value)}
               className="px-2.5 sm:px-3 py-1 rounded-lg text-xs dark:bg-white/10 bg-white dark:text-white text-[#00165F] border dark:border-white/10 border-[#00165F]/10 max-w-[110px] sm:max-w-none"
             >
-              {GAMES.map(g => <option key={g} value={g === 'Tous' ? '' : g}>{g}</option>)}
+              {GAMES.map((g, i) => <option key={g} value={i === 0 ? '' : g}>{g}</option>)}
             </select>
             <button onClick={load} className="ml-auto dark:text-white/40 text-[#00165F]/40 hover:text-[#0097FC]">
               <RefreshCw className="w-4 h-4" />
@@ -126,13 +130,13 @@ export default function ChallengesPage() {
         ) : challenges.length === 0 ? (
           <div className="text-center py-20">
             <Trophy className="w-16 h-16 mx-auto dark:text-white/20 text-[#00165F]/20 mb-4" />
-            <p className="dark:text-white/50 text-[#00165F]/50 text-lg">Aucun défi pour le moment</p>
-            <p className="dark:text-white/30 text-[#00165F]/30 text-sm mt-2">Sois le premier à en créer un !</p>
+            <p className="dark:text-white/50 text-[#00165F]/50 text-lg">{t('challenges.noChallenge')}</p>
+            <p className="dark:text-white/30 text-[#00165F]/30 text-sm mt-2">{t('challenges.noChallenge.sub')}</p>
             <button
               onClick={() => setShowCreate(true)}
               className="mt-6 px-6 py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:scale-105 transition-transform"
             >
-              Créer le premier défi
+              {t('challenges.createFirst')}
             </button>
           </div>
         ) : (

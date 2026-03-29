@@ -1,5 +1,6 @@
 import Card from '@/components/ui/Card'
 import { Trophy, Swords, Gamepad2, TrendingUp } from 'lucide-react'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 export type ProfileStats = {
   gamesPlayed: number
@@ -9,11 +10,12 @@ export type ProfileStats = {
 }
 
 export default function StatsGrid({ stats }: { stats: ProfileStats }) {
+  const { t } = useI18n()
   const items = [
-    { label: 'Games', value: stats.gamesPlayed, icon: Gamepad2 },
-    { label: 'Wins', value: stats.wins, icon: Trophy },
-    { label: 'Losses', value: stats.losses, icon: Swords },
-    { label: 'Winrate', value: `${stats.winRate}%`, icon: TrendingUp },
+    { label: t('stats.games'), value: stats.gamesPlayed, icon: Gamepad2 },
+    { label: t('stats.wins'), value: stats.wins, icon: Trophy },
+    { label: t('stats.losses'), value: stats.losses, icon: Swords },
+    { label: t('stats.winrate'), value: `${stats.winRate}%`, icon: TrendingUp },
   ]
 
   return (

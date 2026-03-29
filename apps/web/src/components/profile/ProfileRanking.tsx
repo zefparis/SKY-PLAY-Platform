@@ -3,6 +3,7 @@
 import { Trophy, Medal, Award, TrendingUp } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 interface RankingData {
   globalRank: number
@@ -17,6 +18,7 @@ interface ProfileRankingProps {
 }
 
 export default function ProfileRanking({ ranking }: ProfileRankingProps) {
+  const { t } = useI18n()
   const progressPercentage = (ranking.points / ranking.nextRankPoints) * 100
 
   const getRankBadgeVariant = (rankName: string): 'danger' | 'info' | 'success' => {
@@ -38,7 +40,7 @@ export default function ProfileRanking({ ranking }: ProfileRankingProps) {
       <div className="flex items-center justify-between mb-6">
         <h2 className="title-tech text-primary dark:text-white text-xl font-extrabold flex items-center gap-2">
           <Trophy className="w-5 h-5 text-secondary" />
-          Classement
+          {t('ranking.title')}
         </h2>
         <Badge variant={getRankBadgeVariant(ranking.rankName)}>
           {ranking.rankName}
@@ -49,7 +51,7 @@ export default function ProfileRanking({ ranking }: ProfileRankingProps) {
       <div className="bg-gradient-to-br from-secondary/10 to-danger/10 rounded-xl p-6 mb-6 border border-secondary/20">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-primary/70 dark:text-white/60 text-sm mb-1">Rang global</p>
+            <p className="text-primary/70 dark:text-white/60 text-sm mb-1">{t('ranking.globalRank')}</p>
             <p className="text-primary dark:text-white text-3xl font-extrabold tabular-nums">
               #{ranking.globalRank.toLocaleString('fr-FR')}
             </p>
@@ -59,14 +61,14 @@ export default function ProfileRanking({ ranking }: ProfileRankingProps) {
           </div>
         </div>
         <p className="text-primary/60 dark:text-white/40 text-xs">
-          Sur {ranking.totalPlayers.toLocaleString('fr-FR')} joueurs
+          {t('ranking.outOf')} {ranking.totalPlayers.toLocaleString()} {t('ranking.players')}
         </p>
       </div>
 
       {/* Progression vers le prochain rang */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-primary/70 dark:text-white/60 text-sm">Progression</p>
+          <p className="text-primary/70 dark:text-white/60 text-sm">{t('ranking.progress')}</p>
           <p className="text-primary dark:text-white text-sm font-semibold">
             {ranking.points.toLocaleString('fr-FR')} / {ranking.nextRankPoints.toLocaleString('fr-FR')} pts
           </p>
@@ -83,7 +85,7 @@ export default function ProfileRanking({ ranking }: ProfileRankingProps) {
         <div className="flex items-center gap-2 mt-3">
           <TrendingUp className="w-4 h-4 text-green-400" />
           <p className="text-green-400 text-xs font-medium">
-            {(ranking.nextRankPoints - ranking.points).toLocaleString('fr-FR')} pts pour le prochain rang
+            {(ranking.nextRankPoints - ranking.points).toLocaleString()} {t('ranking.nextRank')}
           </p>
         </div>
       </div>
@@ -91,11 +93,11 @@ export default function ProfileRanking({ ranking }: ProfileRankingProps) {
       {/* Stats de rang */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white/40 dark:bg-black/20 rounded-lg p-4 border border-primary/10 dark:border-white/5">
-          <p className="text-primary/70 dark:text-white/60 text-xs mb-1">Points totaux</p>
-          <p className="text-primary dark:text-white text-xl font-bold tabular-nums">{ranking.points.toLocaleString('fr-FR')}</p>
+          <p className="text-primary/70 dark:text-white/60 text-xs mb-1">{t('ranking.totalPoints')}</p>
+          <p className="text-primary dark:text-white text-xl font-bold tabular-nums">{ranking.points.toLocaleString()}</p>
         </div>
         <div className="bg-white/40 dark:bg-black/20 rounded-lg p-4 border border-primary/10 dark:border-white/5">
-          <p className="text-primary/70 dark:text-white/60 text-xs mb-1">Top</p>
+          <p className="text-primary/70 dark:text-white/60 text-xs mb-1">{t('ranking.top')}</p>
           <p className="text-primary dark:text-white text-xl font-bold tabular-nums">
             {((ranking.globalRank / ranking.totalPlayers) * 100).toFixed(1)}%
           </p>

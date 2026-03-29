@@ -10,38 +10,33 @@ import { formatCFA } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
 import DepositModal from '@/components/wallet/DepositModal';
 import WithdrawModal from '@/components/wallet/WithdrawModal';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const IS_TEST = process.env.NEXT_PUBLIC_FLW_ENV !== 'production';
 
-const TX_TYPE_LABELS: Record<string, { label: string; color: string; icon: string }> = {
-  DEPOSIT:          { label: 'Dépôt',         color: 'text-green-400',  icon: '↓' },
-  WITHDRAWAL:       { label: 'Retrait',        color: 'text-red-400',    icon: '↑' },
-  CHALLENGE_DEBIT:  { label: 'Mise défi',      color: 'text-blue-400',   icon: '🎮' },
-  CHALLENGE_CREDIT: { label: 'Gain défi',      color: 'text-[#0097FC]',  icon: '🏆' },
-  CHALLENGE_ENTRY:  { label: 'Mise défi',      color: 'text-blue-400',   icon: '🎮' },
-  CHALLENGE_WIN:    { label: 'Gain défi',      color: 'text-[#0097FC]',  icon: '🏆' },
-  REFUND:           { label: 'Remboursement',  color: 'text-yellow-400', icon: '↩' },
-  COMMISSION:       { label: 'Commission',     color: 'text-gray-400',   icon: '·' },
-  DEBIT:            { label: 'Débit',          color: 'text-red-400',    icon: '↑' },
-  CREDIT:           { label: 'Crédit',         color: 'text-green-400',  icon: '↓' },
+const TX_TYPE_COLORS: Record<string, { color: string; icon: string }> = {
+  DEPOSIT:          { color: 'text-green-400',  icon: '↓' },
+  WITHDRAWAL:       { color: 'text-red-400',    icon: '↑' },
+  CHALLENGE_DEBIT:  { color: 'text-blue-400',   icon: '🎮' },
+  CHALLENGE_CREDIT: { color: 'text-[#0097FC]',  icon: '🏆' },
+  CHALLENGE_ENTRY:  { color: 'text-blue-400',   icon: '🎮' },
+  CHALLENGE_WIN:    { color: 'text-[#0097FC]',  icon: '🏆' },
+  REFUND:           { color: 'text-yellow-400', icon: '↩' },
+  COMMISSION:       { color: 'text-gray-400',   icon: '·' },
+  DEBIT:            { color: 'text-red-400',    icon: '↑' },
+  CREDIT:           { color: 'text-green-400',  icon: '↓' },
 };
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  COMPLETED: { label: 'Confirmé',  color: 'text-green-400 bg-green-400/10' },
-  PENDING:   { label: 'En attente', color: 'text-yellow-400 bg-yellow-400/10' },
-  FAILED:    { label: 'Échoué',    color: 'text-red-400 bg-red-400/10' },
-  CANCELLED: { label: 'Annulé',   color: 'text-gray-400 bg-gray-400/10' },
+const STATUS_COLORS: Record<string, string> = {
+  COMPLETED: 'text-green-400 bg-green-400/10',
+  PENDING:   'text-yellow-400 bg-yellow-400/10',
+  FAILED:    'text-red-400 bg-red-400/10',
+  CANCELLED: 'text-gray-400 bg-gray-400/10',
 };
-
-const FILTERS = [
-  { key: 'ALL',             label: 'Tous' },
-  { key: 'DEPOSIT',        label: 'Dépôts' },
-  { key: 'WITHDRAWAL',     label: 'Retraits' },
-  { key: 'CHALLENGE_DEBIT', label: 'Défis' },
-];
 
 export default function WalletPage() {
+  const { t } = useI18n();
   const idToken = useAuthStore((s) => s.tokens?.idToken);
   const initialized = useAuthStore((s) => s.initialized);
   const [wallet, setWallet] = useState<any>(null);
@@ -130,9 +125,9 @@ export default function WalletPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
         <Wallet className="w-14 h-14 dark:text-white/20 text-[#00165F]/20" />
-        <p className="text-lg font-bold dark:text-white text-[#00165F]">Connectez-vous pour accéder à votre wallet</p>
+        <p className="text-lg font-bold dark:text-white text-[#00165F]">{t('wallet.loginRequired')}</p>
         <a href="/login" className="px-6 py-2.5 rounded-xl bg-[#0097FC] text-white font-bold text-sm hover:bg-[#0097FC]/90 transition">
-          Se connecter
+          {t('wallet.signIn')}
         </a>
       </div>
     );
@@ -163,7 +158,7 @@ export default function WalletPage() {
         <div className="relative rounded-2xl overflow-hidden mb-6 p-6 sm:p-8 bg-gradient-to-br from-[#00165F] via-[#003399] to-[#0097FC]">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           <div className="relative">
-            <p className="text-white/70 text-sm mb-1 font-medium">Solde disponible</p>
+            <p className="text-white/70 text-sm mb-1 font-medium">{t('wallet.balance')}</p>
             <motion.p
               key={balance}
               initial={{ scale: 0.9, opacity: 0 }}
@@ -177,21 +172,21 @@ export default function WalletPage() {
                 onClick={() => setShowDeposit(true)}
                 className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-[#00165F] font-black text-sm hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
               >
-                <Plus className="w-5 h-5" /> Déposer
+                <Plus className="w-5 h-5" /> {t('wallet.deposit')}
               </button>
               <button
                 onClick={() => setShowWithdraw(true)}
                 disabled={balance < 1000}
                 className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/20 text-white font-bold text-sm hover:bg-white/30 transition-all border border-white/30 disabled:opacity-40"
               >
-                <ArrowUpRight className="w-5 h-5" /> Retirer
+                <ArrowUpRight className="w-5 h-5" /> {t('wallet.withdraw')}
               </button>
               <button
                 onClick={handleRefresh}
                 className="sm:ml-auto flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white/10 text-white/70 hover:text-white transition-colors border border-white/20"
               >
                 <RefreshCw className="w-4 h-4" />
-                <span className="text-sm">Actualiser</span>
+                <span className="text-sm">{t('wallet.refresh')}</span>
               </button>
             </div>
           </div>
@@ -200,10 +195,10 @@ export default function WalletPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Total déposé', value: stats.totalDeposited, icon: <ArrowDownLeft className="w-4 h-4 text-green-400" />, color: 'text-green-400' },
-            { label: 'Total gagné', value: stats.totalWon, icon: <Trophy className="w-4 h-4 text-[#0097FC]" />, color: 'text-[#0097FC]' },
-            { label: 'Total misé', value: stats.totalMised, icon: <Gamepad2 className="w-4 h-4 text-blue-400" />, color: 'text-blue-400' },
-            { label: 'Gains nets', value: stats.gainsNets, icon: stats.gainsNets >= 0 ? <TrendingUp className="w-4 h-4 text-green-400" /> : <TrendingDown className="w-4 h-4 text-red-400" />, color: stats.gainsNets >= 0 ? 'text-green-400' : 'text-red-400' },
+            { label: t('wallet.totalDeposited'), value: stats.totalDeposited, icon: <ArrowDownLeft className="w-4 h-4 text-green-400" />, color: 'text-green-400' },
+            { label: t('wallet.totalWon'), value: stats.totalWon, icon: <Trophy className="w-4 h-4 text-[#0097FC]" />, color: 'text-[#0097FC]' },
+            { label: t('wallet.totalBet'), value: stats.totalMised, icon: <Gamepad2 className="w-4 h-4 text-blue-400" />, color: 'text-blue-400' },
+            { label: t('wallet.netGains'), value: stats.gainsNets, icon: stats.gainsNets >= 0 ? <TrendingUp className="w-4 h-4 text-green-400" /> : <TrendingDown className="w-4 h-4 text-red-400" />, color: stats.gainsNets >= 0 ? 'text-green-400' : 'text-red-400' },
           ].map(({ label, value, icon, color }) => (
             <div key={label} className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4">
               <div className="flex items-center gap-2 mb-2">{icon}<p className="text-xs dark:text-white/50 text-[#00165F]/50">{label}</p></div>
@@ -216,9 +211,14 @@ export default function WalletPage() {
         <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 overflow-hidden">
           <div className="p-4 sm:p-5 border-b dark:border-white/10 border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h2 className="font-black dark:text-white text-[#00165F]">Historique des transactions</h2>
+              <h2 className="font-black dark:text-white text-[#00165F]">{t('wallet.history')}</h2>
               <div className="flex flex-wrap gap-1.5">
-                {FILTERS.map(f => (
+                {[
+                  { key: 'ALL',              label: t('wallet.filter.all') },
+                  { key: 'DEPOSIT',          label: t('wallet.filter.deposits') },
+                  { key: 'WITHDRAWAL',       label: t('wallet.filter.withdrawals') },
+                  { key: 'CHALLENGE_DEBIT',  label: t('wallet.filter.challenges') },
+                ].map(f => (
                   <button
                     key={f.key}
                     onClick={() => setFilter(f.key)}
@@ -240,13 +240,25 @@ export default function WalletPage() {
           ) : transactions.length === 0 ? (
             <div className="p-12 text-center">
               <Wallet className="w-12 h-12 mx-auto dark:text-white/20 text-[#00165F]/20 mb-3" />
-              <p className="dark:text-white/50 text-[#00165F]/50">Aucune transaction</p>
+              <p className="dark:text-white/50 text-[#00165F]/50">{t('wallet.noTx')}</p>
             </div>
           ) : (
             <div className="divide-y dark:divide-white/5 divide-gray-100">
               {transactions.map((tx: any) => {
-                const typeInfo = TX_TYPE_LABELS[tx.type] ?? { label: tx.type, color: 'text-gray-400', icon: '·' };
-                const statusInfo = STATUS_LABELS[tx.status] ?? { label: tx.status, color: 'text-gray-400 bg-gray-400/10' };
+                const txColors = TX_TYPE_COLORS[tx.type] ?? { color: 'text-gray-400', icon: '·' };
+                const txTypeLabels: Record<string, string> = {
+                  DEPOSIT: t('wallet.tx.deposit'), WITHDRAWAL: t('wallet.tx.withdrawal'),
+                  CHALLENGE_DEBIT: t('wallet.tx.challengeDebit'), CHALLENGE_CREDIT: t('wallet.tx.challengeCredit'),
+                  CHALLENGE_ENTRY: t('wallet.tx.challengeDebit'), CHALLENGE_WIN: t('wallet.tx.challengeCredit'),
+                  REFUND: t('wallet.tx.refund'), COMMISSION: t('wallet.tx.commission'),
+                  DEBIT: t('wallet.tx.debit'), CREDIT: t('wallet.tx.credit'),
+                };
+                const txStatusLabels: Record<string, string> = {
+                  COMPLETED: t('wallet.status.completed'), PENDING: t('wallet.status.pending'),
+                  FAILED: t('wallet.status.failed'), CANCELLED: t('wallet.status.cancelled'),
+                };
+                const typeInfo = { label: txTypeLabels[tx.type] ?? tx.type, ...txColors };
+                const statusInfo = { label: txStatusLabels[tx.status] ?? tx.status, color: STATUS_COLORS[tx.status] ?? 'text-gray-400 bg-gray-400/10' };
                 const isCredit = Number(tx.amount) > 0;
                 return (
                   <motion.div
@@ -285,7 +297,7 @@ export default function WalletPage() {
                 disabled={txLoading}
                 className="px-6 py-2 rounded-xl text-sm font-semibold dark:bg-white/5 bg-gray-50 dark:text-white/70 text-[#00165F]/70 hover:text-[#0097FC] transition-colors disabled:opacity-50"
               >
-                {txLoading ? 'Chargement...' : `Charger plus (${total - transactions.length} restantes)`}
+                {txLoading ? t('wallet.loading') : `${t('wallet.loadMore')} (${total - transactions.length} ${t('wallet.remaining')})`}
               </button>
             </div>
           )}

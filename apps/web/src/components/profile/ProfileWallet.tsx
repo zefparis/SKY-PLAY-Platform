@@ -4,6 +4,7 @@ import { Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from '
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 interface Transaction {
   id: string
@@ -26,6 +27,7 @@ export default function ProfileWallet({
   onDeposit,
   onWithdraw 
 }: ProfileWalletProps) {
+  const { t } = useI18n()
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case 'deposit':
@@ -57,14 +59,14 @@ export default function ProfileWallet({
       <div className="flex items-center justify-between mb-6">
         <h2 className="title-tech text-primary dark:text-white text-xl font-extrabold flex items-center gap-2">
           <Wallet className="w-5 h-5 text-secondary" />
-          Wallet
+          {t('profileWallet.title')}
         </h2>
-        <Badge variant="success">Active</Badge>
+        <Badge variant="success">{t('profileWallet.active')}</Badge>
       </div>
 
       {/* Solde principal */}
       <div className="bg-gradient-to-br from-secondary/20 to-danger/20 rounded-xl p-6 mb-6 border border-secondary/30 shadow-glow-blue">
-        <p className="text-primary/70 dark:text-white/60 text-sm mb-2">Solde disponible</p>
+        <p className="text-primary/70 dark:text-white/60 text-sm mb-2">{t('profileWallet.balance')}</p>
         <p className="text-primary dark:text-white text-4xl font-extrabold tabular-nums">
           {balance.toLocaleString('fr-FR')} <span className="text-2xl text-secondary">SKY</span>
         </p>
@@ -77,7 +79,7 @@ export default function ProfileWallet({
             onClick={onDeposit}
           >
             <TrendingUp className="w-4 h-4 mr-2" />
-            Déposer
+            {t('profileWallet.deposit')}
           </Button>
           <Button 
             variant="ghost" 
@@ -86,7 +88,7 @@ export default function ProfileWallet({
             onClick={onWithdraw}
           >
             <TrendingDown className="w-4 h-4 mr-2" />
-            Retirer
+            {t('profileWallet.withdraw')}
           </Button>
         </div>
       </div>
@@ -94,7 +96,7 @@ export default function ProfileWallet({
       {/* Historique des transactions */}
       {transactions.length > 0 && (
         <div>
-          <h3 className="text-primary dark:text-white font-semibold mb-4">Dernières transactions</h3>
+          <h3 className="text-primary dark:text-white font-semibold mb-4">{t('profileWallet.recentTx')}</h3>
           <div className="space-y-3">
             {transactions.slice(0, 5).map((tx) => (
               <div
@@ -123,7 +125,7 @@ export default function ProfileWallet({
       {transactions.length === 0 && (
         <div className="text-center py-8">
           <Wallet className="w-12 h-12 text-primary/20 dark:text-white/20 mx-auto mb-3" />
-          <p className="text-primary/60 dark:text-white/40">Aucune transaction pour le moment</p>
+          <p className="text-primary/60 dark:text-white/40">{t('profileWallet.noTx')}</p>
         </div>
       )}
     </Card>

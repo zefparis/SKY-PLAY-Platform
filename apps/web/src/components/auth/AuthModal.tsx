@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle, Eye, EyeOff, Loader2, MailCheck, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 type AuthModalProps = {
   isOpen: boolean
@@ -51,35 +52,15 @@ function DiscordIcon() {
   )
 }
 
-function getPasswordStrength(password: string): { label: string; level: number; color: string } {
+function getPasswordScore(password: string): number {
   let score = 0
-
   if (password.length >= 8) score += 1
   if (/[A-Z]/.test(password)) score += 1
   if (/[0-9]/.test(password)) score += 1
   if (/[^A-Za-z0-9]/.test(password)) score += 1
-
-  if (score <= 1) return { label: 'Faible', level: 1, color: 'bg-red-400' }
-  if (score === 2) return { label: 'Moyen', level: 2, color: 'bg-amber-400' }
-  if (score === 3) return { label: 'Bon', level: 3, color: 'bg-lime-400' }
-  return { label: 'Fort', level: 4, color: 'bg-emerald-400' }
+  return score
 }
 
-const SEPARATOR = (
-  <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
-    <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
-    <span>ou</span>
-    <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
-  </div>
-)
-
-const VIEW_TITLES: Record<ViewMode, string> = {
-  login: 'Connexion',
-  signup: 'Créer un compte',
-  confirm: 'Confirmer le compte',
-  forgot: 'Mot de passe oublié',
-  reset: 'Nouveau mot de passe',
-}
 
 export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalProps) {
   const [view, setView] = useState<ViewMode>(initialView)
@@ -108,9 +89,39 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
   const clearError = useAuthStore((state) => state.clearError)
   const setConfirmEmail = useAuthStore((state) => state.setConfirmEmail)
 
+  const { t } = useI18n()
+
+  const VIEW_TITLES: Record<ViewMode, string> = {
+    login: t('auth.login'),
+    signup: t('auth.signup'),
+    confirm: t('auth.confirm'),
+    forgot: t('auth.forgot'),
+    reset: t('auth.reset'),
+  }
+
+  const SEPARATOR = (
+    <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
+      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
+      <span>{t('auth.or')}</span>
+      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
+    </div>
+  )
+
   const code = otpValues.join('')
-  const passwordStrength = useMemo(() => getPasswordStrength(password), [password])
-  const newPasswordStrength = useMemo(() => getPasswordStrength(newPassword), [newPassword])
+  const passwordScore = useMemo(() => getPasswordScore(password), [password])
+  const newPasswordScore = useMemo(() => getPasswordScore(newPassword), [newPassword])
+  const passwordStrength = useMemo(() => {
+    const labels = [t('auth.strength.weak'), t('auth.strength.fair'), t('auth.strength.good'), t('auth.strength.strong')]
+    const colors = ['bg-red-400', 'bg-amber-400', 'bg-lime-400', 'bg-emerald-400']
+    const s = passwordScore
+    return { label: labels[Math.max(s - 1, 0)], level: s <= 0 ? 1 : s, color: colors[Math.max(s - 1, 0)] }
+  }, [passwordScore, t])
+  const newPasswordStrength = useMemo(() => {
+    const labels = [t('auth.strength.weak'), t('auth.strength.fair'), t('auth.strength.good'), t('auth.strength.strong')]
+    const colors = ['bg-red-400', 'bg-amber-400', 'bg-lime-400', 'bg-emerald-400']
+    const s = newPasswordScore
+    return { label: labels[Math.max(s - 1, 0)], level: s <= 0 ? 1 : s, color: colors[Math.max(s - 1, 0)] }
+  }, [newPasswordScore, t])
   const signupPasswordsMatch = password.length > 0 && password === confirmPassword
 
   const resetLocalState = () => {
@@ -193,7 +204,7 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
   const handleResetSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     await resetPassword(email, code, newPassword)
-    setSuccessMessage('Mot de passe réinitialisé ! Connecte-toi.')
+    setSuccessMessage(t('auth.resetSuccess'))
     switchView('login')
   }
 
@@ -286,7 +297,7 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                 type="button"
                 onClick={onClose}
                 className="absolute right-4 top-4 rounded-full p-2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:bg-white/5 hover:bg-[#00165F]/5 dark:hover:text-white hover:text-[#00165F]"
-                aria-label="Fermer"
+                aria-label={t('auth.close')}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -307,12 +318,12 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                   <motion.form key="login" className="space-y-4" onSubmit={handleLoginSubmit} {...viewTransition}>
                     <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
                       <GoogleIcon />
-                      <span>Continuer avec Google</span>
+                      <span>{t('auth.continueGoogle')}</span>
                     </button>
 
                     <button type="button" onClick={loginWithDiscord} disabled={isLoading} className={DISCORD_BUTTON}>
                       <DiscordIcon />
-                      <span>Continuer avec Discord</span>
+                      <span>{t('auth.continueDiscord')}</span>
                     </button>
 
                     {SEPARATOR}
@@ -325,20 +336,20 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                     ) : null}
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder="vous@exemple.com" />
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.email')}</label>
+                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder={t('auth.emailPlaceholder')} />
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
+                        <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.password')}</label>
                         <button type="button" onClick={() => switchView('forgot')} className="text-xs text-[#0097FC] dark:text-sky-300 hover:underline">
-                          Mot de passe oublié ?
+                          {t('auth.forgotPassword')}
                         </button>
                       </div>
                       <div className="relative">
-                        <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="current-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Votre mot de passe" />
-                        <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showPassword ? 'Masquer' : 'Afficher'}>
+                        <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="current-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder={t('auth.passwordPlaceholder')} />
+                        <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]">
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
@@ -347,13 +358,13 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                     <ErrorBox />
 
                     <button type="submit" disabled={!canLogin} className={PRIMARY_BUTTON}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Se connecter'}
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.signInBtn')}
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                      Pas de compte ?{' '}
+                      {t('auth.noAccount')}{' '}
                       <button type="button" onClick={() => switchView('signup')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
-                        S&apos;inscrire
+                        {t('auth.register')}
                       </button>
                     </p>
                   </motion.form>
@@ -364,33 +375,33 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                   <motion.form key="signup" className="space-y-4" onSubmit={handleSignupSubmit} {...viewTransition}>
                     <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE_BUTTON}>
                       <GoogleIcon />
-                      <span>Continuer avec Google</span>
+                      <span>{t('auth.continueGoogle')}</span>
                     </button>
 
                     <button type="button" onClick={loginWithDiscord} disabled={isLoading} className={DISCORD_BUTTON}>
                       <DiscordIcon />
-                      <span>Continuer avec Discord</span>
+                      <span>{t('auth.continueDiscord')}</span>
                     </button>
 
                     {SEPARATOR}
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder="vous@exemple.com" />
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.email')}</label>
+                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder={t('auth.emailPlaceholder')} />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.password')}</label>
                       <div className="relative">
-                        <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Créez un mot de passe" />
-                        <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showPassword ? 'Masquer' : 'Afficher'}>
+                        <input value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder={t('auth.createPassword')} />
+                        <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]">
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       {password.length > 0 ? (
                         <div className="space-y-1 rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-slate-50 px-4 py-3">
                           <div className="flex items-center justify-between text-xs dark:text-white/60 text-[#00165F]/60">
-                            <span>Force du mot de passe</span>
+                            <span>{t('auth.passwordStrength')}</span>
                             <span>{passwordStrength.label}</span>
                           </div>
                           <div className="grid grid-cols-4 gap-2">
@@ -403,28 +414,28 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Confirmer le mot de passe</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.confirmPassword')}</label>
                       <div className="relative">
-                        <input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Répétez votre mot de passe" />
-                        <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showConfirmPassword ? 'Masquer' : 'Afficher'}>
+                        <input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder={t('auth.confirmPasswordPlaceholder')} />
+                        <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]">
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                       {confirmPassword.length > 0 && !signupPasswordsMatch ? (
-                        <p className="text-xs text-[#FD2E5F] dark:text-red-200">Les mots de passe ne correspondent pas</p>
+                        <p className="text-xs text-[#FD2E5F] dark:text-red-200">{t('auth.passwordMismatch')}</p>
                       ) : null}
                     </div>
 
                     <ErrorBox />
 
                     <button type="submit" disabled={!canSignup} className={PRIMARY_BUTTON}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Créer mon compte'}
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.createAccountBtn')}
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                      Déjà un compte ?{' '}
+                      {t('auth.alreadyAccount')}{' '}
                       <button type="button" onClick={() => switchView('login')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
-                        Se connecter
+                        {t('auth.signInBtn')}
                       </button>
                     </p>
                   </motion.form>
@@ -435,24 +446,24 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                   <motion.form key="confirm" className="space-y-5" onSubmit={handleConfirmSubmit} {...viewTransition}>
                     <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-center">
                       <MailCheck className="mx-auto mb-3 h-6 w-6 text-[#0097FC] dark:text-sky-300" />
-                      <p className="text-sm font-medium dark:text-white text-[#00165F]">Code envoyé à</p>
+                      <p className="text-sm font-medium dark:text-white text-[#00165F]">{t('auth.codeSentTo')}</p>
                       <p className="mt-1 text-sm font-semibold dark:text-white text-[#00165F]">{confirmEmail ?? email}</p>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code de confirmation (6 chiffres)</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.confirmationCode')}</label>
                       <OtpInput refs={otpRefs} />
                     </div>
 
                     <ErrorBox />
 
                     <button type="submit" disabled={!canConfirm} className={PRIMARY_BUTTON}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmer'}
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.confirmBtn')}
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       <button type="button" onClick={() => { setConfirmEmail(null); switchView('signup') }} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
-                        Retour
+                        {t('auth.back')}
                       </button>
                     </p>
                   </motion.form>
@@ -461,24 +472,22 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                 {/* ── FORGOT ── */}
                 {view === 'forgot' ? (
                   <motion.form key="forgot" className="space-y-4" onSubmit={handleForgotSubmit} {...viewTransition}>
-                    <p className="text-sm dark:text-white/60 text-[#00165F]/60">
-                      Saisis ton adresse email et nous t&apos;enverrons un code pour réinitialiser ton mot de passe.
-                    </p>
+                    <p className="text-sm dark:text-white/60 text-[#00165F]/60">{t('auth.forgotDesc')}</p>
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder="vous@exemple.com" />
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.email')}</label>
+                      <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT_CLASSNAME} placeholder={t('auth.emailPlaceholder')} />
                     </div>
 
                     <ErrorBox />
 
                     <button type="submit" disabled={!canForgot} className={PRIMARY_BUTTON}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Envoyer le code'}
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.sendCode')}
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       <button type="button" onClick={() => switchView('login')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
-                        ← Retour à la connexion
+                        {t('auth.backToLogin')}
                       </button>
                     </p>
                   </motion.form>
@@ -489,19 +498,19 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                   <motion.form key="reset" className="space-y-4" onSubmit={handleResetSubmit} {...viewTransition}>
                     <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-center">
                       <MailCheck className="mx-auto mb-2 h-5 w-5 text-[#0097FC] dark:text-sky-300" />
-                      <p className="text-sm dark:text-white/70 text-[#00165F]/70">Code envoyé à <span className="font-semibold dark:text-white text-[#00165F]">{email}</span></p>
+                      <p className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.codeSentTo')} <span className="font-semibold dark:text-white text-[#00165F]">{email}</span></p>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code reçu par email</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.codeReceivedByEmail')}</label>
                       <OtpInput refs={otpRefs} />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">Nouveau mot de passe</label>
+                      <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.newPassword')}</label>
                       <div className="relative">
-                        <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} type={showNewPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder="Nouveau mot de passe" />
-                        <button type="button" onClick={() => setShowNewPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]" aria-label={showNewPassword ? 'Masquer' : 'Afficher'}>
+                        <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} type={showNewPassword ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT_CLASSNAME} pr-12`} placeholder={t('auth.newPasswordPlaceholder')} />
+                        <button type="button" onClick={() => setShowNewPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 transition dark:hover:text-white hover:text-[#00165F]">
                           {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
@@ -517,12 +526,12 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
                     <ErrorBox />
 
                     <button type="submit" disabled={!canReset} className={PRIMARY_BUTTON}>
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Réinitialiser le mot de passe'}
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.resetBtn')}
                     </button>
 
                     <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
                       <button type="button" onClick={() => switchView('forgot')} className="font-semibold text-[#0097FC] dark:text-sky-300 hover:text-[#00165F] dark:hover:text-sky-200 transition-colors">
-                        ← Retour
+                        {t('auth.back')}
                       </button>
                     </p>
                   </motion.form>

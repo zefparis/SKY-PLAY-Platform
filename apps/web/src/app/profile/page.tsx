@@ -13,8 +13,10 @@ import MatchHistory from '@/components/profile/MatchHistory'
 import Achievements from '@/components/profile/Achievements'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 export default function ProfilePage() {
+  const { t } = useI18n()
   const user = useAuthStore((s) => s.user)
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
 
@@ -192,19 +194,19 @@ export default function ProfilePage() {
                   
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Matchs</p>
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.games')}</p>
                       <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.gamesPlayed}</p>
                     </div>
                     <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Victoires</p>
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.wins')}</p>
                       <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.wins}</p>
                     </div>
                     <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Défaites</p>
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.losses')}</p>
                       <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.losses}</p>
                     </div>
                     <div className="dark:bg-black/20 bg-[#00165F]/5 rounded-lg p-3 border dark:border-white/5 border-[#00165F]/10">
-                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">Winrate</p>
+                      <p className="dark:text-white/60 text-[#00165F]/60 text-xs mb-1">{t('stats.winrate')}</p>
                       <p className="dark:text-white text-[#00165F] text-xl font-bold">{stats.winRate}%</p>
                     </div>
                   </div>

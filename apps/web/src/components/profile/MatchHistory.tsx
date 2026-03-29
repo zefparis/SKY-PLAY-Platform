@@ -1,5 +1,7 @@
+'use client'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 export type MatchItem = {
   id: string
@@ -10,11 +12,12 @@ export type MatchItem = {
 }
 
 export default function MatchHistory({ matches }: { matches: MatchItem[] }) {
+  const { t } = useI18n()
   return (
     <Card variant="glass">
       <div className="mb-4 sm:mb-6 flex items-center justify-between gap-4">
-        <h2 className="title-tech text-primary dark:text-white text-lg sm:text-xl font-extrabold">Match history</h2>
-        <p className="text-primary/70 dark:text-white/60 text-xs sm:text-sm">Last {matches.length}</p>
+        <h2 className="title-tech text-primary dark:text-white text-lg sm:text-xl font-extrabold">{t('match.history')}</h2>
+        <p className="text-primary/70 dark:text-white/60 text-xs sm:text-sm">{t('match.last')} {matches.length}</p>
       </div>
 
       <div className="space-y-3">
