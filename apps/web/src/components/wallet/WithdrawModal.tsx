@@ -59,9 +59,9 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
         <div className="flex items-center justify-between p-4 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
             <h2 className="text-lg font-black dark:text-white text-[#00165F]">Retirer des fonds</h2>
-            <p className="text-xs dark:text-white/50 text-[#00165F]/50 mt-0.5">Solde disponible : {formatCFA(balance)}</p>
+            <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">Solde disponible : {formatCFA(balance)}</p>
           </div>
-          <button onClick={onClose} className="p-1 dark:text-white/50 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors">
+          <button onClick={onClose} className="p-1 dark:text-white/70 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -70,7 +70,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
         <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
           {/* Montant */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Montant à retirer (min. 1 000 XAF)</label>
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Montant à retirer (min. 1 000 XAF)</label>
             <div className="relative">
               <input
                 type="number"
@@ -81,7 +81,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
                 max={balance}
                 className="w-full px-4 py-3 pr-14 rounded-xl dark:bg-white/10 bg-gray-50 dark:text-white text-[#00165F] border dark:border-white/10 border-gray-200 focus:outline-none focus:border-[#0097FC] text-sm"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs dark:text-white/40 text-[#00165F]/40 font-medium">XAF</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs dark:text-white/60 text-[#00165F]/40 font-medium">XAF</span>
             </div>
             {amountNum > 0 && amountNum > balance && (
               <p className="text-xs text-red-400 mt-1">Solde insuffisant ({formatCFA(balance)} disponible)</p>
@@ -93,7 +93,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
 
           {/* Réseau */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Réseau Mobile Money</label>
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Réseau Mobile Money</label>
             <div className="grid grid-cols-2 gap-2">
               {(['MTN', 'ORANGE'] as const).map(n => (
                 <button
@@ -113,7 +113,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
 
           {/* Téléphone */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">
               Numéro {network === 'MTN' ? 'MTN' : 'Orange'} (9 chiffres)
             </label>
             <input
@@ -127,7 +127,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
 
           {/* Nom */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Nom complet du bénéficiaire</label>
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Nom complet du bénéficiaire</label>
             <input
               type="text"
               value={name}
@@ -140,7 +140,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
           {/* Récap */}
           {isValid && !confirmed && (
             <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-4 space-y-2">
-              <p className="text-xs font-semibold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wide mb-2">Récapitulatif</p>
+              <p className="text-xs font-semibold dark:text-white/70 text-[#00165F]/50 uppercase tracking-wide mb-2">Récapitulatif</p>
               <div className="flex justify-between text-sm">
                 <span className="dark:text-white/60 text-[#00165F]/60">Montant</span>
                 <span className="font-bold text-[#FD2E5F]">{formatCFA(amountNum)}</span>
