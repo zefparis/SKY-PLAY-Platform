@@ -56,7 +56,7 @@ const Navbar = () => {
 
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="SKY PLAY" width={120} height={60} style={{ objectFit: 'contain' }} priority />
+              <Image src="/logo.png" alt="SKY PLAY" width={120} height={40} className="h-10 w-auto object-contain" priority />
             </Link>
 
             {/* Desktop nav links */}

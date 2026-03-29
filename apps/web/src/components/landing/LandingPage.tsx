@@ -211,7 +211,7 @@ function PublicNavbar({ lang, setLang, openLogin, openSignup, t }: {
   return (
     <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#00165F]/95 backdrop-blur-md border-b border-white/10 shadow-2xl shadow-black/30' : 'bg-transparent'}`}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Image src="/logo.png" alt="SKY PLAY" width={110} height={55} style={{ objectFit: 'contain' }} priority />
+        <Image src="/logo.png" alt="SKY PLAY" width={110} height={40} className="h-10 w-auto object-contain" priority />
         <div className="flex items-center gap-2 sm:gap-3">
           <button onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
             className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-white/15">
