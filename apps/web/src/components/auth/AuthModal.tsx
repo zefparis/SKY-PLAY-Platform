@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/auth-store'
 type AuthModalProps = {
   isOpen: boolean
   onClose: () => void
+  initialView?: ViewMode
 }
 
 type ViewMode = 'login' | 'signup' | 'confirm' | 'forgot' | 'reset'
@@ -69,8 +70,8 @@ const VIEW_TITLES: Record<ViewMode, string> = {
   reset: 'Nouveau mot de passe',
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [view, setView] = useState<ViewMode>('login')
+export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalProps) {
+  const [view, setView] = useState<ViewMode>(initialView)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -120,6 +121,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setOtpValues(Array.from({ length: 6 }, () => ''))
     }
   }
+
+  useEffect(() => {
+    if (isOpen) setView(initialView)
+  }, [isOpen, initialView])
 
   useEffect(() => {
     if (!isOpen) return

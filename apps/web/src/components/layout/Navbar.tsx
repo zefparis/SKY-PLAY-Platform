@@ -29,6 +29,8 @@ const Navbar = () => {
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => { if (superMenuOpen) document.body.style.overflow = 'hidden'; else document.body.style.overflow = '' }, [superMenuOpen])
 
+  if (pathname === '/') return null
+
   const navLinks = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
     { href: '/challenges', label: t('nav.challenges'), icon: Trophy },

@@ -6,8 +6,16 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import SessionRestorer from '@/components/providers/SessionRestorer'
 
 export const metadata: Metadata = {
-  title: 'SKY PLAY - Competitive Gaming Platform',
-  description: 'Join challenges, compete with players, and win prizes on the ultimate gaming platform',
+  title: 'SKY PLAY — Défie. Joue. Gagne. | Plateforme gaming Afrique',
+  description: "Première plateforme de défis gaming avec mise en argent réel en Afrique centrale. FIFA, COD, Free Fire. Gagnez jusqu'\u00e0 450\u00a0000 CFA.",
+  keywords: 'gaming, défis, argent, Cameroun, Mobile Money, FIFA, COD, Free Fire, SKY PLAY',
+  openGraph: {
+    title: 'SKY PLAY — Défie. Joue. Gagne.',
+    description: "Gagnez jusqu'\u00e0 450\u00a0000 CFA en jouant \u00e0 vos jeux préférés.",
+    url: 'https://sky-play-platform.vercel.app',
+    siteName: 'SKY PLAY',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({
@@ -35,7 +43,7 @@ export default function RootLayout({
           <I18nProvider>
             <SessionRestorer />
             <Navbar />
-            <div className="pt-20 pb-16 md:pb-0">{children}</div>
+            <div className="[&:has([data-page=landing])]:p-0 pt-20 pb-16 md:pb-0">{children}</div>
           </I18nProvider>
         </ThemeProvider>
       </body>
