@@ -57,8 +57,12 @@ const LeaderboardTable = ({ entries, scoreLabel, formatScore }: LeaderboardTable
                 {getRankIcon(entry.rank)}
               </div>
 
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-sm font-bold text-white sm:h-12 sm:w-12 sm:text-base">
-                {entry.avatar || entry.username.charAt(0).toUpperCase()}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-primary text-sm font-bold text-white sm:h-12 sm:w-12 sm:text-base">
+                {entry.avatar?.startsWith('http') ? (
+                  <img src={entry.avatar} alt={entry.username} className="h-full w-full object-cover" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                ) : (
+                  entry.username.charAt(0).toUpperCase()
+                )}
               </div>
 
               <div className="min-w-0 flex-1">
