@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SKY PLAY</string>
+    <string name="title_activity_main">SKY PLAY</string>
+    <string name="package_name">cm.skyplay.app</string>
+    <string name="custom_url_scheme">cm.skyplay.app</string>
+</resources>

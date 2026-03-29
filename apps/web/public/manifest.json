@@ -1,0 +1,13 @@
+{
+  "name": "SKY PLAY",
+  "short_name": "SKYPLAY",
+  "description": "Défie. Joue. Gagne.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#00165F",
+  "theme_color": "#0097FC",
+  "icons": [
+    { "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

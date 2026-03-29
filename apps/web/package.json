@@ -4,9 +4,14 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000"
+    "start": "next start -p 3000",
+    "build:android": "next build && npx cap sync android",
+    "open:android": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^7.6.1",
+    "@capacitor/core": "^8.3.0",
     "@tanstack/react-query": "^5.28.0",
     "amazon-cognito-identity-js": "^6.3.16",
     "autoprefixer": "^10.4.0",
