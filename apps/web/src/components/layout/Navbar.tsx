@@ -195,6 +195,13 @@ const Navbar = () => {
                       className="p-2 rounded-xl dark:bg-white/8 bg-[#00165F]/6 transition hover:bg-[#0097FC]/10">
                       <ChevronRight className="w-5 h-5 dark:text-white/50 text-[#00165F]/50" />
                     </Link>
+                    <button
+                      onClick={() => { logout(); setSuperMenuOpen(false) }}
+                      className="p-2 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 transition hover:bg-red-500/20"
+                      title="Se déconnecter"
+                    >
+                      <LogOut className="w-5 h-5" />
+                    </button>
                   </div>
                 ) : (
                   <div className="px-5 py-4">
@@ -272,18 +279,6 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                {/* Logout */}
-                {mounted && tokens && (
-                  <div className="px-5 py-4 pb-6">
-                    <button
-                      onClick={() => { logout(); setSuperMenuOpen(false) }}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold text-sm hover:bg-red-500/20 transition"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Se déconnecter
-                    </button>
-                  </div>
-                )}
 
               </div>
 
