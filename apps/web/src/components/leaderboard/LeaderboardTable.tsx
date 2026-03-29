@@ -1,5 +1,6 @@
 import { Trophy, Medal } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 interface LeaderboardEntry {
   rank: number
@@ -11,18 +12,20 @@ interface LeaderboardEntry {
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[]
+  scoreLabel?: string
+  formatScore?: (value: number) => string
 }
 
-const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
+const LeaderboardTable = ({ entries, scoreLabel, formatScore }: LeaderboardTableProps) => {
+  const { t } = useI18n()
   const formatCompactEarnings = (value: number) => {
+    if (formatScore) return formatScore(value)
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(value % 1000000 === 0 ? 0 : 1)}M XOF`
     }
-
     if (value >= 1000) {
       return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}K XOF`
     }
-
     return formatCurrency(value)
   }
 
@@ -62,20 +65,20 @@ const LeaderboardTable = ({ entries }: LeaderboardTableProps) => {
                 <h3 className="truncate text-sm font-semibold text-primary dark:text-white sm:text-base">
                   {entry.username}
                 </h3>
-                <p className="text-xs text-primary/70 dark:text-white/65 sm:text-sm">{entry.wins} wins</p>
+                <p className="text-xs text-primary/70 dark:text-white/65 sm:text-sm">{entry.wins} {t('leaderboard.wins').toLowerCase()}</p>
               </div>
             </div>
 
             <div className="flex items-end justify-between gap-3 border-t border-primary/10 dark:border-white/10 pt-3 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
               <p className="text-[10px] uppercase tracking-[0.18em] text-primary/60 dark:text-white/45 sm:hidden">
-                Total Earnings
+                {scoreLabel ?? t('leaderboard.totalEarnings')}
               </p>
               <div className="min-w-0 sm:max-w-[180px]">
                 <p className="truncate text-sm font-bold text-secondary tabular-nums sm:text-lg">
                   <span className="sm:hidden">{formatCompactEarnings(entry.earnings)}</span>
                   <span className="hidden sm:inline">{formatCurrency(entry.earnings)}</span>
                 </p>
-                <p className="hidden text-xs text-primary/70 dark:text-white/60 sm:block">Total Earnings</p>
+                <p className="hidden text-xs text-primary/70 dark:text-white/60 sm:block">{scoreLabel ?? t('leaderboard.totalEarnings')}</p>
               </div>
             </div>
           </div>

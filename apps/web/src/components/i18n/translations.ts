@@ -63,6 +63,12 @@ export const translations: Record<SupportedLang, Translations> = {
     'leaderboard.activePlayers': 'Active Players',
     'leaderboard.competingNow': 'Competing Now',
     'leaderboard.wins': 'Wins',
+    'leaderboard.score': 'XP Score',
+    'leaderboard.totalEarnings': 'Total Earnings',
+    'leaderboard.loading': 'Loading leaderboard...',
+    'leaderboard.noData': 'No players yet',
+    'leaderboard.registeredPlayers': 'Registered Players',
+    'leaderboard.topWins': 'Best Wins',
 
     // Wallet page
     'wallet.title': 'Wallet',
@@ -277,6 +283,12 @@ export const translations: Record<SupportedLang, Translations> = {
     'leaderboard.activePlayers': 'Joueurs actifs',
     'leaderboard.competingNow': 'En compétition',
     'leaderboard.wins': 'Victoires',
+    'leaderboard.score': 'Score XP',
+    'leaderboard.totalEarnings': 'Gains totaux',
+    'leaderboard.loading': 'Chargement du classement...',
+    'leaderboard.noData': 'Aucun joueur pour le moment',
+    'leaderboard.registeredPlayers': 'Joueurs inscrits',
+    'leaderboard.topWins': 'Meilleures victoires',
 
     // Wallet page
     'wallet.title': 'Portefeuille',
