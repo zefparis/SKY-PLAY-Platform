@@ -24,6 +24,7 @@ export type AuthUser = {
   firstName?: string | null
   lastName?: string | null
   bio?: string | null
+  discordId?: string | null
   discordTag?: string | null
   twitchUsername?: string | null
 }
