@@ -739,6 +739,37 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('message_deleted')
+  async handleMessageDeleted(
+    @MessageBody() data: { messageId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+
+    const { messageId } = data;
+
+    try {
+      // Récupérer le message pour obtenir la conversationId avant de le supprimer
+      const message = await this.chatService.getMessage(messageId);
+      if (!message) {
+        client.emit('error', { message: 'Message not found' });
+        return;
+      }
+
+      // Supprimer le message (vérifie aussi la propriété)
+      await this.chatService.deleteMessage(messageId, user.id);
+
+      // Émettre l'événement de suppression à tous les clients de la conversation
+      this.server.to(`conv_${message.conversationId}`).emit('message_deleted', { messageId });
+      
+      this.logger.log(`Message ${messageId} deleted by ${user.username}`);
+    } catch (err) {
+      this.logger.error(`message_deleted error: ${err.message}`);
+      client.emit('error', { message: err.message || 'Failed to delete message' });
+    }
+  }
+
   // Méthode publique pour émettre depuis d'autres services (ex: ChallengesService)
   emitToConversation(conversationId: string, event: string, data: any) {
     this.server.to(`conv_${conversationId}`).emit(event, data);

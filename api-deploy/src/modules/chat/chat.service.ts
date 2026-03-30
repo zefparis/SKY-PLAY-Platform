@@ -109,6 +109,14 @@ export class ChatService {
     return conv;
   }
 
+  // ─── GET SINGLE MESSAGE ──────────────────────────────────────────────────────
+
+  async getMessage(messageId: string) {
+    return this.prisma.conversationMessage.findUnique({
+      where: { id: messageId },
+    });
+  }
+
   // ─── DELETE MESSAGE ──────────────────────────────────────────────────────────
 
   async deleteMessage(messageId: string, userId: string) {
