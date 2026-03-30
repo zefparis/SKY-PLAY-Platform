@@ -9,6 +9,8 @@ export type Message = {
   userId: string
   author: string
   content: string
+  type?: 'TEXT' | 'IMAGE' | 'SYSTEM'
+  imageUrl?: string
   isMe?: boolean
   createdAt: string
   status?: 'sending' | 'sent' | 'delivered'
@@ -71,14 +73,28 @@ export default function MessageBubble({
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         >
           <div className="rounded-lg bg-secondary text-white px-4 py-3 shadow-glow-blue border border-blue-400/30 hover:border-blue-400/60 transition relative group">
-            <p className="text-sm leading-relaxed whitespace-pre-wrap pr-8">{message.content}</p>
+            {message.type === 'IMAGE' && message.imageUrl ? (
+              <div className="relative">
+                <img 
+                  src={message.imageUrl} 
+                  alt="Image partagée" 
+                  className="max-w-full rounded-lg cursor-pointer" 
+                  onClick={() => window.open(message.imageUrl, '_blank')}
+                />
+                {message.content && (
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap mt-2">{message.content}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap pr-8">{message.content}</p>
+            )}
             {onDelete && (
               <button
                 onClick={() => onDelete(message.id)}
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-300"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 bg-black/40 backdrop-blur-sm"
                 title="Supprimer le message"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             )}
             <ReactionBar
@@ -153,17 +169,33 @@ export default function MessageBubble({
               {onDelete && message.author === currentUser && (
                 <button
                   onClick={() => onDelete(message.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-300"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 bg-black/20 backdrop-blur-sm"
                   title="Supprimer le message"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
             </div>
           </div>
-          <p className="text-sm text-primary/90 dark:text-white/80 leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </p>
+          {message.type === 'IMAGE' && message.imageUrl ? (
+            <div className="mb-2">
+              <img 
+                src={message.imageUrl} 
+                alt="Image partagée" 
+                className="max-w-full rounded-lg cursor-pointer" 
+                onClick={() => window.open(message.imageUrl, '_blank')}
+              />
+              {message.content && (
+                <p className="text-sm text-primary/90 dark:text-white/80 leading-relaxed whitespace-pre-wrap mt-2">
+                  {message.content}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-primary/90 dark:text-white/80 leading-relaxed whitespace-pre-wrap">
+              {message.content}
+            </p>
+          )}
           <ReactionBar
             reactions={reactions}
             onReact={onReact}
