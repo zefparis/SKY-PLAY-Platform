@@ -27,6 +27,9 @@ export default function NotificationBell() {
     if (!initialized || !tokens?.idToken) return
 
     const fetchNotifications = async () => {
+      // Double-check token avant la requête
+      if (!tokens?.idToken) return
+
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL || 'https://skyplayapi-production.up.railway.app'}/notifications?limit=10`,
@@ -41,9 +44,13 @@ export default function NotificationBell() {
           const data = await response.json()
           setNotifications(data.notifications || [])
           setUnreadCount(data.unreadCount || 0)
+        } else if (response.status === 401) {
+          // Token invalide ou expiré - ne pas logger d'erreur
+          setNotifications([])
+          setUnreadCount(0)
         }
       } catch (error) {
-        console.error('Failed to fetch notifications:', error)
+        // Ignorer les erreurs réseau silencieusement
       }
     }
 
