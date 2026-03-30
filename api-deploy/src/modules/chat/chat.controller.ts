@@ -13,10 +13,10 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ChatService } from './chat.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
+import { ChatService } from './chat.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -71,7 +71,7 @@ export class ChatController {
     file: Express.Multer.File,
   ) {
     const ext = file.mimetype.split('/')[1];
-    const key = `screenshots/${uuidv4()}.${ext}`;
+    const key = `screenshots/${randomUUID()}.${ext}`;
     const bucket = process.env.AWS_S3_BUCKET ?? 'skyplay-assets-prod';
 
     await this.s3.send(
