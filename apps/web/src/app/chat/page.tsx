@@ -93,9 +93,11 @@ export default function ChatPage() {
   // Input
   const [input, setInput] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const submitFileInputRef = useRef<HTMLInputElement>(null)
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const { messages: globalMsgs, connectedUsers, currentRoom, isConnected, socket, sendMessage: sendGlobal, joinRoom } = useChat()
@@ -135,16 +137,21 @@ export default function ChatPage() {
   // ── Screenshot upload ──────────────────────────────────────────────────────
   const handleScreenshot = useCallback(async (file: File) => {
     if (!tokens?.idToken) return
-    const form = new FormData()
-    form.append('file', file)
-    const res = await fetch(`${API}/chat/upload-screenshot`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${tokens.idToken}` },
-      body: form,
-    })
-    if (!res.ok) return
-    const { url } = await res.json()
-    sendImage(url)
+    setUploadingImage(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch(`${API}/chat/upload-screenshot`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tokens.idToken}` },
+        body: form,
+      })
+      if (!res.ok) return
+      const { url } = await res.json()
+      sendImage(url)
+    } finally {
+      setUploadingImage(false)
+    }
   }, [tokens?.idToken, sendImage])
 
   // ── DM user search ────────────────────────────────────────────────────────
@@ -489,10 +496,14 @@ export default function ChatPage() {
             {/* Screenshot (challenge/DM only) */}
             {activeConv.type !== 'GLOBAL' && (
               <>
-                <button onClick={() => fileInputRef.current?.click()} className="p-2.5 rounded-xl bg-white/8 text-white/40 hover:text-[#0097FC] transition">
-                  <Paperclip className="w-5 h-5" />
+                <button onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="p-2.5 rounded-xl transition"
+                  style={{ background: 'rgba(255,255,255,0.1)', color: uploadingImage ? '#0097FC' : 'rgba(255,255,255,0.7)' }}
+                  title="Envoyer une image">
+                  {uploadingImage ? <span className="w-5 h-5 block border-2 border-[#0097FC]/30 border-t-[#0097FC] rounded-full animate-spin" /> : <Paperclip className="w-5 h-5" />}
                 </button>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleScreenshot(f); e.target.value = '' }} />
               </>
             )}
@@ -643,11 +654,11 @@ export default function ChatPage() {
                     </div>
                     <div>
                       <label className="text-xs text-white/50 uppercase tracking-wider mb-2 block">Screenshot (obligatoire)</label>
-                      <button onClick={() => fileInputRef.current?.click()}
+                      <button onClick={() => submitFileInputRef.current?.click()}
                         className={`w-full py-8 rounded-xl border-2 border-dashed transition text-sm ${submitFile ? 'border-[#0097FC] bg-[#0097FC]/10 text-[#0097FC]' : 'border-white/20 text-white/40 hover:border-white/40'}`}>
                         {submitFile ? `✓ ${submitFile.name}` : '+ Ajouter screenshot'}
                       </button>
-                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                      <input ref={submitFileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
                         onChange={e => { const f = e.target.files?.[0]; if (f) setSubmitFile(f); e.target.value = '' }} />
                     </div>
                     <button onClick={handleSubmitResult} disabled={!submitFile || submitLoading}
