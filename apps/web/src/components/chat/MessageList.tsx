@@ -14,6 +14,7 @@ type MessageListProps = {
   messages: Message[];
   reactions: { [messageId: string]: ReactionState };
   onReact: (messageId: string, emoji: string, user: string) => void;
+  onDelete?: (messageId: string) => void;
   currentUser: string;
 };
 
@@ -132,5 +133,4 @@ export default function MessageList({
       </AnimatePresence>
     </motion.div>
   );
-}
 }
