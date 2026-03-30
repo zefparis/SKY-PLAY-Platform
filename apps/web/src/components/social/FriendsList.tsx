@@ -1,11 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Users, MessageCircle, Swords, Check, X, UserPlus, Search } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Users, MessageCircle, Swords, Check, X, UserPlus, Search, ArrowLeft, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
 import { useFriendships } from '@/hooks/useFriendships'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://skyplayapi-production.up.railway.app'
+
+type SearchUser = {
+  id: string
+  username: string
+  avatar?: string
+  level?: number
+}
 
 export default function FriendsList() {
   const tokens = useAuthStore((state) => state.tokens)
@@ -13,6 +22,11 @@ export default function FriendsList() {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [sentRequests, setSentRequests] = useState<Set<string>>(new Set())
   const router = useRouter()
 
   const {
@@ -52,6 +66,51 @@ export default function FriendsList() {
   const handleOpenDM = (userId: string, username: string) => {
     setIsOpen(false)
     router.push(`/chat?dm=${userId}`)
+  }
+
+  const handleSearch = useCallback(async (q: string) => {
+    if (!tokens?.idToken || q.trim().length < 2) {
+      setSearchResults([])
+      return
+    }
+    setSearchLoading(true)
+    try {
+      const res = await fetch(`${API}/chat/users/search?q=${encodeURIComponent(q.trim())}`, {
+        headers: { Authorization: `Bearer ${tokens.idToken}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSearchResults(data)
+      }
+    } catch {
+      setSearchResults([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }, [tokens?.idToken])
+
+  useEffect(() => {
+    const timer = setTimeout(() => handleSearch(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery, handleSearch])
+
+  const openSearch = () => {
+    setShowSearch(true)
+    setSearchQuery('')
+    setSearchResults([])
+  }
+
+  const closeSearch = () => {
+    setShowSearch(false)
+    setSearchQuery('')
+    setSearchResults([])
+  }
+
+  const handleAddFromSearch = async (userId: string) => {
+    setActionLoading(userId)
+    await sendRequest(userId)
+    setSentRequests(prev => new Set(prev).add(userId))
+    setActionLoading(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -312,35 +371,106 @@ export default function FriendsList() {
               </div>
             )}
 
+            {/* Search Panel */}
+            {showSearch && (
+              <div className="p-3 border-b border-white/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <button
+                    onClick={closeSearch}
+                    className="p-1.5 rounded-lg hover:bg-white/5 text-white/60 hover:text-white transition"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <h4 className="text-xs font-bold text-white/70 uppercase tracking-wide">
+                    Rechercher un joueur
+                  </h4>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <input
+                    autoFocus
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Nom d'utilisateur..."
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#0097FC]/50"
+                  />
+                  {searchLoading && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 animate-spin" />
+                  )}
+                </div>
+                {searchQuery.trim().length >= 2 && (
+                  <div className="mt-2 space-y-1">
+                    {searchResults.length === 0 && !searchLoading && (
+                      <p className="text-xs text-white/40 text-center py-3">Aucun résultat</p>
+                    )}
+                    {searchResults.map((user) => {
+                      const alreadyFriend = friends.some(f => f.id === user.id)
+                      const alreadySent = sentRequests.has(user.id)
+                      return (
+                        <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition">
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={user.username} className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0097FC] to-[#003399] flex items-center justify-center text-white font-bold text-xs">
+                              {user.username[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">{user.username}</p>
+                            {user.level && <p className="text-xs text-white/40">Niveau {user.level}</p>}
+                          </div>
+                          {alreadyFriend ? (
+                            <span className="text-xs text-emerald-400 font-semibold">Ami ✓</span>
+                          ) : alreadySent ? (
+                            <span className="text-xs text-white/40">Envoyé ✓</span>
+                          ) : (
+                            <button
+                              onClick={() => handleAddFromSearch(user.id)}
+                              disabled={actionLoading === user.id}
+                              className="p-1.5 rounded-lg bg-[#0097FC]/20 hover:bg-[#0097FC]/30 text-[#0097FC] transition disabled:opacity-50"
+                              title="Ajouter"
+                            >
+                              {actionLoading === user.id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <UserPlus className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Empty State */}
-            {friends.length === 0 && pendingRequests.length === 0 && (
+            {!showSearch && friends.length === 0 && pendingRequests.length === 0 && (
               <div className="p-8 text-center">
                 <Users className="w-12 h-12 text-white/20 mx-auto mb-3" />
                 <p className="text-sm text-white/50 mb-4">
                   Aucun ami pour le moment
                 </p>
-                <Link
-                  href="/leaderboard"
-                  onClick={() => setIsOpen(false)}
+                <button
+                  onClick={openSearch}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0097FC] hover:bg-[#0097FC]/90 text-white text-sm font-semibold transition"
                 >
                   <Search className="w-4 h-4" />
                   Trouver des joueurs
-                </Link>
+                </button>
               </div>
             )}
 
             {/* Footer */}
-            {friends.length > 0 && (
+            {!showSearch && friends.length > 0 && (
               <div className="p-3">
-                <Link
-                  href="/leaderboard"
-                  onClick={() => setIsOpen(false)}
+                <button
+                  onClick={openSearch}
                   className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-white/5 hover:bg-[#0097FC]/20 text-white/70 hover:text-[#0097FC] text-sm font-semibold transition"
                 >
                   <Search className="w-4 h-4" />
                   Trouver des joueurs
-                </Link>
+                </button>
               </div>
             )}
           </div>
