@@ -36,6 +36,7 @@ export default function MessageList({
   messages,
   reactions,
   onReact,
+  onDelete,
   currentUser,
   loading = false,
   unreadId = null,
@@ -129,4 +130,5 @@ export default function MessageList({
       </AnimatePresence>
     </motion.div>
   );
+}
 }

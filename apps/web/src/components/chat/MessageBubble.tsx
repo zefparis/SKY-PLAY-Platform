@@ -1,6 +1,7 @@
 import Card from '@/components/ui/Card'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
+import { Trash2 } from 'lucide-react'
 import ReactionBar from './ReactionBar'
 
 export type Message = {
@@ -28,12 +29,14 @@ type ReactionState = {
 type MessageBubbleProps = {
   message: Message;
   reactions: ReactionState;
+  onDelete?: (messageId: string) => void;
   onReact: (emoji: string) => void;
   currentUser: string;
 };
 
 export default function MessageBubble({
   message,
+  onDelete,
   reactions,
   onReact,
   currentUser,
@@ -67,8 +70,17 @@ export default function MessageBubble({
           whileHover={{ scale: 1.015, boxShadow: '0 0 12px 0 #3b82f633' }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         >
-          <div className="rounded-lg bg-secondary text-white px-4 py-3 shadow-glow-blue border border-blue-400/30 hover:border-blue-400/60 transition relative">
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          <div className="rounded-lg bg-secondary text-white px-4 py-3 shadow-glow-blue border border-blue-400/30 hover:border-blue-400/60 transition relative group">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap pr-8">{message.content}</p>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(message.id)}
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-300"
+                title="Supprimer le message"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
             <ReactionBar
               reactions={reactions}
               onReact={onReact}
@@ -131,12 +143,23 @@ export default function MessageBubble({
         <Card
           variant="glass"
           className={cn(
-            'p-4 border-2 border-gradient-to-br from-pink-400/30 to-blue-400/30 hover:border-pink-400/60 transition'
+            'p-4 border-2 border-gradient-to-br from-pink-400/30 to-blue-400/30 hover:border-pink-400/60 transition group'
           )}
         >
           <div className="flex items-center justify-between gap-4 mb-1">
             <p className="text-primary dark:text-white font-semibold text-sm">{message.author}</p>
-            <p className="text-xs text-primary/60 dark:text-white/55">{message.createdAt}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-primary/60 dark:text-white/55">{message.createdAt}</p>
+              {onDelete && message.author === currentUser && (
+                <button
+                  onClick={() => onDelete(message.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-300"
+                  title="Supprimer le message"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <p className="text-sm text-primary/90 dark:text-white/80 leading-relaxed whitespace-pre-wrap">
             {message.content}

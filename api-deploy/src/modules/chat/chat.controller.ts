@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Param,
   Query,
   UseGuards,
@@ -69,6 +70,11 @@ export class ChatController {
   @Get('users/search')
   searchUsers(@Request() req: any, @Query('q') q: string) {
     return this.chatService.searchUsers(q ?? '', req.user.id);
+  }
+
+  @Delete('messages/:messageId')
+  deleteMessage(@Request() req: any, @Param('messageId') messageId: string) {
+    return this.chatService.deleteMessage(messageId, req.user.id);
   }
 
   @Post('upload-screenshot')

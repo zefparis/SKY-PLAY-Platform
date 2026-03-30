@@ -106,6 +106,29 @@ export class ChatService {
     return conv;
   }
 
+  // ─── DELETE MESSAGE ──────────────────────────────────────────────────────────
+
+  async deleteMessage(messageId: string, userId: string) {
+    const message = await this.prisma.conversationMessage.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new ForbiddenException('Message introuvable');
+    }
+
+    // Only author can delete their own message (or system messages cannot be deleted)
+    if (message.type === 'SYSTEM' || (message.authorId && message.authorId !== userId)) {
+      throw new ForbiddenException('Vous ne pouvez supprimer que vos propres messages');
+    }
+
+    await this.prisma.conversationMessage.delete({
+      where: { id: messageId },
+    });
+
+    return { message: 'Message supprimé avec succès' };
+  }
+
   // ─── MARK AS READ ────────────────────────────────────────────────────────────
 
   async markAsRead(conversationId: string, userId: string) {
