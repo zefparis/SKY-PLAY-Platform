@@ -55,7 +55,29 @@ CORS_ORIGINS=http://localhost:3000,https://sky-play-platform.vercel.app
 
 ---
 
-### 5. Application
+### 5. JWT Secret (Authentification custom)
+```bash
+JWT_SECRET=g622Lf6UOI6HzhslTGTryOqxFvf7KPNy8H0sm5wXdLA=
+```
+**Détails :**
+- Utilisé pour valider les tokens custom JWT (Discord, email/password)
+- **IMPORTANT:** Cette valeur est déjà configurée sur Railway - ne pas la changer
+
+---
+
+### 6. Cloudinary (Upload screenshots chat)
+```bash
+CLOUDINARY_CLOUD_NAME=dxeazyhm7
+CLOUDINARY_API_KEY=643428897634476
+CLOUDINARY_API_SECRET=wZqKmdGIkYWIKGmcMOUZK8mbl-k
+```
+**Détails :**
+- Utilisé pour l'upload de screenshots dans le chat
+- Les credentials sont du compte Cloudinary du projet
+
+---
+
+### 7. Application
 ```bash
 NODE_ENV=production
 PORT=4000
@@ -81,9 +103,17 @@ AWS_COGNITO_CLIENT_ID=5f29473pmgndvnqlavstf8abnu
 
 # S3
 AWS_REGION=eu-west-1
-AWS_ACCESS_KEY_ID=VOTRE_ACCESS_KEY_ICI
-AWS_SECRET_ACCESS_KEY=VOTRE_SECRET_KEY_ICI
-AWS_S3_BUCKET_NAME=skyplay
+AWS_ACCESS_KEY_ID=<voir .env local ou Railway>
+AWS_SECRET_ACCESS_KEY=<voir .env local ou Railway>
+AWS_S3_BUCKET_NAME=skyplay-assets-prod
+
+# JWT (custom auth - Discord, email/password)
+JWT_SECRET=g622Lf6UOI6HzhslTGTryOqxFvf7KPNy8H0sm5wXdLA=
+
+# Cloudinary (chat screenshots)
+CLOUDINARY_CLOUD_NAME=dxeazyhm7
+CLOUDINARY_API_KEY=643428897634476
+CLOUDINARY_API_SECRET=wZqKmdGIkYWIKGmcMOUZK8mbl-k
 
 # CORS
 CORS_ORIGINS=http://localhost:3000,https://sky-play-platform.vercel.app
