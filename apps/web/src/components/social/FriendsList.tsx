@@ -156,7 +156,7 @@ export default function FriendsList() {
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-12 z-50 w-96 rounded-xl bg-[#0a0f1e] border border-white/10 shadow-2xl max-h-[600px] overflow-y-auto">
+          <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 max-w-[calc(100vw-1rem)] rounded-xl bg-[#0a0f1e] border border-white/10 shadow-2xl max-h-[80vh] sm:max-h-[600px] overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-[#0a0f1e] p-4 border-b border-white/10 z-10">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
