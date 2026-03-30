@@ -82,6 +82,7 @@ export default function MessageList({
                 message={msg}
                 reactions={reactions[msg.id] || {}}
                 onReact={(emoji: string) => onReact(msg.id, emoji, currentUser)}
+                onDelete={onDelete}
                 currentUser={currentUser}
               />
             </div>
@@ -122,6 +123,7 @@ export default function MessageList({
                 message={msg}
                 reactions={reactions[msg.id] || {}}
                 onReact={(emoji: string) => onReact(msg.id, emoji, currentUser)}
+                onDelete={onDelete}
                 currentUser={currentUser}
               />
             </motion.div>
