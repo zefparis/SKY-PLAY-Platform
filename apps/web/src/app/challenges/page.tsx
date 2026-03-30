@@ -14,6 +14,7 @@ const GAMES_FR = ['Tous', 'FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobil
 
 export default function ChallengesPage() {
   const { t, lang } = useI18n();
+  const { user } = useAuthStore();
   const GAMES = lang === 'fr' ? GAMES_FR : GAMES_EN;
   const TYPE_FILTERS = [
     { key: '', label: t('challenges.filter.all') },
