@@ -3,7 +3,7 @@ import {
   UseGuards, Request, Headers, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import {
   InitiateDepositDto,
   VerifyDepositDto,
@@ -15,13 +15,13 @@ import {
 export class WalletController {
   constructor(private walletService: WalletService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Get()
   getWallet(@Request() req) {
     return this.walletService.getWallet(req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Get('transactions')
   getTransactions(@Request() req, @Query() query: GetTransactionsQueryDto) {
     return this.walletService.getTransactions(req.user.id, {
@@ -31,19 +31,19 @@ export class WalletController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post('deposit')
   initiateDeposit(@Request() req, @Body() dto: InitiateDepositDto) {
     return this.walletService.initiateDeposit(req.user.id, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post('deposit/verify')
   verifyDeposit(@Request() req, @Body() dto: VerifyDepositDto) {
     return this.walletService.verifyDeposit(req.user.id, dto.flwTxId, dto.transactionId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post('withdraw')
   initiateWithdrawal(@Request() req, @Body() dto: InitiateWithdrawalDto) {
     return this.walletService.initiateWithdrawal(req.user.id, dto);

@@ -15,11 +15,11 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import { ChatService } from './chat.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { Logger } from '@nestjs/common';
 
 @Controller('chat')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtDualGuard)
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 

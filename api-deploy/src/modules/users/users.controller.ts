@@ -18,7 +18,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -46,11 +46,11 @@ export class UsersController {
 
   /**
    * Synchronise l'utilisateur Cognito → PostgreSQL.
-   * Protégé par JwtAuthGuard (Cognito JWT).
+   * Protégé par JwtDualGuard (Cognito JWT ou custom JWT).
    * Upsert sur cognitoSub (idempotent).
    */
   @SkipThrottle()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post('sync')
   async syncUser(@Req() req: Request) {
     // Debug: afficher le header Authorization reçu
@@ -89,7 +89,7 @@ export class UsersController {
    * Protégé par JwtAuthGuard.
    */
   @SkipThrottle()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Patch('profile')
   async updateProfile(@Req() req: Request, @Body() updateDto: UpdateProfileDto) {
     const userPayload = req.user as any;
@@ -114,7 +114,7 @@ export class UsersController {
    * Protégé par JwtAuthGuard.
    */
   @SkipThrottle()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post('avatar')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -190,9 +190,9 @@ export class UsersController {
 
   /**
    * Liste des utilisateurs en ligne (amis en premier)
-   * Protégé par JwtAuthGuard
+   * Protégé par JwtDualGuard
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Get('online')
   async getOnlineUsers(
     @Req() req: Request,
@@ -226,9 +226,9 @@ export class UsersController {
 
   /**
    * Mise à jour du statut de l'utilisateur connecté
-   * Protégé par JwtAuthGuard
+   * Protégé par JwtDualGuard
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Patch('status')
   async updateStatus(
     @Req() req: Request,

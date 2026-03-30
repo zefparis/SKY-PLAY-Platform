@@ -1,9 +1,9 @@
 import { Controller, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { MatchesService } from './matches.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { SubmitResultDto } from './dto/match.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtDualGuard)
 @Controller('matches')
 export class MatchesController {
   constructor(private matchesService: MatchesService) {}

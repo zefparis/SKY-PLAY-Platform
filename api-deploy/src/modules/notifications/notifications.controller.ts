@@ -10,11 +10,11 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { NotificationsService } from './notifications.service';
 
 @Controller('notifications')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtDualGuard)
 export class NotificationsController {
   constructor(private notificationsService: NotificationsService) {}
 

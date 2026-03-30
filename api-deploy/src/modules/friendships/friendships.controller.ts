@@ -10,11 +10,11 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { FriendshipsService } from './friendships.service';
 
 @Controller('friendships')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtDualGuard)
 export class FriendshipsController {
   constructor(private friendshipsService: FriendshipsService) {}
 

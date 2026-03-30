@@ -10,7 +10,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ChallengesService } from './challenges.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import {
   CreateChallengeDto,
   SubmitResultDto,
@@ -39,7 +39,7 @@ export class ChallengesController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Get('my')
   getMyChallenges(@Request() req) {
     return this.challengesService.getMyChallenges(req.user.id);
@@ -50,19 +50,19 @@ export class ChallengesController {
     return this.challengesService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post()
   create(@Body() dto: CreateChallengeDto, @Request() req) {
     return this.challengesService.create(req.user.id, dto.title, dto.game, dto.type);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post(':id/join')
   join(@Param('id') id: string, @Request() req) {
     return this.challengesService.join(id, req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post(':id/submit-result')
   submitResult(
     @Param('id') id: string,
@@ -72,7 +72,7 @@ export class ChallengesController {
     return this.challengesService.submitResult(id, req.user.id, dto.rank, dto.screenshotUrl);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtDualGuard)
   @Post(':id/dispute')
   forceDispute(
     @Param('id') id: string,
@@ -84,7 +84,7 @@ export class ChallengesController {
 }
 
 @Controller('admin/challenges')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtDualGuard)
 export class AdminChallengesController {
   constructor(private readonly challengesService: ChallengesService) {}
 
