@@ -9,6 +9,7 @@ export default function AuthCallbackPage() {
   const handleOAuthCallback = useAuthStore((state) => state.handleOAuthCallback)
   const [error, setError] = useState<string | null>(null)
   const hasCalledRef = useRef(false)
+  const callbackRef = useRef(handleOAuthCallback)
 
   useEffect(() => {
     if (hasCalledRef.current) return
@@ -22,7 +23,7 @@ export default function AuthCallbackPage() {
       return
     }
 
-    void handleOAuthCallback(code).catch((caughtError: unknown) => {
+    void callbackRef.current(code).catch((caughtError: unknown) => {
       if (caughtError instanceof Error) {
         setError(caughtError.message)
         return
@@ -30,7 +31,7 @@ export default function AuthCallbackPage() {
 
       setError('Erreur inconnue pendant la connexion Google')
     })
-  }, [handleOAuthCallback])
+  }, [])
 
   if (error) {
     return (
