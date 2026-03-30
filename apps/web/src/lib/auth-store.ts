@@ -59,6 +59,26 @@ type AuthStoreState = {
 
 const STORAGE_KEY = 'skyplay-auth'
 const PASSWORD_CACHE_KEY = 'skyplay-auth-confirm-password'
+const PKCE_VERIFIER_KEY = 'skyplay-pkce-verifier'
+
+// ── PKCE helpers ──────────────────────────────────────────────────────────────
+function generateCodeVerifier(): string {
+  const array = new Uint8Array(64)
+  crypto.getRandomValues(array)
+  return btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
+
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const data = new TextEncoder().encode(verifier)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
 
 const COGNITO_CONFIG = {
   domain: 'https://eu-west-1sznqqakay.auth.eu-west-1.amazoncognito.com',
@@ -355,15 +375,23 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       return
     }
 
-    const url = new URL(`${domain}/oauth2/authorize`)
-    url.searchParams.set('client_id', clientId)
-    url.searchParams.set('response_type', 'code')
-    url.searchParams.set('scope', 'email openid profile')
-    url.searchParams.set('redirect_uri', redirectUri)
-    url.searchParams.set('identity_provider', 'Google')
+    // PKCE: generate verifier, store it, compute challenge then redirect
+    const verifier = generateCodeVerifier()
+    sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier)
 
-    set({ error: null })
-    window.location.assign(url.toString())
+    generateCodeChallenge(verifier).then((challenge) => {
+      const url = new URL(`${domain}/oauth2/authorize`)
+      url.searchParams.set('client_id', clientId)
+      url.searchParams.set('response_type', 'code')
+      url.searchParams.set('scope', 'email openid profile')
+      url.searchParams.set('redirect_uri', redirectUri)
+      url.searchParams.set('identity_provider', 'Google')
+      url.searchParams.set('code_challenge', challenge)
+      url.searchParams.set('code_challenge_method', 'S256')
+
+      set({ error: null })
+      window.location.assign(url.toString())
+    })
   },
 
   loginWithDiscord: () => {
@@ -432,17 +460,26 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       const clientId = COGNITO_CONFIG.clientId
       const redirectUri = COGNITO_CONFIG.redirectSignIn
 
+      // PKCE: retrieve verifier stored during loginWithGoogle
+      const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY) ?? ''
+      sessionStorage.removeItem(PKCE_VERIFIER_KEY)
+
+      const params: Record<string, string> = {
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        code,
+        redirect_uri: redirectUri,
+      }
+      if (codeVerifier) {
+        params.code_verifier = codeVerifier
+      }
+
       const response = await fetch(`${domain}/oauth2/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: clientId,
-          code,
-          redirect_uri: redirectUri,
-        }),
+        body: new URLSearchParams(params),
       })
 
       if (!response.ok) {
