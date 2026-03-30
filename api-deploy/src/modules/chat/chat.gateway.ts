@@ -17,6 +17,7 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ChallengesService } from '../challenges/challenges.service';
 import { WalletService } from '../wallet/wallet.service';
+import { ChatService } from './chat.service';
 
 interface ConnectedUser {
   id: string;
@@ -97,6 +98,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private prisma: PrismaService,
     private challengesService: ChallengesService,
     private walletService: WalletService,
+    private chatService: ChatService,
   ) {
     const cognito = config.get('cognito');
     const jwksUri = cognito?.jwksUri;
@@ -183,6 +185,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.join('global');
       client.join(`user_${user.id}`);
+
+      // Rejoindre toutes les conversations de l'utilisateur
+      const convs = await this.prisma.conversationMember.findMany({
+        where: { userId: user.id },
+        select: { conversationId: true },
+      });
+      convs.forEach((c) => client.join(`conv_${c.conversationId}`));
 
       // Mettre à jour le statut à ONLINE
       await this.prisma.user.update({
@@ -664,6 +673,75 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.removeUserFromVoiceRoom(socketId, room);
       }
     });
+  }
+
+  // ===== CONVERSATION HANDLERS =====
+
+  @SubscribeMessage('join_conversation')
+  handleJoinConversation(
+    @MessageBody() data: { conversationId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.join(`conv_${data.conversationId}`);
+  }
+
+  @SubscribeMessage('leave_conversation')
+  handleLeaveConversation(
+    @MessageBody() data: { conversationId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.leave(`conv_${data.conversationId}`);
+  }
+
+  @SubscribeMessage('send_conversation_message')
+  async handleSendConversationMessage(
+    @MessageBody() data: { conversationId: string; content: string; type?: string; imageUrl?: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+
+    const { conversationId, content, type = 'TEXT', imageUrl } = data;
+
+    if (!content?.trim() && type !== 'IMAGE') {
+      client.emit('error', { message: 'Message cannot be empty' });
+      return;
+    }
+    if (content?.length > MAX_MESSAGE_LENGTH) {
+      client.emit('error', { message: `Message too long (max ${MAX_MESSAGE_LENGTH} characters)` });
+      return;
+    }
+
+    const now = Date.now();
+    const last = this.userLastMessage.get(user.id) ?? 0;
+    if (now - last < RATE_LIMIT_MS) {
+      client.emit('error', { message: 'Please wait before sending another message' });
+      return;
+    }
+    this.userLastMessage.set(user.id, now);
+
+    try {
+      const saved = await this.chatService.saveMessage(
+        conversationId,
+        user.id,
+        content?.trim() ?? '',
+        type as 'TEXT' | 'IMAGE' | 'SYSTEM',
+        imageUrl,
+      );
+
+      this.server.to(`conv_${conversationId}`).emit('conversation_message', {
+        ...saved,
+        conversationId,
+      });
+    } catch (err) {
+      this.logger.error(`send_conversation_message error: ${err.message}`);
+      client.emit('error', { message: 'Failed to send message' });
+    }
+  }
+
+  // Méthode publique pour émettre depuis d'autres services (ex: ChallengesService)
+  emitToConversation(conversationId: string, event: string, data: any) {
+    this.server.to(`conv_${conversationId}`).emit(event, data);
   }
 
   // ===== CHALLENGE ROOM HANDLERS =====

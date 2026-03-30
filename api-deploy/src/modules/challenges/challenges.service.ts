@@ -3,9 +3,12 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
+import { ChatService } from '../chat/chat.service';
 import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION } from './challenges.constants';
 
 type ChallengeTypeKey = keyof typeof CHALLENGE_TYPES;
@@ -29,6 +32,7 @@ export class ChallengesService {
   constructor(
     private prisma: PrismaService,
     private walletService: WalletService,
+    @Inject(forwardRef(() => ChatService)) private chatService: ChatService,
   ) {}
 
   setServer(server: any) {
@@ -193,12 +197,26 @@ export class ChallengesService {
   // ─── START ───────────────────────────────────────────────────────────────────
 
   async startChallenge(challengeId: string) {
-    await this.prisma.challenge.update({
+    const challenge = await this.prisma.challenge.update({
       where: { id: challengeId },
       data: { status: 'IN_PROGRESS' as any, startedAt: new Date() },
+      include: { participants: { select: { userId: true } } },
     });
 
     this.notifyChallenge(challengeId, 'challenge_started', { challengeId });
+
+    // Créer automatiquement le salon de discussion du défi
+    try {
+      const participantIds = challenge.participants.map((p) => p.userId);
+      const conv = await this.chatService.createChallengeConversation(challengeId, participantIds);
+      this.notifyChallenge(challengeId, 'challenge_chat_ready', {
+        challengeId,
+        conversationId: conv.id,
+      });
+    } catch (err) {
+      // Non-bloquant : le chat de défi est optionnel
+      console.error('[ChallengesService] Failed to create challenge conversation:', err.message);
+    }
   }
 
   // ─── SUBMIT RESULT ───────────────────────────────────────────────────────────

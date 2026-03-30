@@ -45,6 +45,8 @@ model User {
   challengeParticipations ChallengeParticipant[]
   challengeResults    ChallengeResult[]
   adminLogs           AdminLog[]
+  conversationMembers  ConversationMember[]
+  sentMessages         ConversationMessage[] @relation("SentMessages")
 
   @@index([status])
   @@index([level])
@@ -138,6 +140,7 @@ model Challenge {
   participants ChallengeParticipant[]
   results     ChallengeResult[]
   dispute     ChallengeDispute?
+  conversation Conversation?
   createdAt   DateTime              @default(now())
   startedAt   DateTime?
   endedAt     DateTime?
@@ -364,4 +367,62 @@ model AdminLog {
   @@index([action])
   @@index([createdAt])
   @@map("admin_logs")
+}
+
+// ─── CHAT ────────────────────────────────────────────────────────────────────
+
+model Conversation {
+  id          String               @id @default(cuid())
+  type        ConversationType
+  name        String?
+  challengeId String?              @unique
+  challenge   Challenge?           @relation(fields: [challengeId], references: [id])
+  members     ConversationMember[]
+  messages    ConversationMessage[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([type])
+  @@map("conversations")
+}
+
+enum ConversationType {
+  DM
+  CHALLENGE
+}
+
+model ConversationMember {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_members")
+}
+
+model ConversationMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  authorId       String?
+  content        String           @db.Text
+  type           MessageType      @default(TEXT)
+  imageUrl       String?          @db.Text
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author         User?            @relation("SentMessages", fields: [authorId], references: [id])
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([authorId])
+  @@map("conversation_messages")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  SYSTEM
 }
