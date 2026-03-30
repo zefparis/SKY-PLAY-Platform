@@ -13,18 +13,19 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { randomUUID } from 'crypto';
+import { v2 as cloudinary } from 'cloudinary';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
-  private s3: S3Client;
-
   constructor(private chatService: ChatService) {
-    this.s3 = new S3Client({ region: process.env.AWS_REGION ?? 'eu-west-1' });
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
   }
 
   @Get('conversations')
@@ -58,7 +59,7 @@ export class ChatController {
   }
 
   @Post('upload-screenshot')
-  @UseInterceptors(FileInterceptor('file', { storage: undefined }))
+  @UseInterceptors(FileInterceptor('file'))
   async uploadScreenshot(
     @UploadedFile(
       new ParseFilePipe({
@@ -70,21 +71,14 @@ export class ChatController {
     )
     file: Express.Multer.File,
   ) {
-    const ext = file.mimetype.split('/')[1];
-    const key = `screenshots/${randomUUID()}.${ext}`;
-    const bucket = process.env.AWS_S3_BUCKET ?? 'skyplay-assets-prod';
-
-    await this.s3.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: 'public-read' as any,
-      }),
-    );
-
-    const url = `https://${bucket}.s3.${process.env.AWS_REGION ?? 'eu-west-1'}.amazonaws.com/${key}`;
-    return { url };
+    const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          { folder: 'skyplay/screenshots', resource_type: 'image' },
+          (err, res) => (err ? reject(err) : resolve(res!)),
+        )
+        .end(file.buffer);
+    });
+    return { url: result.secure_url };
   }
 }
