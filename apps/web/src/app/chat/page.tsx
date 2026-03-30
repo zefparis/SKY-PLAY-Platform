@@ -151,7 +151,7 @@ export default function ChatPage() {
         body: form,
       })
       if (!res.ok) {
-        setUploadError('Erreur upload — vérifiez la config S3')
+        setUploadError('Erreur upload — vérifiez les variables Cloudinary dans Railway')
         return
       }
       const { url } = await res.json()
