@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Eye, CheckCircle, Ban, DollarSign } from 'lucide-react'
+import { Search, CheckCircle, Ban, DollarSign, PlusCircle, MinusCircle, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import AdminBadge from '@/components/admin/AdminBadge'
 import { useAuthStore } from '@/lib/auth-store'
 
@@ -27,9 +27,17 @@ export default function UsersPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [totalPages, setTotalPages] = useState(1)
+  const [roleFilter, setRoleFilter] = useState('')
   const [banModalOpen, setBanModalOpen] = useState(false)
   const [banReason, setBanReason] = useState('')
   const [banDuration, setBanDuration] = useState('')
+  const [adjustUser, setAdjustUser] = useState<User | null>(null)
+  const [adjustAmount, setAdjustAmount] = useState('')
+  const [adjustType, setAdjustType] = useState<'CREDIT' | 'DEBIT'>('CREDIT')
+  const [adjustDesc, setAdjustDesc] = useState('')
+  const [adjustLoading, setAdjustLoading] = useState(false)
+  const [actionMsg, setActionMsg] = useState('')
 
   const fetchUsers = async () => {
     if (!idToken) return
@@ -37,6 +45,7 @@ export default function UsersPage() {
     try {
       const params = new URLSearchParams({ page: page.toString(), limit: '20' })
       if (search) params.append('search', search)
+      if (roleFilter) params.append('role', roleFilter)
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users?${params}`, {
         headers: { Authorization: `Bearer ${idToken}` },
@@ -44,6 +53,7 @@ export default function UsersPage() {
       const data = await res.json()
       setUsers(data.users || [])
       setTotal(data.total || 0)
+      setTotalPages(data.totalPages || 1)
     } catch (error) {
       console.error('Failed to fetch users:', error)
     } finally {
@@ -103,6 +113,27 @@ export default function UsersPage() {
     }
   }
 
+  const handleAdjustWallet = async () => {
+    if (!adjustUser || !adjustAmount || !idToken) return
+    setAdjustLoading(true)
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/wallet/adjust`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ userId: adjustUser.id, amount: Number(adjustAmount), type: adjustType, description: adjustDesc || `Ajustement admin` }),
+      })
+      if (!res.ok) throw new Error()
+      setActionMsg(`Wallet de ${adjustUser.username} ${adjustType === 'CREDIT' ? 'crédité' : 'débité'} de ${adjustAmount} CFA`)
+      setAdjustUser(null); setAdjustAmount(''); setAdjustDesc('')
+      fetchUsers()
+    } catch {
+      setActionMsg('Erreur lors de l\'ajustement')
+    } finally {
+      setAdjustLoading(false)
+      setTimeout(() => setActionMsg(''), 3500)
+    }
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
@@ -112,6 +143,22 @@ export default function UsersPage() {
           </h1>
           <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">{total} utilisateurs au total</p>
         </div>
+      </div>
+
+      {actionMsg && (
+        <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">{actionMsg}</div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        {['', 'USER', 'ADMIN', 'MODERATOR'].map(r => (
+          <button key={r} onClick={() => { setRoleFilter(r); setPage(1) }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+              roleFilter === r ? 'bg-[#0097FC] text-white' : 'dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white/70 text-[#00165F]/70'
+            }`}>
+            {r || 'Tous'}
+          </button>
+        ))}
       </div>
 
       {/* Search */}
@@ -188,6 +235,13 @@ export default function UsersPage() {
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-1 sm:gap-2">
+                        <button
+                          onClick={() => { setAdjustUser(user); setAdjustAmount(''); setAdjustType('CREDIT'); setAdjustDesc('') }}
+                          className="p-1.5 sm:p-2 rounded-lg dark:bg-[#0097FC]/20 bg-blue-100 text-[#0097FC] hover:bg-[#0097FC]/30 transition"
+                          title="Ajuster wallet"
+                        >
+                          <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        </button>
                         {!user.isVerified && (
                           <button
                             onClick={() => handleVerify(user.id)}
@@ -226,26 +280,61 @@ export default function UsersPage() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between gap-4">
-        <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">
-          Page {page}/{Math.ceil(total / 20)}
-        </p>
+        <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">Page {page}/{totalPages}</p>
         <div className="flex gap-2">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-3 sm:px-4 py-2 rounded-xl dark:bg-white/10 bg-[#00165F]/10 dark:text-white text-[#00165F] font-semibold disabled:opacity-50 hover:bg-[#0097FC] hover:text-white transition text-sm"
-          >
-            ← Préc.
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+            className="p-2 rounded-xl dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] disabled:opacity-40 hover:border-[#0097FC] transition">
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setPage(p => p + 1)}
-            disabled={page >= Math.ceil(total / 20)}
-            className="px-3 sm:px-4 py-2 rounded-xl dark:bg-white/10 bg-[#00165F]/10 dark:text-white text-[#00165F] font-semibold disabled:opacity-50 hover:bg-[#0097FC] hover:text-white transition text-sm"
-          >
-            Suiv. →
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+            className="p-2 rounded-xl dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] disabled:opacity-40 hover:border-[#0097FC] transition">
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
+
+      {/* Adjust Wallet Modal */}
+      {adjustUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#00165F] rounded-2xl p-6 max-w-md w-full border dark:border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-black dark:text-white text-[#00165F]">Wallet — {adjustUser.username}</h3>
+              <button onClick={() => setAdjustUser(null)} className="dark:text-white/50 text-[#00165F]/50 hover:text-red-400"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <button onClick={() => setAdjustType('CREDIT')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-bold transition ${
+                    adjustType === 'CREDIT' ? 'border-emerald-400 bg-emerald-400/10 text-emerald-400' : 'border-transparent dark:bg-white/5 bg-gray-50 dark:text-white/50 text-[#00165F]/50'
+                  }`}>
+                  <PlusCircle className="w-4 h-4" /> Créditer
+                </button>
+                <button onClick={() => setAdjustType('DEBIT')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-bold transition ${
+                    adjustType === 'DEBIT' ? 'border-red-400 bg-red-400/10 text-red-400' : 'border-transparent dark:bg-white/5 bg-gray-50 dark:text-white/50 text-[#00165F]/50'
+                  }`}>
+                  <MinusCircle className="w-4 h-4" /> Débiter
+                </button>
+              </div>
+              <input type="number" value={adjustAmount} onChange={e => setAdjustAmount(e.target.value)} placeholder="Montant en CFA..."
+                className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC] text-sm" />
+              <input value={adjustDesc} onChange={e => setAdjustDesc(e.target.value)} placeholder="Description (optionnel)..."
+                className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC] text-sm" />
+              <div className="flex gap-3">
+                <button onClick={() => setAdjustUser(null)}
+                  className="flex-1 py-2.5 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] font-semibold text-sm">Annuler</button>
+                <button onClick={handleAdjustWallet} disabled={!adjustAmount || adjustLoading}
+                  className={`flex-1 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 transition flex items-center justify-center gap-2 ${
+                    adjustType === 'CREDIT' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
+                  }`}>
+                  {adjustLoading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ban Modal */}
       {banModalOpen && (
