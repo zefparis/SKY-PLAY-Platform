@@ -16,9 +16,16 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: true,
+    origin: [
+      'https://sky-play-platform.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 3600,
   });
 
   app.useGlobalPipes(
