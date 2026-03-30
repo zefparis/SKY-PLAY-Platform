@@ -152,20 +152,34 @@ export default function FriendsList() {
 
       {isOpen && (
         <>
+          {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 max-w-[calc(100vw-1rem)] rounded-xl bg-[#0a0f1e] border border-white/10 shadow-2xl max-h-[80vh] sm:max-h-[600px] overflow-y-auto">
+          {/* Responsive: bottom sheet on mobile, dropdown on desktop */}
+          <div className="fixed inset-x-0 bottom-0 rounded-t-2xl md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:top-12 md:w-96 md:rounded-xl z-[9999] bg-[#0a0f1e] border-t md:border border-white/10 shadow-2xl max-h-[85vh] md:max-h-[600px] overflow-y-auto">
+            {/* Mobile drag handle */}
+            <div className="md:hidden flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
             {/* Header */}
-            <div className="sticky top-0 bg-[#0a0f1e] p-4 border-b border-white/10 z-10">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Amis ({friends.length})
-              </h3>
-              <p className="text-xs text-white/60 mt-1">
-                {onlineFriends.length} en ligne
-              </p>
+            <div className="sticky top-0 bg-[#0a0f1e] p-4 border-b border-white/10 z-10 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Amis ({friends.length})
+                </h3>
+                <p className="text-xs text-white/60 mt-1">
+                  {onlineFriends.length} en ligne
+                </p>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Pending Requests */}
