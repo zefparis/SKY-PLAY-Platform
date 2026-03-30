@@ -16,15 +16,28 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Logger } from '@nestjs/common';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
+  private readonly logger = new Logger(ChatController.name);
+
   constructor(private chatService: ChatService) {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    
+    if (!cloudName || !apiKey || !apiSecret) {
+      this.logger.error('Missing Cloudinary credentials!');
+    } else {
+      this.logger.log(`Cloudinary config: cloud_name=${cloudName}`);
+    }
+    
     cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
     });
   }
 
@@ -71,14 +84,29 @@ export class ChatController {
     )
     file: Express.Multer.File,
   ) {
-    const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          { folder: 'skyplay/screenshots', resource_type: 'image' },
-          (err, res) => (err ? reject(err) : resolve(res!)),
-        )
-        .end(file.buffer);
-    });
-    return { url: result.secure_url };
+    this.logger.log(`Upload started: ${file?.originalname}, size: ${file?.size}, buffer: ${file?.buffer ? 'present' : 'missing'}`);
+    
+    try {
+      const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: 'skyplay/screenshots', resource_type: 'image' },
+            (err, res) => {
+              if (err) {
+                this.logger.error(`Cloudinary upload error: ${err.message}`);
+                reject(err);
+              } else {
+                this.logger.log(`Cloudinary upload success: ${res?.secure_url}`);
+                resolve(res!);
+              }
+            },
+          )
+          .end(file.buffer);
+      });
+      return { url: result.secure_url };
+    } catch (error: any) {
+      this.logger.error(`Upload failed: ${error?.message || error}`);
+      throw error;
+    }
   }
 }
