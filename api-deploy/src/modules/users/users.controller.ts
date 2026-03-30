@@ -225,6 +225,25 @@ export class UsersController {
   }
 
   /**
+   * Récupère les statistiques de l'utilisateur connecté
+   * Protégé par JwtDualGuard
+   */
+  @UseGuards(JwtDualGuard)
+  @Get('me/stats')
+  async getMyStats(@Req() req: Request) {
+    const userPayload = req.user as any;
+    
+    if (!userPayload?.id) {
+      throw new HttpException(
+        'Utilisateur non authentifié',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return this.usersService.getUserStats(userPayload.id);
+  }
+
+  /**
    * Mise à jour du statut de l'utilisateur connecté
    * Protégé par JwtDualGuard
    */

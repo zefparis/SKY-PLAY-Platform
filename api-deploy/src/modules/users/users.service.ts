@@ -399,6 +399,48 @@ export class UsersService {
     });
   }
 
+  async getUserStats(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        xp: true,
+        level: true,
+        _count: {
+          select: {
+            challengeParticipations: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return {
+        totalChallenges: 0,
+        wins: 0,
+        xp: 0,
+        level: 1,
+      };
+    }
+
+    // Compter les victoires (participations avec rank=1 dans des challenges COMPLETED)
+    const wins = await this.prisma.challengeParticipant.count({
+      where: {
+        userId,
+        rank: 1,
+        challenge: {
+          status: 'COMPLETED',
+        },
+      },
+    });
+
+    return {
+      totalChallenges: user._count.challengeParticipations,
+      wins,
+      xp: user.xp,
+      level: user.level,
+    };
+  }
+
   private discordStatusCache = new Map<string, { status: string; timestamp: number }>();
 
   async getDiscordStatus(userId: string) {
