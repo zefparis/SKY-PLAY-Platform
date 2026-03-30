@@ -202,7 +202,7 @@ export default function ChatPage() {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 top-16 bottom-20 flex dark:bg-[#030b1a] bg-[#f0f4ff] overflow-hidden">
+    <div className="dark fixed inset-0 top-16 bottom-20 flex bg-[#030b1a] overflow-hidden">
 
       {/* ══ SIDEBAR ══════════════════════════════════════════════ */}
       <AnimatePresence>
@@ -467,7 +467,7 @@ export default function ChatPage() {
         )}
 
         {/* ── INPUT BAR ────────────────────────────────────────── */}
-        <div className="shrink-0 px-3 sm:px-5 py-3 bg-[#00165F]/20 backdrop-blur-md border-t border-white/8">
+        <div className="shrink-0 px-3 sm:px-5 py-3 bg-[#00165F]/30 backdrop-blur-md border-t border-white/10">
           <AnimatePresence>
             {showEmoji && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="mb-2">
