@@ -118,26 +118,26 @@ export default function DashboardPage() {
           <Card className="gradient-primary relative overflow-hidden text-white border-0 shadow-glow-blue dark:shadow-none">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
             <div className="relative">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                    <Wallet className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-white/70">{t('wallet.balance')}</p>
-                    <motion.p key={balance} initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-4xl font-black text-white">
-                      {formatCFA(balance)}
-                    </motion.p>
-                  </div>
+              {/* Balance row */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                  <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowDeposit(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#00165F] font-bold text-sm hover:bg-white/90 transition shadow-lg">
-                    <Plus className="w-4 h-4" /> {t('wallet.deposit')}
-                  </button>
-                  <button onClick={() => setShowWithdraw(true)} disabled={balance < 1000} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/20 text-white font-bold text-sm hover:bg-white/30 transition border border-white/30 disabled:opacity-40">
-                    <ArrowUpRight className="w-4 h-4" /> {t('wallet.withdraw')}
-                  </button>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-white/70">{t('wallet.balance')}</p>
+                  <motion.p key={balance} initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-3xl sm:text-4xl font-black text-white leading-tight">
+                    {formatCFA(balance)}
+                  </motion.p>
                 </div>
+              </div>
+              {/* Action buttons */}
+              <div className="flex gap-2 mb-6">
+                <button onClick={() => setShowDeposit(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-white text-[#00165F] font-bold text-sm hover:bg-white/90 transition shadow-lg">
+                  <Plus className="w-4 h-4" /> {t('wallet.deposit')}
+                </button>
+                <button onClick={() => setShowWithdraw(true)} disabled={balance < 1000} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-white/20 text-white font-bold text-sm hover:bg-white/30 transition border border-white/30 disabled:opacity-40">
+                  <ArrowUpRight className="w-4 h-4" /> {t('wallet.withdraw')}
+                </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
