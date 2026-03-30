@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Swords, Trophy, Users, Wallet, Check } from 'lucide-react';
 import { formatCFA, computeNetPot, computePrizes } from '@/lib/currency';
+import { getAuthToken } from '@/lib/get-auth-token';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -41,12 +42,15 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('Non authentifié. Veuillez vous connecter.');
+      }
       const res = await fetch(`${API}/challenges`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ title, game, type: selectedType.key }),
       });

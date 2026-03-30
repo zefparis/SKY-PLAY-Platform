@@ -24,7 +24,16 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 function getToken() {
-  return localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+  if (typeof window === 'undefined') return '';
+  try {
+    const stored = window.localStorage.getItem('skyplay-auth');
+    if (!stored) return '';
+    const parsed = JSON.parse(stored);
+    const tokens = parsed?.state?.tokens || parsed?.tokens;
+    return tokens?.idToken || tokens?.accessToken || '';
+  } catch {
+    return '';
+  }
 }
 
 export default function ChallengePage() {
