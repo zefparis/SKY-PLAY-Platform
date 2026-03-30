@@ -43,31 +43,6 @@ export default function FriendsList() {
 
   useEffect(() => { setMounted(true) }, [])
 
-  if (!mounted || !initialized || !tokens) return null
-
-  const handleAccept = async (userId: string) => {
-    setActionLoading(userId)
-    await accept(userId)
-    setActionLoading(null)
-  }
-
-  const handleDecline = async (userId: string) => {
-    setActionLoading(userId)
-    await decline(userId)
-    setActionLoading(null)
-  }
-
-  const handleSendRequest = async (userId: string) => {
-    setActionLoading(userId)
-    await sendRequest(userId)
-    setActionLoading(null)
-  }
-
-  const handleOpenDM = (userId: string, username: string) => {
-    setIsOpen(false)
-    router.push(`/chat?dm=${userId}`)
-  }
-
   const handleSearch = useCallback(async (q: string) => {
     if (!tokens?.idToken || q.trim().length < 2) {
       setSearchResults([])
@@ -93,6 +68,31 @@ export default function FriendsList() {
     const timer = setTimeout(() => handleSearch(searchQuery), 300)
     return () => clearTimeout(timer)
   }, [searchQuery, handleSearch])
+
+  if (!mounted || !initialized || !tokens) return null
+
+  const handleAccept = async (userId: string) => {
+    setActionLoading(userId)
+    await accept(userId)
+    setActionLoading(null)
+  }
+
+  const handleDecline = async (userId: string) => {
+    setActionLoading(userId)
+    await decline(userId)
+    setActionLoading(null)
+  }
+
+  const handleSendRequest = async (userId: string) => {
+    setActionLoading(userId)
+    await sendRequest(userId)
+    setActionLoading(null)
+  }
+
+  const handleOpenDM = (userId: string, username: string) => {
+    setIsOpen(false)
+    router.push(`/chat?dm=${userId}`)
+  }
 
   const openSearch = () => {
     setShowSearch(true)
