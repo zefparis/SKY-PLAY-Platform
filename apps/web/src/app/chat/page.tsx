@@ -67,7 +67,7 @@ export default function ChatPage() {
   if (!tokens || !currentUser) return null
 
   return (
-    <div className={`flex flex-col dark:bg-[#030b1a] bg-[#f0f4ff] overflow-hidden ${isInVoice ? 'h-[calc(100dvh-64px-80px-48px)]' : 'h-[calc(100dvh-64px-80px)]'}`}>
+    <div className="fixed inset-0 top-16 bottom-20 flex flex-col dark:bg-[#030b1a] bg-[#f0f4ff] overflow-hidden">
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
       <div className="shrink-0 px-3 sm:px-5 py-2.5 dark:bg-[#00165F]/40 bg-white/80 backdrop-blur-md border-b dark:border-white/8 border-[#00165F]/8">
@@ -208,7 +208,7 @@ export default function ChatPage() {
       </AnimatePresence>
 
       {/* ── MESSAGES ──────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-1">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-1" style={{ minHeight: 0 }}>
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-3">
             <motion.div
