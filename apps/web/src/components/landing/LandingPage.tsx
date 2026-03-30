@@ -73,7 +73,7 @@ const translations = {
       tagline: 'La plateforme de défis gaming #1 en Afrique centrale',
       sections: [
         { title: 'Plateforme', links: [{ text: 'Défis', href: '/challenges' }, { text: 'Wallet', href: '/wallet' }, { text: 'Classement', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
-        { title: 'Légal', links: [{ text: 'CGU', href: '#' }, { text: 'Politique de confidentialité', href: '#' }, { text: 'Jeu responsable', href: '#' }] },
+        { title: 'Légal', links: [{ text: 'CGU', href: '/cgu' }, { text: 'Politique de confidentialité', href: '/politique-confidentialite' }, { text: 'Jeu responsable', href: '/jeu-responsable' }] },
         { title: 'Contact', links: [{ text: 'support@skyplay.cm', href: 'mailto:support@skyplay.cm' }, { text: 'Discord', href: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || 'https://discord.gg/skyplay' }, { text: 'Twitter / X', href: '#' }] },
       ],
       copyright: '© 2026 SKY PLAY — Tous droits réservés',
@@ -141,7 +141,7 @@ const translations = {
       tagline: 'The #1 gaming challenge platform in Central Africa',
       sections: [
         { title: 'Platform', links: [{ text: 'Challenges', href: '/challenges' }, { text: 'Wallet', href: '/wallet' }, { text: 'Leaderboard', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
-        { title: 'Legal', links: [{ text: 'Terms of Service', href: '#' }, { text: 'Privacy Policy', href: '#' }, { text: 'Responsible Gaming', href: '#' }] },
+        { title: 'Legal', links: [{ text: 'Terms of Service', href: '/cgu' }, { text: 'Privacy Policy', href: '/politique-confidentialite' }, { text: 'Responsible Gaming', href: '/jeu-responsable' }] },
         { title: 'Contact', links: [{ text: 'support@skyplay.cm', href: 'mailto:support@skyplay.cm' }, { text: 'Discord', href: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || 'https://discord.gg/skyplay' }, { text: 'Twitter / X', href: '#' }] },
       ],
       copyright: '© 2026 SKY PLAY — All rights reserved',
