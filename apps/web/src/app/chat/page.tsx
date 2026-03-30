@@ -91,6 +91,7 @@ export default function ChatPage() {
   const [showVoice, setShowVoice] = useState(false)
 
   // Input
+  const [mounted, setMounted] = useState(false)
   const [input, setInput] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -108,7 +109,8 @@ export default function ChatPage() {
   const { messages: convMsgs, sendMessage: sendConv, sendImage } = useMessages(convId, socket)
 
   // Auth redirect
-  useEffect(() => { if (!tokens) router.push('/') }, [tokens, router])
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { if (mounted && !tokens) router.push('/') }, [mounted, tokens, router])
 
   // Active messages (global or conversation)
   const activeMessages = activeConv.type === 'GLOBAL' ? globalMsgs : convMsgs
@@ -211,7 +213,7 @@ export default function ChatPage() {
       ? activeConv.conv.members.find(m => m.userId !== currentUser?.id)?.user.username ?? 'DM'
       : activeConv.conv.challenge?.title ?? 'Défi'
 
-  if (!tokens || !currentUser) return null
+  if (!mounted || !tokens || !currentUser) return null
 
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
