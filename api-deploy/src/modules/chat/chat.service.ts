@@ -1,8 +1,11 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { v2 as cloudinary } from 'cloudinary';
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
+
   constructor(private prisma: PrismaService) {}
 
   // ─── DM ──────────────────────────────────────────────────────────────────────
@@ -118,8 +121,35 @@ export class ChatService {
     }
 
     // Only author can delete their own message (or system messages cannot be deleted)
-    if (message.type === 'SYSTEM' || (message.authorId && message.authorId !== userId)) {
+    if (message.type === 'SYSTEM') {
+      throw new ForbiddenException('Les messages système ne peuvent pas être supprimés');
+    }
+
+    if (!message.authorId || message.authorId !== userId) {
       throw new ForbiddenException('Vous ne pouvez supprimer que vos propres messages');
+    }
+
+    // If message has an image, delete it from Cloudinary
+    if (message.type === 'IMAGE' && message.imageUrl) {
+      try {
+        // Extract public_id from Cloudinary URL
+        // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
+        const urlParts = message.imageUrl.split('/');
+        const uploadIndex = urlParts.indexOf('upload');
+        if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
+          // Get everything after 'upload/v{version}/'
+          const pathAfterVersion = urlParts.slice(uploadIndex + 2).join('/');
+          // Remove file extension
+          const publicId = pathAfterVersion.replace(/\.[^/.]+$/, '');
+          
+          this.logger.log(`Deleting image from Cloudinary: ${publicId}`);
+          await cloudinary.uploader.destroy(publicId);
+          this.logger.log(`Image deleted successfully from Cloudinary`);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to delete image from Cloudinary: ${error.message}`);
+        // Continue with message deletion even if Cloudinary deletion fails
+      }
     }
 
     await this.prisma.conversationMessage.delete({
