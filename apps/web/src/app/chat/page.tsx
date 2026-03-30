@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight } from 'lucide-react'
+import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
@@ -107,6 +107,7 @@ export default function ChatPage() {
   const { dms, challenges, openDm, markAsRead } = useConversations(socket)
   const convId = activeConv.type !== 'GLOBAL' ? activeConv.conversationId : null
   const { messages: convMsgs, sendMessage: sendConv, sendImage } = useMessages(convId, socket)
+  const [deletingMsg, setDeletingMsg] = useState<string | null>(null)
 
   // Auth redirect
   useEffect(() => { setMounted(true) }, [])
@@ -151,7 +152,7 @@ export default function ChatPage() {
         body: form,
       })
       if (!res.ok) {
-        setUploadError('Erreur upload — vérifiez les variables Cloudinary dans Railway')
+        setUploadError('Erreur lors de l\'upload')
         return
       }
       const { url } = await res.json()
@@ -163,6 +164,26 @@ export default function ChatPage() {
       setTimeout(() => setUploadError(null), 4000)
     }
   }, [tokens?.idToken, sendImage])
+
+  // ── Delete message ─────────────────────────────────────────────────────────
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    if (!tokens?.idToken || deletingMsg) return
+    setDeletingMsg(messageId)
+    try {
+      const res = await fetch(`${API}/chat/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${tokens.idToken}` },
+      })
+      if (res.ok) {
+        // Émettre l'événement de suppression via socket pour mise à jour temps réel
+        socket?.emit('message_deleted', { messageId })
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
+    } finally {
+      setDeletingMsg(null)
+    }
+  }, [tokens?.idToken, socket, deletingMsg])
 
   // ── DM user search ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -449,7 +470,7 @@ export default function ChatPage() {
                       {!isMe && !grouped && (
                         <span className="text-xs font-bold text-[#0097FC] ml-1">{authorName}</span>
                       )}
-                      <div className={`px-3.5 py-2 rounded-2xl text-sm leading-relaxed break-words ${
+                      <div className={`px-3.5 py-2 rounded-2xl text-sm leading-relaxed break-words relative group ${
                         isMe
                           ? 'bg-gradient-to-br from-[#0097FC] to-[#003399] text-white rounded-tr-sm shadow-lg shadow-[#0097FC]/20'
                           : activeConv.type === 'DM'
@@ -458,10 +479,28 @@ export default function ChatPage() {
                               ? 'bg-orange-500/10 border border-orange-500/20 text-white rounded-tl-sm'
                               : 'dark:bg-white/10 bg-white text-[#00165F] dark:text-white rounded-tl-sm border dark:border-white/8'
                       }`}>
-                        {msg.type === 'IMAGE' && msg.imageUrl
-                          ? <img src={msg.imageUrl} alt="screenshot" className="max-w-full rounded-xl cursor-pointer" onClick={() => window.open(msg.imageUrl, '_blank')} />
-                          : msg.content
-                        }
+                        {msg.type === 'IMAGE' && msg.imageUrl ? (
+                          <div className="relative">
+                            <img src={msg.imageUrl} alt="screenshot" className="max-w-full rounded-xl cursor-pointer" onClick={() => window.open(msg.imageUrl, '_blank')} />
+                            {isMe && activeConv.type !== 'GLOBAL' && (
+                              <button
+                                onClick={() => handleDeleteMessage(msg.id)}
+                                disabled={deletingMsg === msg.id}
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/30 text-red-400 hover:text-red-300 bg-black/60 backdrop-blur-sm disabled:opacity-50"
+                                title="Supprimer le message"
+                              >
+                                {deletingMsg === msg.id ? (
+                                  <span className="inline-block w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                            {msg.content && <p className="mt-2">{msg.content}</p>}
+                          </div>
+                        ) : (
+                          msg.content
+                        )}
                       </div>
                       <span className="text-[10px] dark:text-white/25 text-[#00165F]/30 px-1">
                         <RelTime date={msg.createdAt ?? msg.timestamp} />

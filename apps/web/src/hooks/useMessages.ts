@@ -75,6 +75,16 @@ export function useMessages(conversationId: string | null, socket: Socket | null
     return () => { socket.off('conversation_message', handler) }
   }, [socket, conversationId])
 
+  // Listen for deleted messages
+  useEffect(() => {
+    if (!socket) return
+    const handler = ({ messageId }: { messageId: string }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId))
+    }
+    socket.on('message_deleted', handler)
+    return () => { socket.off('message_deleted', handler) }
+  }, [socket])
+
   const sendMessage = useCallback(
     (content: string) => {
       if (!socket || !conversationId || !content.trim()) return
