@@ -57,7 +57,7 @@ function RelTime({ date }: { date: string | Date }) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-4 pt-4 pb-1 text-[11px] font-bold uppercase tracking-[2px] text-white/40">
+    <div className="px-4 pt-4 pb-1 text-[11px] font-bold uppercase tracking-[2px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
       {children}
     </div>
   )
@@ -202,7 +202,7 @@ export default function ChatPage() {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="dark fixed inset-0 top-16 bottom-20 flex bg-[#030b1a] overflow-hidden">
+    <div className="fixed inset-0 top-16 bottom-20 flex overflow-hidden" style={{ background: '#030b1a', color: 'white' }}>
 
       {/* ══ SIDEBAR ══════════════════════════════════════════════ */}
       <AnimatePresence>
@@ -218,17 +218,19 @@ export default function ChatPage() {
       </AnimatePresence>
 
       <aside
-        className={`fixed md:relative md:translate-x-0 z-30 flex h-full w-72 flex-col bg-[#00165F] border-r border-white/8 shrink-0 overflow-hidden transition-transform duration-[250ms] ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        className={`fixed md:relative md:translate-x-0 z-30 flex h-full w-72 flex-col shrink-0 overflow-hidden transition-transform duration-[250ms] ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        style={{ background: '#00165F', borderRight: '1px solid rgba(255,255,255,0.08)' }}
       >
         {/* Search */}
         <div className="px-3 pt-3 pb-2 shrink-0">
-          <div className="flex items-center gap-2 rounded-xl bg-white/8 px-3 py-2">
-            <Search className="w-4 h-4 text-white/40 shrink-0" />
+          <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <Search className="w-4 h-4 shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }} />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher..."
-              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 outline-none"
+              className="flex-1 bg-transparent text-sm outline-none"
+              style={{ color: 'white' }}
             />
           </div>
         </div>
@@ -467,7 +469,7 @@ export default function ChatPage() {
         )}
 
         {/* ── INPUT BAR ────────────────────────────────────────── */}
-        <div className="shrink-0 px-3 sm:px-5 py-3 bg-[#00165F]/30 backdrop-blur-md border-t border-white/10">
+        <div className="shrink-0 px-3 sm:px-5 py-3" style={{ background: '#001050', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           <AnimatePresence>
             {showEmoji && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="mb-2">
@@ -503,7 +505,8 @@ export default function ChatPage() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 placeholder={`Message ${convName}…`}
                 maxLength={500}
-                className="w-full px-4 py-2.5 rounded-xl bg-white/8 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#0097FC]/50 focus:bg-white/12 transition"
+                className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none transition"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }}
               />
               {input.length > 400 && (
                 <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold ${input.length >= 490 ? 'text-red-400' : 'text-[#0097FC]/60'}`}>
