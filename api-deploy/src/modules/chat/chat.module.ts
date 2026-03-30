@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
@@ -12,7 +13,7 @@ import { WalletModule } from '../wallet/wallet.module';
     UsersModule,
     forwardRef(() => ChallengesModule),
     WalletModule,
-    MulterModule.register({ storage: undefined }),
+    MulterModule.register({ storage: memoryStorage() }),
   ],
   providers: [ChatGateway, ChatService],
   controllers: [ChatController],

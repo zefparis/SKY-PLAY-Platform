@@ -94,6 +94,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -138,6 +139,7 @@ export default function ChatPage() {
   const handleScreenshot = useCallback(async (file: File) => {
     if (!tokens?.idToken) return
     setUploadingImage(true)
+    setUploadError(null)
     try {
       const form = new FormData()
       form.append('file', file)
@@ -146,11 +148,17 @@ export default function ChatPage() {
         headers: { Authorization: `Bearer ${tokens.idToken}` },
         body: form,
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        setUploadError('Erreur upload — vérifiez la config S3')
+        return
+      }
       const { url } = await res.json()
       sendImage(url)
+    } catch {
+      setUploadError('Impossible d\'envoyer l\'image')
     } finally {
       setUploadingImage(false)
+      setTimeout(() => setUploadError(null), 4000)
     }
   }, [tokens?.idToken, sendImage])
 
@@ -541,6 +549,11 @@ export default function ChatPage() {
           {!isConnected && (
             <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1">
               <Zap className="w-3 h-3" /> {t('chat.reconnecting')}
+            </p>
+          )}
+          {uploadError && (
+            <p className="text-[11px] text-orange-400 mt-1.5">
+              ⚠️ {uploadError}
             </p>
           )}
         </div>
