@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Users, Gamepad2, Clock } from 'lucide-react';
+import { Users, Gamepad2, Clock, Trash2 } from 'lucide-react';
 import { formatCFA, computeNetPot, computePrizes } from '@/lib/currency';
+import { getAuthToken } from '@/lib/get-auth-token';
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   DUEL: { label: '1v1 Duel', color: 'bg-blue-500' },
@@ -36,12 +37,15 @@ interface Challenge {
   commission: number;
   potTotal: number;
   expiresAt: string;
+  creatorId?: string;
   _count?: { participants: number };
 }
 
 interface ChallengeCardProps {
   challenge: Challenge;
   onJoin?: () => void;
+  onDelete?: () => void;
+  currentUserId?: string;
 }
 
 function useCountdown(target: string) {
@@ -62,8 +66,9 @@ function useCountdown(target: string) {
   return remaining;
 }
 
-const ChallengeCard = ({ challenge, onJoin }: ChallengeCardProps) => {
+const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: ChallengeCardProps) => {
   const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
   const count = challenge._count?.participants ?? 0;
   const progress = (count / challenge.maxPlayers) * 100;
   const netPot = computeNetPot(challenge.potTotal, challenge.commission);
@@ -72,6 +77,27 @@ const ChallengeCard = ({ challenge, onJoin }: ChallengeCardProps) => {
   const statusInfo = STATUS_CONFIG[challenge.status] ?? { label: challenge.status, dotClass: 'bg-gray-400', textClass: 'text-gray-400' };
   const countdown = useCountdown(challenge.expiresAt);
   const isTimeLow = new Date(challenge.expiresAt).getTime() - Date.now() < 5 * 60 * 1000;
+  const isCreator = currentUserId && challenge.creatorId === currentUserId;
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce défi ? Votre mise sera remboursée.')) return;
+    
+    setDeleting(true);
+    try {
+      const token = getAuthToken();
+      const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+      const res = await fetch(`${API}/challenges/${challenge.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Échec de la suppression');
+      onDelete?.();
+    } catch (err) {
+      alert('Erreur lors de la suppression du défi');
+      setDeleting(false);
+    }
+  };
 
   return (
     <motion.div
@@ -94,9 +120,21 @@ const ChallengeCard = ({ challenge, onJoin }: ChallengeCardProps) => {
               <p className="text-xs dark:text-white/50 text-[#00165F]/50">{challenge.game}</p>
             </div>
           </div>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full text-white shrink-0 ${typeInfo.color}`}>
-            {typeInfo.label}
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full text-white ${typeInfo.color}`}>
+              {typeInfo.label}
+            </span>
+            {isCreator && challenge.status === 'OPEN' && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors disabled:opacity-50"
+                title="Supprimer le défi"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Pot */}

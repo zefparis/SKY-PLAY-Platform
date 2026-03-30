@@ -509,4 +509,49 @@ export class ChallengesService {
     if (!dispute) throw new NotFoundException('Litige introuvable');
     return dispute;
   }
+
+  // ─── DELETE CHALLENGE ─────────────────────────────────────────────────────────
+
+  async deleteChallenge(challengeId: string, userId: string) {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+      include: { participants: true },
+    });
+
+    if (!challenge) {
+      throw new NotFoundException('Défi introuvable');
+    }
+
+    // Only creator can delete
+    if (challenge.creatorId !== userId) {
+      throw new ForbiddenException('Seul le créateur peut supprimer ce défi');
+    }
+
+    // Can only delete if OPEN (no one else joined yet)
+    if (challenge.status !== 'OPEN') {
+      throw new BadRequestException('Impossible de supprimer un défi en cours ou terminé');
+    }
+
+    // Refund creator if they paid
+    const creatorParticipant = challenge.participants.find((p) => p.userId === userId);
+    if (creatorParticipant?.hasPaid) {
+      await this.walletService.credit(
+        userId,
+        challenge.entryFee,
+        'CHALLENGE_REFUND',
+        `Remboursement défi annulé: ${challenge.title}`,
+      );
+    }
+
+    // Delete participants and challenge
+    await this.prisma.challengeParticipant.deleteMany({
+      where: { challengeId },
+    });
+
+    await this.prisma.challenge.delete({
+      where: { id: challengeId },
+    });
+
+    return { message: 'Défi supprimé avec succès' };
+  }
 }

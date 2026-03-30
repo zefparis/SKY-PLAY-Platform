@@ -5,6 +5,7 @@ import { Plus, RefreshCw, Swords, Trophy, Gamepad2 } from 'lucide-react';
 import ChallengeCard from '@/components/challenges/ChallengeCard';
 import CreateChallengeModal from '@/components/challenges/CreateChallengeModal';
 import { useI18n } from '@/components/i18n/I18nProvider';
+import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -13,6 +14,7 @@ const GAMES_FR = ['Tous', 'FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobil
 
 export default function ChallengesPage() {
   const { t, lang } = useI18n();
+  const { user } = useAuthStore();
   const GAMES = lang === 'fr' ? GAMES_FR : GAMES_EN;
   const TYPE_FILTERS = [
     { key: '', label: t('challenges.filter.all') },

@@ -81,6 +81,12 @@ export class ChallengesController {
   ) {
     return this.challengesService.forceDispute(id, req.user.id, dto.reason);
   }
+
+  @UseGuards(JwtDualGuard)
+  @Delete(':id')
+  delete(@Param('id') id: string, @Request() req) {
+    return this.challengesService.deleteChallenge(id, req.user.id);
+  }
 }
 
 @Controller('admin/challenges')
