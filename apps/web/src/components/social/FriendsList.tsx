@@ -158,7 +158,7 @@ export default function FriendsList() {
             onClick={() => setIsOpen(false)}
           />
           {/* Responsive: bottom sheet on mobile, dropdown on desktop */}
-          <div className="fixed inset-x-0 bottom-0 rounded-t-2xl md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:top-12 md:w-96 md:rounded-xl z-[9999] bg-[#0a0f1e] border-t md:border border-white/10 shadow-2xl max-h-[85vh] md:max-h-[600px] overflow-y-auto">
+          <div className="fixed inset-x-0 bottom-16 rounded-t-2xl md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:top-12 md:w-96 md:rounded-xl z-[10000] bg-[#0a0f1e] border-t md:border border-white/10 shadow-2xl max-h-[calc(85vh-4rem)] md:max-h-[600px] overflow-y-auto">
             {/* Mobile drag handle */}
             <div className="md:hidden flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-white/20" />

@@ -101,12 +101,17 @@ export default function NotificationBell() {
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-12 z-50 w-80 rounded-xl bg-[#00165F] border border-white/10 shadow-xl max-h-96 overflow-y-auto">
-            <div className="p-4 border-b border-white/10">
+          <div className="fixed inset-x-0 bottom-16 rounded-t-2xl md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:top-12 md:w-80 md:rounded-xl z-[10000] bg-[#00165F] border-t md:border border-white/10 shadow-xl max-h-[calc(85vh-4rem)] md:max-h-96 overflow-y-auto">
+            {/* Mobile drag handle */}
+            <div className="md:hidden flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Notifications</h3>
+              <button onClick={() => setIsOpen(false)} className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition text-lg leading-none">&times;</button>
             </div>
 
             {notifications.length === 0 ? (
