@@ -17,6 +17,6 @@ import { WalletModule } from '../wallet/wallet.module';
   ],
   providers: [ChatGateway, ChatService],
   controllers: [ChatController],
-  exports: [ChatService],
+  exports: [ChatService, ChatGateway],
 })
 export class ChatModule {}
