@@ -8,6 +8,7 @@ import {
   Request,
   Query,
   ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FriendshipsService } from './friendships.service';
@@ -50,8 +51,8 @@ export class FriendshipsController {
   @Get()
   async getFriends(
     @Request() req,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
   ) {
     return this.friendshipsService.getFriends(req.user.id, limit, offset);
   }
@@ -59,8 +60,8 @@ export class FriendshipsController {
   @Get('pending')
   async getPendingRequests(
     @Request() req,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
   ) {
     return this.friendshipsService.getPendingRequests(req.user.id, limit, offset);
   }
@@ -68,7 +69,7 @@ export class FriendshipsController {
   @Get('suggestions')
   async getSuggestions(
     @Request() req,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
     return this.friendshipsService.getSuggestions(req.user.id, limit);
   }

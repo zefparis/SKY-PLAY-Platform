@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  DefaultValuePipe,
   UseGuards,
   HttpException,
   HttpStatus,
@@ -182,9 +183,9 @@ export class UsersController {
    */
   @Get('leaderboard')
   async getLeaderboard(
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
   ) {
-    return this.usersService.getLeaderboard(limit || 100);
+    return this.usersService.getLeaderboard(limit);
   }
 
   /**
@@ -195,10 +196,10 @@ export class UsersController {
   @Get('online')
   async getOnlineUsers(
     @Req() req: Request,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
   ) {
     const userPayload = req.user as any;
-    return this.usersService.getOnlineUsers(userPayload.id, limit || 50);
+    return this.usersService.getOnlineUsers(userPayload.id, limit);
   }
 
   /**
