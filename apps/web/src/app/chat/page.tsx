@@ -152,24 +152,52 @@ export default function ChatPage() {
 
   // ── Screenshot upload ──────────────────────────────────────────────────────
   const handleScreenshot = useCallback(async (file: File) => {
-    if (!tokens?.idToken) return
+    if (!tokens?.idToken) {
+      setUploadError('Non authentifié')
+      return
+    }
+
+    // Validation côté client
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Fichier trop volumineux (max 5MB)')
+      setTimeout(() => setUploadError(null), 4000)
+      return
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError(`Type de fichier non supporté (${file.type})`)
+      setTimeout(() => setUploadError(null), 4000)
+      return
+    }
+
     setUploadingImage(true)
     setUploadError(null)
+    
     try {
       const form = new FormData()
       form.append('file', file)
+      
+      console.log('[Upload] Sending file:', file.name, file.type, file.size)
+      
       const res = await fetch(`${API}/chat/upload-screenshot`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${tokens.idToken}` },
         body: form,
       })
+      
       if (!res.ok) {
-        setUploadError('Erreur lors de l\'upload')
+        const errorText = await res.text()
+        console.error('[Upload] Error response:', res.status, errorText)
+        setUploadError(`Erreur ${res.status}: ${errorText.substring(0, 50)}`)
         return
       }
+      
       const { url } = await res.json()
+      console.log('[Upload] Success:', url)
       sendImage(url)
-    } catch {
+    } catch (error) {
+      console.error('[Upload] Exception:', error)
       setUploadError('Impossible d\'envoyer l\'image')
     } finally {
       setUploadingImage(false)

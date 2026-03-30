@@ -80,21 +80,34 @@ export class ChatController {
   @Post('upload-screenshot')
   @UseInterceptors(FileInterceptor('file'))
   async uploadScreenshot(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
-        ],
-      }),
-    )
+    @UploadedFile()
     file: Express.Multer.File,
   ) {
-    this.logger.log(`Upload started: ${file?.originalname}, size: ${file?.size}, buffer: ${file?.buffer ? 'present' : 'missing'}`);
+    this.logger.log(`Upload request received`);
     
-    if (!file || !file.buffer) {
-      this.logger.error('No file or buffer provided');
+    if (!file) {
+      this.logger.error('No file provided in request');
       throw new Error('No file uploaded');
+    }
+
+    this.logger.log(`Upload started: ${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}, buffer: ${file.buffer ? 'present' : 'missing'}`);
+    
+    // Validate file size
+    if (file.size > 5 * 1024 * 1024) {
+      this.logger.error(`File too large: ${file.size} bytes`);
+      throw new Error('File size exceeds 5MB limit');
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      this.logger.error(`Invalid file type: ${file.mimetype}`);
+      throw new Error(`Invalid file type. Allowed: ${allowedTypes.join(', ')}`);
+    }
+
+    if (!file.buffer) {
+      this.logger.error('No file buffer provided');
+      throw new Error('No file data received');
     }
 
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
