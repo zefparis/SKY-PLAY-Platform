@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Trophy, Calendar, Target, Shield, UserPlus, UserCheck, Ban } from 'lucide-react'
+import { Trophy, Calendar, Target, Shield, UserPlus, UserCheck, Ban, MessageCircle, Clock, CheckCheck } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
+import { useFriendships } from '@/hooks/useFriendships'
+import Link from 'next/link'
 
 type Achievement = {
   id: string
@@ -38,7 +40,9 @@ export default function ProfilePage() {
   const currentUser = useAuthStore((state) => state.user)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(false)
 
+  const { sendRequest, accept, decline, removeFriend, getFriendshipStatus } = useFriendships()
   const username = params.username as string
 
   useEffect(() => {
@@ -72,43 +76,43 @@ export default function ProfilePage() {
   }, [username, tokens?.idToken, router])
 
   const handleAddFriend = async () => {
-    if (!tokens?.idToken || !profile) return
-
-    try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'https://skyplayapi-production.up.railway.app'}/friendships/request/${profile.id}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${tokens.idToken}`,
-          },
-        },
-      )
-
+    if (!profile || actionLoading) return
+    setActionLoading(true)
+    const result = await sendRequest(profile.id)
+    if (result.success) {
       setProfile({ ...profile, friendshipStatus: 'PENDING_SENT' })
-    } catch (error) {
-      console.error('Failed to send friend request:', error)
     }
+    setActionLoading(false)
+  }
+
+  const handleAcceptFriend = async () => {
+    if (!profile || actionLoading) return
+    setActionLoading(true)
+    const result = await accept(profile.id)
+    if (result.success) {
+      setProfile({ ...profile, friendshipStatus: 'ACCEPTED' })
+    }
+    setActionLoading(false)
+  }
+
+  const handleDeclineFriend = async () => {
+    if (!profile || actionLoading) return
+    setActionLoading(true)
+    const result = await decline(profile.id)
+    if (result.success) {
+      setProfile({ ...profile, friendshipStatus: 'NONE' })
+    }
+    setActionLoading(false)
   }
 
   const handleRemoveFriend = async () => {
-    if (!tokens?.idToken || !profile) return
-
-    try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'https://skyplayapi-production.up.railway.app'}/friendships/${profile.id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${tokens.idToken}`,
-          },
-        },
-      )
-
+    if (!profile || actionLoading) return
+    setActionLoading(true)
+    const result = await removeFriend(profile.id)
+    if (result.success) {
       setProfile({ ...profile, friendshipStatus: 'NONE' })
-    } catch (error) {
-      console.error('Failed to remove friend:', error)
     }
+    setActionLoading(false)
   }
 
   const handleBlock = async () => {
@@ -189,39 +193,85 @@ export default function ProfilePage() {
 
             {!isOwnProfile && tokens && (
               <div className="flex gap-2">
+                {/* NONE - Pas ami */}
                 {profile.friendshipStatus === 'NONE' && (
                   <button
                     onClick={handleAddFriend}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-400 text-white font-semibold hover:bg-sky-500 transition"
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0097FC] text-white font-semibold hover:bg-[#0097FC]/90 transition disabled:opacity-50"
                   >
                     <UserPlus className="h-4 w-4" />
-                    Ajouter
+                    ➕ Ajouter
                   </button>
                 )}
-                {profile.friendshipStatus === 'ACCEPTED' && (
-                  <button
-                    onClick={handleRemoveFriend}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-400 text-white font-semibold hover:bg-emerald-500 transition"
-                  >
-                    <UserCheck className="h-4 w-4" />
-                    Ami
-                  </button>
-                )}
+
+                {/* PENDING_SENT - Demande envoyée */}
                 {profile.friendshipStatus === 'PENDING_SENT' && (
                   <button
                     disabled
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white/50 font-semibold cursor-not-allowed"
                   >
-                    En attente
+                    <Clock className="h-4 w-4" />
+                    ⏳ Demande envoyée
                   </button>
                 )}
-                <button
-                  onClick={handleBlock}
-                  className="p-2 rounded-lg bg-red-400/20 text-red-400 hover:bg-red-400/30 transition"
-                  title="Bloquer"
-                >
-                  <Ban className="h-4 w-4" />
-                </button>
+
+                {/* PENDING_RECEIVED - Demande reçue */}
+                {profile.friendshipStatus === 'PENDING_RECEIVED' && (
+                  <>
+                    <button
+                      onClick={handleAcceptFriend}
+                      disabled={actionLoading}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition disabled:opacity-50"
+                    >
+                      <CheckCheck className="h-4 w-4" />
+                      ✅ Accepter
+                    </button>
+                    <button
+                      onClick={handleDeclineFriend}
+                      disabled={actionLoading}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 font-semibold hover:bg-red-500/30 transition disabled:opacity-50"
+                    >
+                      Refuser
+                    </button>
+                  </>
+                )}
+
+                {/* ACCEPTED - Ami */}
+                {profile.friendshipStatus === 'ACCEPTED' && (
+                  <>
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">
+                      <UserCheck className="h-4 w-4" />
+                      ✅ Ami
+                    </div>
+                    <Link
+                      href={`/chat?dm=${profile.id}`}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0097FC] text-white font-semibold hover:bg-[#0097FC]/90 transition"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      💬 Message
+                    </Link>
+                    <button
+                      onClick={handleRemoveFriend}
+                      disabled={actionLoading}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition disabled:opacity-50"
+                      title="Retirer des amis"
+                    >
+                      <Ban className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+
+                {/* BLOCKED */}
+                {(profile.friendshipStatus === 'BLOCKED_BY_YOU' || profile.friendshipStatus === 'BLOCKED') && (
+                  <button
+                    disabled
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 font-semibold cursor-not-allowed"
+                  >
+                    <Ban className="h-4 w-4" />
+                    🚫 Bloqué
+                  </button>
+                )}
               </div>
             )}
           </div>

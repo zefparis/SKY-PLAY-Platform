@@ -11,6 +11,7 @@ import { useChat } from '@/hooks/useChat'
 import { useVoiceChat } from '@/hooks/useVoiceChat'
 import { useConversations, Conversation, ConvMessage } from '@/hooks/useConversations'
 import { useMessages } from '@/hooks/useMessages'
+import { useFriendships } from '@/hooks/useFriendships'
 import EmojiPicker from '@/components/chat/EmojiPicker'
 import VoiceChannelList from '@/components/voice/VoiceChannelList'
 import VoiceRoom from '@/components/voice/VoiceRoom'
@@ -80,6 +81,9 @@ export default function ChatPage() {
   const [dmSearch, setDmSearch] = useState('')
   const [dmResults, setDmResults] = useState<{ id: string; username: string; avatar?: string }[]>([])
   const [dmSearching, setDmSearching] = useState(false)
+  
+  // Friends for DM
+  const { friends: friendsList } = useFriendships()
 
   // Submit result modal
   const [showSubmit, setShowSubmit] = useState(false)
@@ -688,19 +692,67 @@ export default function ChatPage() {
                       <input value={dmSearch} onChange={e => setDmSearch(e.target.value)} placeholder="Rechercher un joueur..."
                         className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 outline-none" autoFocus />
                     </div>
-                    <div className="space-y-1 max-h-60 overflow-y-auto">
-                      {dmSearching && <p className="text-xs text-white/40 text-center py-4">Recherche...</p>}
-                      {dmResults.map(u => (
-                        <button key={u.id} onClick={async () => {
-                          const conv = await openDm(u.id)
-                          if (conv) { setActiveConv({ type: 'DM', conversationId: conv.id, conv }); setShowNewDm(false); setDmSearch('') }
-                        }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 transition">
-                          <Avatar name={u.username} src={u.avatar} size={9} />
-                          <span className="text-sm text-white font-medium">{u.username}</span>
-                        </button>
-                      ))}
-                      {!dmSearching && dmSearch && dmResults.length === 0 && (
-                        <p className="text-xs text-white/40 text-center py-4">Aucun joueur trouvé</p>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {/* Friends Section */}
+                      {!dmSearch && friendsList && friendsList.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold text-white/50 uppercase tracking-wide mb-2 px-1">Amis</h4>
+                          <div className="space-y-1">
+                            {friendsList.slice(0, 8).map(friend => (
+                              <button key={friend.id} onClick={async () => {
+                                const conv = await openDm(friend.id)
+                                if (conv) { setActiveConv({ type: 'DM', conversationId: conv.id, conv }); setShowNewDm(false); setDmSearch('') }
+                              }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 transition">
+                                <div className="relative">
+                                  <Avatar name={friend.username} src={friend.avatar} size={9} />
+                                  <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#00165F] ${
+                                    friend.status === 'ONLINE' ? 'bg-emerald-500' :
+                                    friend.status === 'AWAY' ? 'bg-yellow-500' :
+                                    friend.status === 'IN_GAME' ? 'bg-red-500' : 'bg-gray-500'
+                                  }`} />
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <p className="text-sm text-white font-medium">{friend.username}</p>
+                                  <p className="text-xs text-white/40">
+                                    {friend.status === 'ONLINE' ? 'En ligne' :
+                                     friend.status === 'AWAY' ? 'Absent' :
+                                     friend.status === 'IN_GAME' ? 'En jeu' : 'Hors ligne'}
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Search Results */}
+                      {dmSearch && (
+                        <div>
+                          <h4 className="text-xs font-bold text-white/50 uppercase tracking-wide mb-2 px-1">Résultats</h4>
+                          {dmSearching && <p className="text-xs text-white/40 text-center py-4">Recherche...</p>}
+                          <div className="space-y-1">
+                            {dmResults.map(u => (
+                              <button key={u.id} onClick={async () => {
+                                const conv = await openDm(u.id)
+                                if (conv) { setActiveConv({ type: 'DM', conversationId: conv.id, conv }); setShowNewDm(false); setDmSearch('') }
+                              }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 transition">
+                                <Avatar name={u.username} src={u.avatar} size={9} />
+                                <span className="text-sm text-white font-medium">{u.username}</span>
+                              </button>
+                            ))}
+                          </div>
+                          {!dmSearching && dmSearch && dmResults.length === 0 && (
+                            <p className="text-xs text-white/40 text-center py-4">Aucun joueur trouvé</p>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Empty State */}
+                      {!dmSearch && (!friendsList || friendsList.length === 0) && (
+                        <div className="text-center py-8">
+                          <p className="text-sm text-white/40 mb-3">Aucun ami pour le moment</p>
+                          <p className="text-xs text-white/30">Recherchez un joueur pour commencer une conversation</p>
+                        </div>
                       )}
                     </div>
                   </div>

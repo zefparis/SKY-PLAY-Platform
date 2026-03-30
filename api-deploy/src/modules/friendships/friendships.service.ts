@@ -1,10 +1,15 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FriendshipStatus } from '@prisma/client';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 export class FriendshipsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => ChatGateway))
+    private chatGateway: ChatGateway,
+  ) {}
 
   async sendFriendRequest(senderId: string, receiverId: string) {
     if (senderId === receiverId) {
@@ -67,6 +72,15 @@ export class FriendshipsService {
           senderUsername: friendship.sender.username,
           senderAvatar: friendship.sender.avatar,
         },
+      },
+    });
+
+    // Emit Socket.io event to receiver
+    this.chatGateway.emitFriendRequest(receiverId, {
+      from: {
+        id: friendship.sender.id,
+        username: friendship.sender.username,
+        avatar: friendship.sender.avatar,
       },
     });
 
@@ -134,6 +148,15 @@ export class FriendshipsService {
           username: friendship.receiver.username,
           avatar: friendship.receiver.avatar,
         },
+      },
+    });
+
+    // Emit Socket.io event to sender
+    this.chatGateway.emitFriendAccepted(senderId, {
+      user: {
+        id: friendship.receiver.id,
+        username: friendship.receiver.username,
+        avatar: friendship.receiver.avatar,
       },
     });
 

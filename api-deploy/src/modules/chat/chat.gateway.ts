@@ -775,6 +775,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`conv_${conversationId}`).emit(event, data);
   }
 
+  // ===== FRIEND NOTIFICATIONS =====
+
+  emitFriendRequest(receiverId: string, data: { from: { id: string; username: string; avatar?: string } }) {
+    // Find the receiver's socket
+    for (const [socketId, user] of this.connectedUsers.entries()) {
+      if (user.id === receiverId) {
+        this.server.to(socketId).emit('friend_request', data);
+        this.logger.log(`Friend request notification sent to ${user.username} from ${data.from.username}`);
+        break;
+      }
+    }
+  }
+
+  emitFriendAccepted(senderId: string, data: { user: { id: string; username: string; avatar?: string } }) {
+    // Find the sender's socket
+    for (const [socketId, user] of this.connectedUsers.entries()) {
+      if (user.id === senderId) {
+        this.server.to(socketId).emit('friend_accepted', data);
+        this.logger.log(`Friend accepted notification sent to ${user.username} from ${data.user.username}`);
+        break;
+      }
+    }
+  }
+
   // ===== CHALLENGE ROOM HANDLERS =====
 
   @SubscribeMessage('join_challenge_room')
