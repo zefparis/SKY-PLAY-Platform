@@ -3,6 +3,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 const logger = new Logger('Bootstrap');
 
@@ -27,6 +28,8 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');

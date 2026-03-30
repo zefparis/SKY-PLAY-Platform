@@ -86,6 +86,20 @@ export class ChatController {
   ) {
     this.logger.log(`Upload started: ${file?.originalname}, size: ${file?.size}, buffer: ${file?.buffer ? 'present' : 'missing'}`);
     
+    if (!file || !file.buffer) {
+      this.logger.error('No file or buffer provided');
+      throw new Error('No file uploaded');
+    }
+
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      this.logger.error('Cloudinary credentials missing');
+      throw new Error('Cloudinary not configured');
+    }
+
     try {
       const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
         cloudinary.uploader
@@ -93,7 +107,7 @@ export class ChatController {
             { folder: 'skyplay/screenshots', resource_type: 'image' },
             (err, res) => {
               if (err) {
-                this.logger.error(`Cloudinary upload error: ${err.message}`);
+                this.logger.error(`Cloudinary upload error: ${JSON.stringify(err)}`);
                 reject(err);
               } else {
                 this.logger.log(`Cloudinary upload success: ${res?.secure_url}`);
@@ -105,8 +119,8 @@ export class ChatController {
       });
       return { url: result.secure_url };
     } catch (error: any) {
-      this.logger.error(`Upload failed: ${error?.message || error}`);
-      throw error;
+      this.logger.error(`Upload failed: ${error?.message || JSON.stringify(error)}`);
+      throw new Error(`Upload failed: ${error?.message || 'Unknown error'}`);
     }
   }
 }
