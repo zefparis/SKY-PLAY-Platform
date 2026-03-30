@@ -229,7 +229,7 @@ export default function ChatPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher..."
-              className="flex-1 bg-transparent text-sm outline-none"
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-white/50"
               style={{ color: 'white' }}
             />
           </div>
@@ -481,7 +481,8 @@ export default function ChatPage() {
           <div className="flex items-center gap-2">
             {/* Emoji */}
             <button onClick={() => setShowEmoji(v => !v)}
-              className={`p-2.5 rounded-xl transition-all ${showEmoji ? 'bg-[#0097FC]/20 text-[#0097FC]' : 'bg-white/8 text-white/40 hover:text-[#0097FC]'}`}>
+              className="p-2.5 rounded-xl transition-all hover:text-[#0097FC]"
+              style={{ background: showEmoji ? 'rgba(0,151,252,0.2)' : 'rgba(255,255,255,0.1)', color: showEmoji ? '#0097FC' : 'rgba(255,255,255,0.7)' }}>
               <Smile className="w-5 h-5" />
             </button>
 
@@ -505,7 +506,7 @@ export default function ChatPage() {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 placeholder={`Message ${convName}…`}
                 maxLength={500}
-                className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none transition"
+                className="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none transition placeholder:text-white/40"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }}
               />
               {input.length > 400 && (
