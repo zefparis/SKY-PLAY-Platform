@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Mic, MicOff, PhoneOff, Volume2 } from 'lucide-react'
 import { VoiceUser } from '@/types/voice'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 type VoiceRoomProps = {
   room: string
@@ -13,6 +14,7 @@ type VoiceRoomProps = {
 }
 
 export default function VoiceRoom({ room, users, isMuted, onToggleMute, onLeave }: VoiceRoomProps) {
+  const { t } = useI18n()
   const roomNames: Record<string, string> = {
     voice_global: 'Global',
     voice_fr: 'Français',
@@ -34,7 +36,7 @@ export default function VoiceRoom({ room, users, isMuted, onToggleMute, onLeave 
           <h3 className="font-bold text-white" style={{ fontFamily: 'Dena, sans-serif' }}>
             {displayName}
           </h3>
-          <span className="text-xs text-white/60">{users.length} connecté{users.length > 1 ? 's' : ''}</span>
+          <span className="text-xs text-white/60">{users.length} {t('voice.connected')}</span>
         </div>
       </div>
 
@@ -73,14 +75,14 @@ export default function VoiceRoom({ room, users, isMuted, onToggleMute, onLeave 
           }`}
         >
           {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          <span className="text-sm">{isMuted ? 'Muet' : 'Micro'}</span>
+          <span className="text-sm">{isMuted ? t('voice.muted') : t('voice.mic')}</span>
         </button>
         <button
           onClick={onLeave}
           className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition"
         >
           <PhoneOff className="h-4 w-4" />
-          <span className="text-sm">Quitter</span>
+          <span className="text-sm">{t('voice.leave')}</span>
         </button>
       </div>
     </motion.div>

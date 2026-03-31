@@ -165,8 +165,8 @@ export default function WalletPage() {
           <div className="mb-4 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
             <span className="text-lg leading-none mt-0.5">🧪</span>
             <div>
-              <p className="text-sm font-bold text-amber-500 dark:text-amber-400">Crédits de test actifs — Test credits active</p>
-              <p className="text-xs text-amber-600/70 dark:text-amber-400/60 mt-0.5">Ces Sky Credits sont des crédits de test. Ils ne sont pas convertibles en argent réel. · These credits are for testing only and cannot be converted to real money.</p>
+              <p className="text-sm font-bold text-amber-500 dark:text-amber-400">{t('wallet.testBanner.title')}</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/60 mt-0.5">{t('wallet.testBanner.desc')}</p>
             </div>
           </div>
         )}
@@ -230,19 +230,19 @@ export default function WalletPage() {
           <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4">
             <div className="flex items-center gap-2 mb-3">
               <CreditCard className="w-4 h-4 text-[#0097FC]" />
-              <p className="text-xs font-bold dark:text-white/70 text-[#00165F]/70">💳 Compte participation</p>
+              <p className="text-xs font-bold dark:text-white/70 text-[#00165F]/70">{t('wallet.account.consumption')}</p>
             </div>
             <p className="text-xl font-black text-[#0097FC] tabular-nums">{formatSKY(consumptionBalance)}</p>
-            <p className="text-xs dark:text-white/40 text-[#00165F]/40 mt-1">Sky Credits rechargés — non retirables</p>
+            <p className="text-xs dark:text-white/40 text-[#00165F]/40 mt-1">{t('wallet.account.consumption.sub')}</p>
           </div>
           {/* Compte récompenses */}
           <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4">
             <div className="flex items-center gap-2 mb-3">
               <Trophy className="w-4 h-4 text-[#FD2E5F]" />
-              <p className="text-xs font-bold dark:text-white/70 text-[#00165F]/70">🏆 Compte récompenses</p>
+              <p className="text-xs font-bold dark:text-white/70 text-[#00165F]/70">{t('wallet.account.rewards')}</p>
             </div>
             <p className="text-xl font-black text-[#FD2E5F] tabular-nums">{formatSKY(rewardBalance)}</p>
-            <p className="text-xs dark:text-white/40 text-[#00165F]/40 mt-1">Primes de performance — retirables en CFA</p>
+            <p className="text-xs dark:text-white/40 text-[#00165F]/40 mt-1">{t('wallet.account.rewards.sub')}</p>
           </div>
         </div>
 
@@ -255,14 +255,14 @@ export default function WalletPage() {
               {kycStatus === 'SUBMITTED'
                 ? <><Shield className="w-5 h-5 text-yellow-400 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-yellow-400">⏳ Vérification d'identité en cours (24-48h)</p>
-                      <p className="text-xs dark:text-white/50 text-[#00165F]/50">Les retraits seront débloqués à la validation.</p>
+                      <p className="text-sm font-bold text-yellow-400">{t('wallet.kyc.submitted')}</p>
+                      <p className="text-xs dark:text-white/50 text-[#00165F]/50">{t('wallet.kyc.submitted.sub')}</p>
                     </div>
                   </>
                 : <><Lock className="w-5 h-5 text-[#FD2E5F] shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-[#FD2E5F]">🔒 Vérification d'identité requise avant retrait</p>
-                      <p className="text-xs dark:text-white/50 text-[#00165F]/50">Cliquez pour compléter votre KYC et débloquer les retraits.</p>
+                      <p className="text-sm font-bold text-[#FD2E5F]">{t('wallet.kyc.required')}</p>
+                      <p className="text-xs dark:text-white/50 text-[#00165F]/50">{t('wallet.kyc.required.sub')}</p>
                     </div>
                   </>
               }
@@ -275,13 +275,13 @@ export default function WalletPage() {
         <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <Settings2 className="w-4 h-4 dark:text-white/50 text-[#00165F]/50" />
-            <p className="text-sm font-bold dark:text-white text-[#00165F]">Limites de dépense responsable</p>
+            <p className="text-sm font-bold dark:text-white text-[#00165F]">{t('wallet.limits.title')}</p>
           </div>
           <div className="space-y-2">
             {[
-              { label: 'Dépôt / jour', value: limits.dailyDepositLimit },
-              { label: 'Dépôt / semaine', value: limits.weeklyDepositLimit },
-              { label: 'Mise / jour (défis)', value: limits.dailySpendLimit },
+              { label: t('wallet.limits.daily'), value: limits.dailyDepositLimit },
+              { label: t('wallet.limits.weekly'), value: limits.weeklyDepositLimit },
+              { label: t('wallet.limits.dailyBet'), value: limits.dailySpendLimit },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between">
                 <span className="text-xs dark:text-white/50 text-[#00165F]/50">{label}</span>
@@ -290,13 +290,13 @@ export default function WalletPage() {
             ))}
           </div>
           <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 mt-2">
-            Réduction immédiate · Augmentation après 48h (anti-impulsivité) · <a href="/profile/kyc" className="underline">Modifier</a>
+            {t('wallet.limits.note')} · <a href="/profile/kyc" className="underline">{t('wallet.limits.edit')}</a>
           </p>
         </div>
 
         {/* Note légale sous-soldes */}
         <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 text-center mb-4">
-          Seules les primes de performance (🏆 Compte récompenses) sont convertibles en CFA lors du retrait.
+          {t('wallet.legalNote')}
         </p>
 
         {/* Historique */}
@@ -345,7 +345,7 @@ export default function WalletPage() {
                   CHALLENGE_ENTRY: t('wallet.tx.challengeDebit'), CHALLENGE_WIN: t('wallet.tx.challengeCredit'),
                   REFUND: t('wallet.tx.refund'), COMMISSION: t('wallet.tx.commission'),
                   DEBIT: t('wallet.tx.debit'), CREDIT: t('wallet.tx.credit'),
-                  TEST_CREDIT: 'Crédit test',
+                  TEST_CREDIT: t('wallet.tx.testCredit'),
                 };
                 const txStatusLabels: Record<string, string> = {
                   COMPLETED: t('wallet.status.completed'), PENDING: t('wallet.status.pending'),

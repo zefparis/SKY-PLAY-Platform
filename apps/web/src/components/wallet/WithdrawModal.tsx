@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { X, Loader2, AlertTriangle, Lock, Shield, ExternalLink } from 'lucide-react';
 import { formatCFA, formatSKY } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -19,6 +20,7 @@ interface WithdrawModalProps {
 
 export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 'PENDING', onClose, onSuccess }: WithdrawModalProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
   const [amount, setAmount] = useState('');
   const [network, setNetwork] = useState<'MTN' | 'ORANGE'>('MTN');
@@ -62,8 +64,8 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
-            <h2 className="text-lg font-black dark:text-white text-[#00165F]">Retirer des fonds</h2>
-            <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">🏆 Récompenses disponibles : {formatSKY(rewardBalance)}</p>
+            <h2 className="text-lg font-black dark:text-white text-[#00165F]">{t('withdraw.title')}</h2>
+            <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">{t('withdraw.available')} {formatSKY(rewardBalance)}</p>
           </div>
           <button onClick={onClose} className="p-1 dark:text-white/70 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors">
             <X className="w-5 h-5" />
@@ -89,19 +91,17 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
                   <p className={`text-sm font-bold mb-1 ${
                     kycStatus === 'SUBMITTED' ? 'text-yellow-400' : 'text-[#FD2E5F]'
                   }`}>
-                    {kycStatus === 'SUBMITTED' ? '⏳ Vérification en cours (24-48h)' : '🔒 Vérification d\'identité requise'}
+                    {kycStatus === 'SUBMITTED' ? t('withdraw.kyc.submitted') : t('withdraw.kyc.required')}
                   </p>
                   <p className="text-xs dark:text-white/60 text-[#00165F]/60">
-                    {kycStatus === 'SUBMITTED'
-                      ? 'Votre dossier KYC est en cours d\'examen. Les retraits seront débloqués à la validation.'
-                      : 'Vous devez vérifier votre identité (KYC) avant d\'effectuer un retrait.'}
+                    {kycStatus === 'SUBMITTED' ? t('withdraw.kyc.submitted.sub') : t('withdraw.kyc.required.sub')}
                   </p>
                   {kycStatus !== 'SUBMITTED' && (
                     <button
                       onClick={() => { onClose(); router.push('/profile/kyc'); }}
                       className="mt-2 flex items-center gap-1.5 text-xs font-bold text-[#0097FC] hover:underline"
                     >
-                      Compléter le KYC <ExternalLink className="w-3 h-3" />
+                      {t('withdraw.kyc.btn')} <ExternalLink className="w-3 h-3" />
                     </button>
                   )}
                 </div>
@@ -113,14 +113,14 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
           {kycStatus === 'VERIFIED' && (
             <div className="rounded-xl bg-[#0097FC]/5 border border-[#0097FC]/20 p-3">
               <p className="text-xs dark:text-white/60 text-[#00165F]/60">
-                🏆 Seul votre <strong>Compte récompenses</strong> est retirable ({formatSKY(rewardBalance)} disponibles).
+                {t('withdraw.rewardOnly')} ({formatSKY(rewardBalance)}).
               </p>
             </div>
           )}
 
           {/* Montant */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Montant à retirer en SKY (min. 1 000)</label>
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">{t('withdraw.amount')} (min. 1 000)</label>
             <div className="relative">
               <input
                 type="number"
@@ -146,7 +146,7 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
 
           {/* Réseau */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Réseau Mobile Money</label>
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">{t('withdraw.method')}</label>
             <div className="grid grid-cols-2 gap-2">
               {(['MTN', 'ORANGE'] as const).map(n => (
                 <button
@@ -167,7 +167,7 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
           {/* Téléphone */}
           <div>
             <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">
-              Numéro {network === 'MTN' ? 'MTN' : 'Orange'} (9 chiffres)
+              {network === 'MTN' ? t('deposit.phone.mtn') : t('deposit.phone.orange')}
             </label>
             <input
               type="tel"
@@ -180,7 +180,7 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
 
           {/* Nom */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Nom complet du bénéficiaire</label>
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">{t('withdraw.name')}</label>
             <input
               type="text"
               value={name}
@@ -193,25 +193,25 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
           {/* Récap */}
           {isValid && !confirmed && (
             <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-4 space-y-2">
-              <p className="text-xs font-semibold dark:text-white/70 text-[#00165F]/50 uppercase tracking-wide mb-2">Récapitulatif</p>
+              <p className="text-xs font-semibold dark:text-white/70 text-[#00165F]/50 uppercase tracking-wide mb-2">{t('withdraw.info')}</p>
               <div className="flex justify-between text-sm">
-                <span className="dark:text-white/60 text-[#00165F]/60">Vous retirez</span>
+                <span className="dark:text-white/60 text-[#00165F]/60">{t('withdraw.submit')}</span>
                 <span className="font-bold text-[#0097FC]">🪙 {formatSKY(amountNum)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="dark:text-white/60 text-[#00165F]/60">Réseau</span>
+                <span className="dark:text-white/60 text-[#00165F]/60">{t('withdraw.method')}</span>
                 <span className="font-semibold dark:text-white text-[#00165F]">{network === 'MTN' ? 'MTN Mobile Money' : 'Orange Money'}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="dark:text-white/60 text-[#00165F]/60">Vers</span>
+                <span className="dark:text-white/60 text-[#00165F]/60">{t('withdraw.confirm')}</span>
                 <span className="font-semibold dark:text-white text-[#00165F]">{phone}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="dark:text-white/60 text-[#00165F]/60">Envoi Mobile Money</span>
+                <span className="dark:text-white/60 text-[#00165F]/60">{t('withdraw.processing')}</span>
                 <span className="font-bold text-[#FD2E5F]">{formatCFA(amountNum)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="dark:text-white/60 text-[#00165F]/60">Solde après</span>
+                <span className="dark:text-white/60 text-[#00165F]/60">{t('withdraw.fee')}</span>
                 <span className="font-semibold dark:text-white text-[#00165F]">🪙 {formatSKY(balance - amountNum)}</span>
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
               onClick={onClose}
               className="px-5 py-2 rounded-xl border dark:border-white/20 border-gray-300 text-sm font-semibold dark:text-white/70 text-[#00165F]/70"
             >
-              Annuler
+              {t('rules.cancel.btn')}
             </button>
             <button
               onClick={handleSubmit}
@@ -249,7 +249,7 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
               className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#FD2E5F] text-white font-bold text-sm disabled:opacity-40 hover:bg-[#FD2E5F]/90"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              {loading ? 'Traitement...' : `Retirer ${amountNum >= 1000 ? formatSKY(amountNum) : ''}`}
+              {loading ? t('withdraw.submitting') : `${t('withdraw.submit')} ${amountNum >= 1000 ? formatSKY(amountNum) : ''}`}
             </button>
           </div>
         </div>

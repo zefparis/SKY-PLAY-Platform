@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Shield, CheckCircle, Clock, XCircle, ChevronRight, Upload, User, CreditCard, Camera } from 'lucide-react';
 import Container from '@/components/ui/Container';
 import { useAuthStore } from '@/lib/auth-store';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -22,14 +23,15 @@ interface KYCState {
 }
 
 const STATUS_CONFIG = {
-  PENDING:   { icon: Shield,       color: 'text-gray-400',    bg: 'bg-gray-400/10',  label: 'Non soumis' },
-  SUBMITTED: { icon: Clock,        color: 'text-yellow-400',  bg: 'bg-yellow-400/10', label: 'En cours d\'examen' },
-  VERIFIED:  { icon: CheckCircle,  color: 'text-green-400',   bg: 'bg-green-400/10',  label: 'Identité vérifiée' },
-  REJECTED:  { icon: XCircle,      color: 'text-red-400',     bg: 'bg-red-400/10',    label: 'Dossier refusé' },
+  PENDING:   { icon: Shield,       color: 'text-gray-400',    bg: 'bg-gray-400/10' },
+  SUBMITTED: { icon: Clock,        color: 'text-yellow-400',  bg: 'bg-yellow-400/10' },
+  VERIFIED:  { icon: CheckCircle,  color: 'text-green-400',   bg: 'bg-green-400/10' },
+  REJECTED:  { icon: XCircle,      color: 'text-red-400',     bg: 'bg-red-400/10' },
 };
 
 export default function KYCPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
   const [kyc, setKyc] = useState<KYCState | null>(null);
   const [step, setStep] = useState(1);
@@ -76,7 +78,7 @@ export default function KYCPage() {
 
   const handleSubmit = async () => {
     if (!firstName.trim() || !lastName.trim() || !idNumber.trim()) {
-      setError('Tous les champs sont obligatoires.'); return;
+      setError(t('kyc.step1.requiredError')); return;
     }
     setSubmitting(true); setError('');
     try {
@@ -121,13 +123,13 @@ export default function KYCPage() {
                 <div className="w-20 h-20 rounded-full bg-green-400/15 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="w-10 h-10 text-green-400" />
                 </div>
-                <h1 className="text-2xl font-black dark:text-white text-[#00165F] mb-2">Identité vérifiée ✅</h1>
+                <h1 className="text-2xl font-black dark:text-white text-[#00165F] mb-2">{t('kyc.verified.title')}</h1>
                 <p className="text-sm dark:text-white/60 text-[#00165F]/60 mb-1">
                   {kyc?.kycFirstName} {kyc?.kycLastName}
                 </p>
-                <p className="text-xs text-green-400 mb-6">Les retraits sont débloqués sur votre compte.</p>
+                <p className="text-xs text-green-400 mb-6">{t('kyc.verified.unlocked')}</p>
                 <button onClick={() => router.push('/wallet')} className="w-full py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 transition-colors">
-                  Aller au portefeuille
+                  {t('kyc.verified.goWallet')}
                 </button>
               </div>
             </div>
@@ -147,16 +149,16 @@ export default function KYCPage() {
                 <div className="w-20 h-20 rounded-full bg-yellow-400/15 flex items-center justify-center mx-auto mb-4">
                   <Clock className="w-10 h-10 text-yellow-400" />
                 </div>
-                <h1 className="text-2xl font-black dark:text-white text-[#00165F] mb-2">Dossier en cours d'examen ⏳</h1>
+                <h1 className="text-2xl font-black dark:text-white text-[#00165F] mb-2">{t('kyc.submitted.title')}</h1>
                 <p className="text-sm dark:text-white/60 text-[#00165F]/60 mb-1">
                   {kyc?.kycFirstName} {kyc?.kycLastName} · {kyc?.kycIdType}
                 </p>
-                <p className="text-xs text-yellow-400 mb-6">Votre dossier est en cours de vérification par notre équipe (24-48h).</p>
+                <p className="text-xs text-yellow-400 mb-6">{t('kyc.submitted.processing')}</p>
                 <div className="rounded-xl bg-yellow-400/5 border border-yellow-400/20 p-4 text-left text-xs dark:text-white/60 text-[#00165F]/60">
-                  <p className="font-semibold mb-1 dark:text-white text-[#00165F]">Que se passe-t-il ensuite ?</p>
-                  <p>• Notre équipe vérifie vos documents (24-48h)</p>
-                  <p>• Vous recevrez une notification de validation ou de refus</p>
-                  <p>• Une fois validé, les retraits seront débloqués</p>
+                  <p className="font-semibold mb-1 dark:text-white text-[#00165F]">{t('kyc.submitted.next')}</p>
+                  <p>• {t('kyc.submitted.next.1')}</p>
+                  <p>• {t('kyc.submitted.next.2')}</p>
+                  <p>• {t('kyc.submitted.next.3')}</p>
                 </div>
               </div>
             </div>
@@ -178,17 +180,17 @@ export default function KYCPage() {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-black dark:text-white text-[#00165F]">Vérification d'identité (KYC)</h1>
-                <p className="text-sm dark:text-white/60 text-[#00165F]/60">Requise pour effectuer des retraits</p>
+                <h1 className="text-2xl font-black dark:text-white text-[#00165F]">{t('kyc.title')}</h1>
+                <p className="text-sm dark:text-white/60 text-[#00165F]/60">{t('kyc.subtitle')}</p>
               </div>
             </div>
 
             {/* Statut rejeté */}
             {currentStatus === 'REJECTED' && (
               <div className="rounded-xl bg-red-400/10 border border-red-400/30 p-4 mb-4">
-                <p className="text-sm font-bold text-red-400 mb-1">❌ Dossier refusé</p>
-                <p className="text-xs dark:text-white/60 text-[#00165F]/60">Raison : {kyc?.kycRejectReason ?? 'Non précisée'}</p>
-                <p className="text-xs text-red-400 mt-1">Vous pouvez soumettre un nouveau dossier ci-dessous.</p>
+                <p className="text-sm font-bold text-red-400 mb-1">{t('kyc.rejected.title')}</p>
+                <p className="text-xs dark:text-white/60 text-[#00165F]/60">{t('kyc.rejected.reason')} {kyc?.kycRejectReason ?? t('kyc.rejected.unspecified')}</p>
+                <p className="text-xs text-red-400 mt-1">{t('kyc.rejected.retry')}</p>
               </div>
             )}
 
@@ -213,12 +215,12 @@ export default function KYCPage() {
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-5 h-5 text-[#0097FC]" />
-                    <h2 className="font-black dark:text-white text-[#00165F]">Étape 1 — Informations personnelles</h2>
+                    <h2 className="font-black dark:text-white text-[#00165F]">{t('kyc.step1.title')}</h2>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Prénom *</label>
+                      <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">{t('kyc.step1.firstName')}</label>
                       <input
                         value={firstName} onChange={e => setFirstName(e.target.value)}
                         placeholder="Jean"
@@ -226,7 +228,7 @@ export default function KYCPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Nom *</label>
+                      <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">{t('kyc.step1.lastName')}</label>
                       <input
                         value={lastName} onChange={e => setLastName(e.target.value)}
                         placeholder="Dupont"
@@ -236,19 +238,19 @@ export default function KYCPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Type de pièce d'identité *</label>
+                    <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">{t('kyc.step1.idType')}</label>
                     <select
                       value={idType} onChange={e => setIdType(e.target.value)}
                       className="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none focus:border-[#0097FC]"
                     >
-                      <option value="CNI">Carte Nationale d'Identité (CNI)</option>
-                      <option value="PASSEPORT">Passeport</option>
-                      <option value="PERMIS">Permis de conduire</option>
+                      <option value="CNI">{t('kyc.step1.idType.cni')}</option>
+                      <option value="PASSEPORT">{t('kyc.step1.idType.passport')}</option>
+                      <option value="PERMIS">{t('kyc.step1.idType.license')}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Numéro de la pièce *</label>
+                    <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">{t('kyc.step1.idNumber')}</label>
                     <input
                       value={idNumber} onChange={e => setIdNumber(e.target.value)}
                       placeholder="ex: 12345678"
@@ -257,10 +259,10 @@ export default function KYCPage() {
                   </div>
 
                   <button
-                    onClick={() => { if (!firstName.trim() || !lastName.trim() || !idNumber.trim()) { setError('Tous les champs sont obligatoires.'); return; } setError(''); setStep(2); }}
+                    onClick={() => { if (!firstName.trim() || !lastName.trim() || !idNumber.trim()) { setError(t('kyc.step1.requiredError')); return; } setError(''); setStep(2); }}
                     className="w-full py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 transition-colors flex items-center justify-center gap-2"
                   >
-                    Continuer <ChevronRight className="w-4 h-4" />
+                    {t('kyc.step1.continue')} <ChevronRight className="w-4 h-4" />
                   </button>
                   {error && <p className="text-xs text-red-400 text-center">{error}</p>}
                 </div>
@@ -271,13 +273,13 @@ export default function KYCPage() {
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
                     <CreditCard className="w-5 h-5 text-[#0097FC]" />
-                    <h2 className="font-black dark:text-white text-[#00165F]">Étape 2 — Documents</h2>
+                    <h2 className="font-black dark:text-white text-[#00165F]">{t('kyc.step2.title')}</h2>
                   </div>
 
                   {/* Photo pièce */}
                   <div>
                     <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-2 block">
-                      📄 Photo de la pièce d'identité (recto)
+                      {t('kyc.step2.idPhoto')}
                     </label>
                     <label className="block cursor-pointer">
                       <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileChange(f, 'idPhoto'); }} />
@@ -288,7 +290,7 @@ export default function KYCPage() {
                           ? <img src={idPhotoPreview} alt="pièce" className="max-h-32 rounded-lg object-contain" />
                           : <>
                               <Upload className="w-8 h-8 dark:text-white/30 text-gray-400 mb-2" />
-                              <p className="text-xs dark:text-white/60 text-[#00165F]/60">Cliquez pour sélectionner une image</p>
+                              <p className="text-xs dark:text-white/60 text-[#00165F]/60">{t('kyc.step2.upload')}</p>
                             </>
                         }
                       </div>
@@ -298,7 +300,7 @@ export default function KYCPage() {
                   {/* Selfie */}
                   <div>
                     <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-2 block">
-                      🤳 Selfie avec votre pièce d'identité
+                      {t('kyc.step2.selfie')}
                     </label>
                     <label className="block cursor-pointer">
                       <input type="file" accept="image/*" capture="user" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileChange(f, 'selfie'); }} />
@@ -309,7 +311,7 @@ export default function KYCPage() {
                           ? <img src={selfiePreview} alt="selfie" className="max-h-32 rounded-lg object-contain" />
                           : <>
                               <Camera className="w-8 h-8 dark:text-white/30 text-gray-400 mb-2" />
-                              <p className="text-xs dark:text-white/60 text-[#00165F]/60">Photo avec votre pièce visible</p>
+                              <p className="text-xs dark:text-white/60 text-[#00165F]/60">{t('kyc.step2.selfieHint')}</p>
                             </>
                         }
                       </div>
@@ -320,7 +322,7 @@ export default function KYCPage() {
 
                   <div className="flex gap-3">
                     <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-xl border dark:border-white/20 border-gray-300 text-sm font-semibold dark:text-white/70 text-[#00165F]/70">
-                      Retour
+                      {t('kyc.step2.back')}
                     </button>
                     <button
                       onClick={handleSubmit}
@@ -328,8 +330,8 @@ export default function KYCPage() {
                       className="flex-2 flex-1 py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {submitting
-                        ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi...</>
-                        : 'Soumettre le dossier'}
+                        ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('kyc.step2.submitting')}</>
+                        : t('kyc.step2.submit')}
                     </button>
                   </div>
                 </div>
@@ -341,18 +343,18 @@ export default function KYCPage() {
                   <div className="w-16 h-16 rounded-full bg-yellow-400/15 flex items-center justify-center mx-auto">
                     <Clock className="w-8 h-8 text-yellow-400" />
                   </div>
-                  <h2 className="text-xl font-black dark:text-white text-[#00165F]">Dossier soumis ✅</h2>
+                  <h2 className="text-xl font-black dark:text-white text-[#00165F]">{t('kyc.step3.title')}</h2>
                   <p className="text-sm dark:text-white/60 text-[#00165F]/60">
-                    Votre dossier est en cours d'examen par notre équipe.<br />
-                    Délai de traitement : <strong className="text-yellow-400">24-48 heures</strong>
+                    {t('kyc.step3.processing')}<br />
+                    {t('kyc.step3.delay')}
                   </p>
                   <div className="rounded-xl bg-[#0097FC]/5 border border-[#0097FC]/20 p-4 text-left space-y-1">
-                    <p className="text-xs dark:text-white/50 text-[#00165F]/50">📋 Récapitulatif</p>
+                    <p className="text-xs dark:text-white/50 text-[#00165F]/50">{t('kyc.step3.recap')}</p>
                     <p className="text-sm dark:text-white text-[#00165F] font-semibold">{firstName} {lastName}</p>
                     <p className="text-xs dark:text-white/60 text-[#00165F]/60">{idType} · N° {idNumber}</p>
                   </div>
                   <button onClick={() => router.push('/wallet')} className="w-full py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 transition-colors">
-                    Retour au portefeuille
+                    {t('kyc.step3.backWallet')}
                   </button>
                 </div>
               )}
@@ -360,7 +362,7 @@ export default function KYCPage() {
 
             {/* Info légale */}
             <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 text-center mt-4">
-              Vos données personnelles sont traitées conformément à notre politique de confidentialité et à la réglementation camerounaise.
+              {t('kyc.legal')}
             </p>
           </div>
         </Container>

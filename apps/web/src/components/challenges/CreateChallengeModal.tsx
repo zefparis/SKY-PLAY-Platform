@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Swords, Trophy, Users, Wallet, Check } from 'lucide-react';
 import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import { getAuthToken } from '@/lib/get-auth-token';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -25,6 +26,7 @@ interface CreateChallengeModalProps {
 }
 
 export default function CreateChallengeModal({ onClose, onCreated }: CreateChallengeModalProps) {
+  const { t } = useI18n();
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<typeof CHALLENGE_TYPES[0] | null>(null);
   const [title, setTitle] = useState('');
@@ -77,8 +79,8 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
         {/* Header — fixed */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
-            <h2 className="text-lg sm:text-xl font-black dark:text-white text-[#00165F]">Créer un défi</h2>
-            <p className="text-xs dark:text-white/50 text-[#00165F]/50 mt-0.5">Étape {step}/3</p>
+            <h2 className="text-lg sm:text-xl font-black dark:text-white text-[#00165F]">{t('create.title')}</h2>
+            <p className="text-xs dark:text-white/50 text-[#00165F]/50 mt-0.5">{t('create.step')} {step}/3</p>
           </div>
           <button onClick={onClose} className="dark:text-white/50 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors p-1">
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -100,7 +102,7 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
             {/* Step 1 — Type */}
             {step === 1 && (
               <motion.div key="step1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
-                <p className="dark:text-white/70 text-[#00165F]/70 mb-4 text-sm">Choisis le type de défi</p>
+                <p className="dark:text-white/70 text-[#00165F]/70 mb-4 text-sm">{t('create.step1.label')}</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {CHALLENGE_TYPES.map(type => {
                     const typeNetPot = computeNetPot(type.entryFee * type.maxPlayers, type.commission);
@@ -123,9 +125,9 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
                         )}
                         <div className={`text-2xl mb-1`}>{type.icon}</div>
                         <p className="font-bold text-sm dark:text-white text-[#00165F]">{type.label}</p>
-                        <p className="text-xs dark:text-white/50 text-[#00165F]/50">{type.maxPlayers} joueurs max</p>
+                        <p className="text-xs dark:text-white/50 text-[#00165F]/50">{type.maxPlayers} {t('create.maxPlayers')}</p>
                         <p className="text-xs font-semibold text-[#0097FC] mt-1">🪙 {formatSKY(type.entryFee)}</p>
-                        <p className="text-xs text-[#FD2E5F]">Prime de performance : {formatSKY(typePrizes.first)}</p>
+                        <p className="text-xs text-[#FD2E5F]">{t('challenge.card.top1')} {formatSKY(typePrizes.first)}</p>
                       </button>
                     );
                   })}
@@ -136,21 +138,21 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
             {/* Step 2 — Details */}
             {step === 2 && selectedType && (
               <motion.div key="step2" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
-                <p className="dark:text-white/70 text-[#00165F]/70 mb-4 text-sm">Détails du défi</p>
+                <p className="dark:text-white/70 text-[#00165F]/70 mb-4 text-sm">{t('create.step2.label')}</p>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/70 mb-1 block">Nom du défi</label>
+                    <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/70 mb-1 block">{t('create.nameLabel')}</label>
                     <input
                       type="text"
                       value={title}
                       onChange={e => setTitle(e.target.value)}
-                      placeholder="Ex: FIFA 25 — Best of 3"
+                      placeholder={t('create.namePlaceholder')}
                       maxLength={60}
                       className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 dark:text-white text-[#00165F] border dark:border-white/10 border-gray-200 focus:outline-none focus:border-[#0097FC] text-sm"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/70 mb-1 block">Jeu</label>
+                    <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/70 mb-1 block">{t('create.game')}</label>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {GAMES.map(g => (
                         <button
@@ -168,17 +170,17 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
 
                   {/* Financial summary */}
                   <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-4 space-y-2">
-                    <p className="text-xs font-semibold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wide">Résumé de la compétition</p>
+                    <p className="text-xs font-semibold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wide">{t('create.step3.label')}</p>
                     <div className="flex justify-between text-sm">
-                      <span className="dark:text-white/70 text-[#00165F]/70">Pass de participation</span>
+                      <span className="dark:text-white/70 text-[#00165F]/70">{t('create.entryFee')}</span>
                       <span className="font-bold text-[#FD2E5F]">🪙 {formatSKY(selectedType.entryFee)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="dark:text-white/70 text-[#00165F]/70">Dotation si complet ({selectedType.maxPlayers} joueurs)</span>
+                      <span className="dark:text-white/70 text-[#00165F]/70">{t('create.ifFull')} ({selectedType.maxPlayers} {t('challenge.card.players')})</span>
                       <span className="font-bold text-[#0097FC]">🪙 {formatSKY(selectedType.entryFee * selectedType.maxPlayers)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="dark:text-white/70 text-[#00165F]/70">Prime de performance 1er</span>
+                      <span className="dark:text-white/70 text-[#00165F]/70">{t('rules.prize1st')}</span>
                       <span className="font-bold text-[#FD2E5F]">🪙 {formatSKY(prizes.first)}</span>
                     </div>
                   </div>
@@ -189,44 +191,44 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
             {/* Step 3 — Confirmation */}
             {step === 3 && selectedType && (
               <motion.div key="step3" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
-                <p className="dark:text-white/70 text-[#00165F]/70 mb-4 text-sm">Confirmation</p>
+                <p className="dark:text-white/70 text-[#00165F]/70 mb-4 text-sm">{t('create.step3.label')}</p>
                 <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-5 space-y-3 mb-4">
                   <div className="flex justify-between">
-                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">Nom</span>
+                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">{t('create.name')}</span>
                     <span className="dark:text-white text-[#00165F] font-semibold text-sm">{title}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">Jeu</span>
+                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">{t('create.game')}</span>
                     <span className="dark:text-white text-[#00165F] font-semibold text-sm">{game}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">Type</span>
+                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">{t('create.type')}</span>
                     <span className="dark:text-white text-[#00165F] font-semibold text-sm">{selectedType.label}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">Joueurs max</span>
+                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm">{t('create.maxPlayersLabel')}</span>
                     <span className="dark:text-white text-[#00165F] font-semibold text-sm">{selectedType.maxPlayers}</span>
                   </div>
                   <div className="h-px dark:bg-white/10 bg-gray-200" />
                   <div className="flex justify-between">
-                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm font-semibold">Frais d'inscription</span>
+                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm font-semibold">{t('create.entryFee')}</span>
                     <span className="font-black text-[#FD2E5F]">🪙 {formatSKY(selectedType.entryFee)}</span>
                   </div>
                 </div>
 
                 <div className="rounded-xl bg-[#0097FC]/10 border border-[#0097FC]/30 p-4 text-center mb-4">
-                  <p className="text-sm dark:text-white/70 text-[#00165F]/70 mb-1">Si la compétition est complète ({selectedType.maxPlayers} joueurs)</p>
+                  <p className="text-sm dark:text-white/70 text-[#00165F]/70 mb-1">{t('create.ifFull')} ({selectedType.maxPlayers} {t('challenge.card.players')})</p>
                   <p className="text-2xl font-black text-[#0097FC]">🪙 {formatSKY(prizes.first)}</p>
-                  <p className="text-xs text-[#FD2E5F]">prime de performance si tu arrives 1er 🏆</p>
+                  <p className="text-xs text-[#FD2E5F]">{t('create.top1Prize')}</p>
                 </div>
 
                 <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 mb-4">
-                  <p className="text-xs font-bold text-yellow-400 mb-1">💸 Politique de remboursement</p>
+                  <p className="text-xs font-bold text-yellow-400 mb-1">{t('create.refund.title')}</p>
                   <ul className="text-[10px] text-yellow-400/70 space-y-0.5 list-disc list-inside">
-                    <li>Remboursement intégral si le défi expire ou est annulé sans avoir commencé.</li>
-                    <li>Gains &ge; 10 000 SKY : validation admin obligatoire (délai 24h max).</li>
-                    <li>Autres gains : crédit automatique dans les 30 minutes.</li>
-                    <li>Tous les remboursements sont en SKY uniquement.</li>
+                    <li>{t('create.refund.1')}</li>
+                    <li>{t('create.refund.2')}</li>
+                    <li>{t('create.refund.3')}</li>
+                    <li>{t('create.refund.4')}</li>
                   </ul>
                 </div>
 
@@ -245,7 +247,7 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
               onClick={() => setStep(s => s - 1)}
               className="flex items-center gap-1 px-4 py-2 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] font-medium text-sm hover:opacity-80"
             >
-              <ChevronLeft className="w-4 h-4" /> Retour
+              <ChevronLeft className="w-4 h-4" /> {t('create.back')}
             </button>
           ) : <div />}
 
@@ -255,7 +257,7 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
               disabled={step === 1 ? !selectedType : !title || !game}
               className="flex items-center gap-1 px-5 py-2 rounded-xl bg-[#0097FC] text-white font-bold text-sm disabled:opacity-40 hover:bg-[#0097FC]/90"
             >
-              Suivant <ChevronRight className="w-4 h-4" />
+              {t('create.next')} <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
             <button
@@ -268,7 +270,7 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
               ) : (
                 <Swords className="w-4 h-4" />
               )}
-              Créer et s'inscrire
+              {t('create.submit')}
             </button>
           )}
         </div>

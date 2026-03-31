@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Clock, AlertTriangle, CheckCircle, XCircle, Pause } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -39,6 +40,7 @@ function calcEndDate(duration: Duration): Date | null {
 
 export default function ResponsabilitePage() {
   const router = useRouter();
+  const { t } = useI18n();
   const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
   const logout = useAuthStore((s) => s.logout);
   const [selected, setSelected] = useState<Duration | null>(null);
@@ -124,8 +126,8 @@ export default function ResponsabilitePage() {
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black dark:text-white text-[#00165F]">Jouer Responsablement</h1>
-            <p className="text-sm dark:text-white/60 text-[#00165F]/60">Pause et auto-exclusion</p>
+            <h1 className="text-2xl font-black dark:text-white text-[#00165F]">{t('resp.title')}</h1>
+            <p className="text-sm dark:text-white/60 text-[#00165F]/60">{t('resp.subtitle')}</p>
           </div>
         </div>
 
@@ -140,11 +142,11 @@ export default function ResponsabilitePage() {
                 : <Pause className="w-6 h-6 text-orange-400 shrink-0" />}
               <div>
                 <p className={`font-bold text-sm ${isExcluded ? 'text-red-400' : 'text-orange-400'}`}>
-                  {isCooling ? '⏸️ Pause active' : '🔒 Compte suspendu'}
+                  {isCooling ? t('resp.cooling') : t('resp.excluded')}
                 </p>
                 {currentStatus?.exclusionUntil && (
                   <p className="text-xs dark:text-white/60 text-[#00165F]/60">
-                    Jusqu'au {new Date(currentStatus.exclusionUntil).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {t('resp.until')} {new Date(currentStatus.exclusionUntil).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 )}
               </div>
@@ -155,12 +157,12 @@ export default function ResponsabilitePage() {
                 disabled={cancelLoading}
                 className="w-full py-2.5 rounded-xl bg-orange-400/20 text-orange-400 border border-orange-400/30 text-sm font-bold hover:bg-orange-400/30 transition disabled:opacity-50"
               >
-                {cancelLoading ? 'Annulation...' : 'Annuler la pause'}
+                {cancelLoading ? t('resp.cancel.loading') : t('resp.cancel.btn')}
               </button>
             )}
             {isExcluded && (
               <p className="text-xs dark:text-white/50 text-[#00165F]/50">
-                Cette suspension est irrévocable. Pour toute erreur : support@skyplay.cm
+                {t('resp.irrevocable')}
               </p>
             )}
             {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
@@ -175,7 +177,7 @@ export default function ResponsabilitePage() {
               {/* Pauses */}
               <div>
                 <p className="text-xs font-bold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wider mb-3">
-                  ⏸️ Prendre une pause
+                  {t('resp.pause.title')}
                 </p>
                 <div className="space-y-2">
                   {DURATIONS.filter(d => d.type === 'pause').map(d => (
@@ -204,7 +206,7 @@ export default function ResponsabilitePage() {
               {/* Auto-exclusions */}
               <div>
                 <p className="text-xs font-bold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wider mb-3">
-                  🔒 Auto-exclusion (irrévocable)
+                  {t('resp.exclusion.title')}
                 </p>
                 <div className="space-y-2">
                   {DURATIONS.filter(d => d.type === 'exclusion').map(d => (
@@ -237,7 +239,7 @@ export default function ResponsabilitePage() {
                 <div className="flex items-start gap-2.5 rounded-xl bg-red-400/5 border border-red-400/20 p-3">
                   <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                   <p className="text-xs text-red-400">
-                    Les auto-exclusions de <strong>1 semaine ou plus sont IRRÉVOCABLES</strong>. Aucune annulation n'est possible.
+                    {t('resp.warning')}
                   </p>
                 </div>
               )}
@@ -245,12 +247,12 @@ export default function ResponsabilitePage() {
               {/* Raison */}
               <div>
                 <label className="text-xs font-semibold dark:text-white/50 text-[#00165F]/50 mb-1.5 block">
-                  Raison (optionnel)
+                  {t('resp.reason.label')}
                 </label>
                 <textarea
                   value={reason}
                   onChange={e => setReason(e.target.value)}
-                  placeholder="Jeu compulsif, besoin de repos..."
+                  placeholder={t('resp.reason.placeholder')}
                   rows={2}
                   className="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm resize-none focus:outline-none focus:border-[#0097FC]"
                 />
@@ -262,8 +264,8 @@ export default function ResponsabilitePage() {
                 className="w-full py-3 rounded-xl font-bold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed bg-[#FD2E5F] text-white hover:bg-[#FD2E5F]/90"
               >
                 {selected
-                  ? isPause ? `Prendre une pause de ${DURATION_LABELS[selected]}` : `Confirmer l'auto-exclusion`
-                  : 'Sélectionnez une durée'}
+                  ? isPause ? `${t('resp.pause.btn')} ${DURATION_LABELS[selected]}` : t('resp.exclusion.btn')
+                  : t('resp.select.placeholder')}
               </button>
             </div>
           </div>
@@ -271,7 +273,7 @@ export default function ResponsabilitePage() {
 
         {/* Info légale */}
         <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 text-center mt-4">
-          En cas de difficulté avec le jeu, contactez <a href="mailto:support@skyplay.cm" className="underline">support@skyplay.cm</a>
+          {t('resp.legal')} <a href="mailto:support@skyplay.cm" className="underline">support@skyplay.cm</a>
         </p>
       </div>
 
@@ -283,26 +285,26 @@ export default function ResponsabilitePage() {
             <div className="flex items-center gap-3">
               <AlertTriangle className={`w-6 h-6 shrink-0 ${isIrrevocable ? 'text-red-400' : 'text-orange-400'}`} />
               <h2 className="text-lg font-black dark:text-white text-[#00165F]">
-                {isPause ? 'Confirmer la pause' : '⚠️ Action irrévocable'}
+                {isPause ? t('resp.modal.pause.title') : t('resp.modal.irrevocable.title')}
               </h2>
             </div>
 
             {isPause ? (
               <p className="text-sm dark:text-white/70 text-[#00165F]/70">
-                Votre compte sera suspendu pendant <strong>{DURATION_LABELS[selected]}</strong>. Vous pouvez annuler cette pause dans les paramètres.
+                {t('resp.modal.pause.desc').replace('{duration}', DURATION_LABELS[selected])}
               </p>
             ) : (
               <div className="space-y-3">
                 <div className="rounded-xl bg-red-400/5 border border-red-400/20 p-3">
-                  <p className="text-sm font-bold text-red-400 mb-1">⚠️ ATTENTION — Action IRRÉVOCABLE</p>
+                  <p className="text-sm font-bold text-red-400 mb-1">{t('resp.modal.irrevocable.warning')}</p>
                   <p className="text-xs dark:text-white/60 text-[#00165F]/60">
-                    Votre compte sera suspendu {selected === 'PERMANENT' ? 'définitivement' : `jusqu'au ${endDate?.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`}.
-                    Vous <strong>ne pourrez PAS</strong> annuler cette décision.
+                    {t('resp.modal.irrevocable.suspended')} {selected === 'PERMANENT' ? t('resp.modal.irrevocable.perm') : `${t('resp.modal.irrevocable.until')} ${endDate?.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`}.{' '}
+                    {t('resp.modal.irrevocable.cannotCancel')}
                   </p>
                 </div>
                 <div>
                   <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">
-                    Tapez <strong className="text-red-400">CONFIRMER</strong> pour valider
+                    {t('resp.modal.confirm.label')}
                   </label>
                   <input
                     value={confirmText}
@@ -321,7 +323,7 @@ export default function ResponsabilitePage() {
                 onClick={() => { setModal(false); setConfirmText(''); setError(''); }}
                 className="flex-1 py-2.5 rounded-xl border dark:border-white/20 border-gray-300 text-sm font-semibold dark:text-white/70 text-[#00165F]/70"
               >
-                Annuler
+                {t('resp.modal.cancel')}
               </button>
               <button
                 onClick={handleSubmit}
@@ -331,8 +333,8 @@ export default function ResponsabilitePage() {
                 }`}
               >
                 {loading
-                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> En cours...</>
-                  : isPause ? 'Activer la pause' : 'Je comprends, suspendre mon compte'}
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('resp.modal.loading')}</>
+                  : isPause ? t('resp.modal.activate') : t('resp.modal.suspend')}
               </button>
             </div>
           </div>

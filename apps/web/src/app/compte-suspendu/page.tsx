@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Lock, XCircle, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export default function CompteSuspenduPage() {
+  const { t } = useI18n();
   const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
   const logout = useAuthStore((s) => s.logout);
   const [status, setStatus] = useState<any>(null);
@@ -40,17 +42,17 @@ export default function CompteSuspenduPage() {
 
           <div>
             <h1 className="text-2xl font-black dark:text-white text-[#00165F] mb-2">
-              🔒 Compte suspendu
+              {t('suspended.title')}
             </h1>
 
             {isPermanent ? (
               <p className="text-sm dark:text-white/70 text-[#00165F]/70">
-                Votre compte a été <strong>définitivement fermé</strong>.
+                {t('suspended.permanent')}
               </p>
             ) : (
               <div className="space-y-1">
                 <p className="text-sm dark:text-white/70 text-[#00165F]/70">
-                  Votre compte est suspendu jusqu'au
+                  {t('suspended.until')}
                 </p>
                 {exclusionUntil && (
                   <p className="text-base font-black dark:text-white text-[#00165F]">
@@ -66,7 +68,7 @@ export default function CompteSuspenduPage() {
 
           {status?.exclusionRequestedAt && (
             <p className="text-xs dark:text-white/40 text-[#00165F]/40">
-              Suspension activée à votre demande le{' '}
+              {t('suspended.activated')}{' '}
               {new Date(status.exclusionRequestedAt).toLocaleDateString('fr-FR', {
                 day: '2-digit', month: 'long', year: 'numeric',
               })}
@@ -75,9 +77,9 @@ export default function CompteSuspenduPage() {
 
           <div className="rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/10 border-gray-200 p-4 text-left text-xs dark:text-white/60 text-[#00165F]/60 space-y-1">
             <p className="font-semibold dark:text-white text-[#00165F] mb-1.5">
-              Si vous pensez qu'il s'agit d'une erreur :
+              {t('suspended.error.title')}
             </p>
-            <p>Contactez notre équipe support :</p>
+            <p>{t('suspended.error.contact')}</p>
             <a href="mailto:support@skyplay.cm" className="text-[#0097FC] font-bold hover:underline">
               support@skyplay.cm
             </a>
@@ -88,7 +90,7 @@ export default function CompteSuspenduPage() {
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border dark:border-white/20 border-gray-300 text-sm font-semibold dark:text-white/70 text-[#00165F]/70 hover:dark:bg-white/5 hover:bg-gray-100 transition"
           >
             <LogOut className="w-4 h-4" />
-            Déconnexion
+            {t('suspended.logout')}
           </button>
         </div>
       </div>
