@@ -95,6 +95,24 @@ export function useConversations(socket: Socket | null) {
     return () => { socket.off('conversation_message', handler) }
   }, [socket, currentUser])
 
+  // Salon défi créé → rafraîchir la liste pour qu'il apparaisse dans la sidebar
+  useEffect(() => {
+    if (!socket) return
+    const handler = () => { fetchConversations() }
+    socket.on('challenge_chat_ready', handler)
+    return () => { socket.off('challenge_chat_ready', handler) }
+  }, [socket, fetchConversations])
+
+  // Salon défi fermé (réconciliation terminée) → le retirer de la sidebar
+  useEffect(() => {
+    if (!socket) return
+    const handler = ({ conversationId }: { conversationId: string }) => {
+      setChallenges((prev) => prev.filter((c) => c.id !== conversationId))
+    }
+    socket.on('challenge_chat_closed', handler)
+    return () => { socket.off('challenge_chat_closed', handler) }
+  }, [socket])
+
   // Ouvrir ou créer un DM
   const openDm = useCallback(
     async (userId: string): Promise<Conversation | null> => {

@@ -341,6 +341,33 @@ export default function ChatPage() {
             )
           })}
 
+          {/* Online players */}
+          {connectedUsers.filter(u => u.id !== currentUser?.id).length > 0 && (
+            <>
+              <SectionLabel>En ligne ({connectedUsers.filter(u => u.id !== currentUser?.id).length})</SectionLabel>
+              {connectedUsers.filter(u => u.id !== currentUser?.id).slice(0, 8).map(u => (
+                <button
+                  key={u.id}
+                  onClick={async () => {
+                    const conv = await openDm(u.id)
+                    if (conv) { setActiveConv({ type: 'DM', conversationId: conv.id, conv }); setSidebarOpen(false) }
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 transition hover:bg-white/5 border-l-[3px] border-transparent"
+                >
+                  <div className="relative shrink-0">
+                    <Avatar name={u.username} src={u.avatar} size={8} />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-[#00165F]" />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm text-white truncate">{u.username}</p>
+                    <p className="text-[11px] text-emerald-400/70">En ligne</p>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-white/20 shrink-0" />
+                </button>
+              ))}
+            </>
+          )}
+
           {/* Challenge rooms */}
           {challenges.length > 0 && (
             <>

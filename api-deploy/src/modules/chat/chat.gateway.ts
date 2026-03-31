@@ -85,6 +85,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onModuleInit() {
     this.challengesService.setServer(this.server);
     this.walletService.setServer(this.server);
+    this.chatService.setServer(this.server);
     // Nettoyage automatique des messages expirés toutes les minutes
     setInterval(() => this.cleanupExpiredRoomMessages(), 60 * 1000);
   }

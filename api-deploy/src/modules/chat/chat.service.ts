@@ -1,12 +1,18 @@
 import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { v2 as cloudinary } from 'cloudinary';
+import { Server } from 'socket.io';
 
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
+  private server: Server | null = null;
 
   constructor(private prisma: PrismaService) {}
+
+  setServer(server: Server) {
+    this.server = server;
+  }
 
   // ─── DM ──────────────────────────────────────────────────────────────────────
 
@@ -83,6 +89,36 @@ export class ChatService {
   }
 
   // ─── CHALLENGE CONVERSATION ───────────────────────────────────────────────────
+
+  async closeChallengeConversation(challengeId: string): Promise<string | null> {
+    const conv = await this.prisma.conversation.findFirst({
+      where: { challengeId },
+    });
+    if (!conv) return null;
+
+    const sysMsg = await this.prisma.conversationMessage.create({
+      data: {
+        conversationId: conv.id,
+        content: '⚡ Le défi est terminé ! Les gains ont été distribués. Ce salon va se fermer.',
+        type: 'SYSTEM',
+      },
+      include: { author: { select: { id: true, username: true, avatar: true } } },
+    });
+
+    if (this.server) {
+      this.server.to(`conv_${conv.id}`).emit('conversation_message', {
+        ...sysMsg,
+        conversationId: conv.id,
+      });
+      // 8 secondes pour lire le message avant de retirer le salon
+      setTimeout(() => {
+        this.server?.to(`conv_${conv.id}`).emit('challenge_chat_closed', {
+          conversationId: conv.id,
+        });
+      }, 8000);
+    }
+    return conv.id;
+  }
 
   async createChallengeConversation(challengeId: string, participantIds: string[]) {
     const existing = await this.prisma.conversation.findFirst({

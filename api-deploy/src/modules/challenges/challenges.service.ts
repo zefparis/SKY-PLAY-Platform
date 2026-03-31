@@ -254,10 +254,15 @@ export class ChallengesService {
     try {
       const participantIds = challenge.participants.map((p) => p.userId);
       const conv = await this.chatService.createChallengeConversation(challengeId, participantIds);
-      this.notifyChallenge(challengeId, 'challenge_chat_ready', {
-        challengeId,
-        conversationId: conv.id,
-      });
+      // Notifier chaque participant directement via sa room personnelle (indépendant de la page défi)
+      for (const userId of participantIds) {
+        if (this.server) {
+          this.server.to(`user_${userId}`).emit('challenge_chat_ready', {
+            challengeId,
+            conversationId: conv.id,
+          });
+        }
+      }
     } catch (err) {
       // Non-bloquant : le chat de défi est optionnel
       console.error('[ChallengesService] Failed to create challenge conversation:', err.message);
@@ -440,6 +445,14 @@ export class ChallengesService {
 
     const final = await this.findOne(challengeId);
     this.notifyChallenge(challengeId, 'challenge_completed', { challengeId, results: final.results });
+
+    // Fermer le salon de discussion du défi (message système + challenge_chat_closed après 8s)
+    try {
+      await this.chatService.closeChallengeConversation(challengeId);
+    } catch (err) {
+      console.error('[ChallengesService] Failed to close challenge conversation:', err.message);
+    }
+
     return final;
   }
 
