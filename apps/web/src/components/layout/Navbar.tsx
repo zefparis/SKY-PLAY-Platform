@@ -128,8 +128,9 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile top-right: theme only */}
+            {/* Mobile top-right: theme + language */}
             <div className="md:hidden flex items-center gap-2">
+              <LanguageSwitch className="border-[#00165F]/15 dark:border-white/10 bg-[#00165F]/5 dark:bg-white/5" />
               <button onClick={toggleTheme} className="p-2 rounded-full transition-colors dark:text-white/60 text-[#00165F]/70 hover:text-[#0097FC]" aria-label="Toggle theme">
                 {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
