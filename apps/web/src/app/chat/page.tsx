@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2, Phone, Volume2 } from 'lucide-react'
+import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2, Phone, PhoneOff, Volume2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
@@ -15,7 +15,6 @@ import { useFriendships } from '@/hooks/useFriendships'
 import EmojiPicker from '@/components/chat/EmojiPicker'
 import VoiceChannelList from '@/components/voice/VoiceChannelList'
 import VoiceRoom from '@/components/voice/VoiceRoom'
-import VoiceIndicator from '@/components/voice/VoiceIndicator'
 import IncomingCallModal from '@/components/voice/IncomingCallModal'
 import PersistentVoicePanel from '@/components/voice/PersistentVoicePanel'
 
@@ -109,7 +108,7 @@ export default function ChatPage() {
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const { messages: globalMsgs, connectedUsers, currentRoom, isConnected, socket, sendMessage: sendGlobal, joinRoom } = useChat()
-  const { isInVoice, currentVoiceRoom, voiceUsers, isMuted, error: voiceError, incomingCall, voiceChannelCounts, joinVoiceRoom, leaveVoiceRoom, toggleMute, callUser, acceptCall, declineCall } = useVoiceChat({ socket, isConnected })
+  const { isInVoice, currentVoiceRoom, voiceUsers, isMuted, error: voiceError, incomingCall, callingUser, voiceChannelCounts, joinVoiceRoom, leaveVoiceRoom, toggleMute, callUser, acceptCall, declineCall, cancelCall } = useVoiceChat({ socket, isConnected })
   const { dms, challenges, openDm, markAsRead } = useConversations(socket)
   const convId = activeConv.type !== 'GLOBAL' ? activeConv.conversationId : null
   const { messages: convMsgs, sendMessage: sendConv, sendImage } = useMessages(convId, socket)
@@ -346,7 +345,7 @@ export default function ChatPage() {
                 </button>
                 {peer && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); callUser(peer.userId, dmVoiceRoom) }}
+                    onClick={(e) => { e.stopPropagation(); callUser(peer.userId, peer.user.username, dmVoiceRoom) }}
                     title="Appeler"
                     className="shrink-0 p-1.5 mr-1 rounded-lg text-white/30 hover:text-emerald-400 hover:bg-emerald-400/10 transition opacity-0 group-hover:opacity-100"
                   >
@@ -380,7 +379,7 @@ export default function ChatPage() {
                     </div>
                   </button>
                   <button
-                    onClick={() => callUser(u.id, `voice_dm_${[currentUser?.id, u.id].sort().join('_')}`)}
+                    onClick={() => callUser(u.id, u.username, `voice_dm_${[currentUser?.id, u.id].filter(Boolean).sort().join('_')}`)}
                     title="Appeler"
                     className="shrink-0 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition text-emerald-400 hover:bg-emerald-400/10"
                   >
@@ -929,6 +928,34 @@ export default function ChatPage() {
         onAccept={(call) => acceptCall(call)}
         onDecline={(call) => declineCall(call)}
       />
+
+      {/* Outgoing call toast */}
+      <AnimatePresence>
+        {callingUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#00165F] border border-[#0097FC]/40 rounded-2xl shadow-2xl px-4 py-3"
+          >
+            <motion.span
+              className="w-3 h-3 rounded-full bg-emerald-400 shrink-0"
+              animate={{ scale: [1, 1.4, 1], opacity: [1, 0.4, 1] }}
+              transition={{ duration: 0.9, repeat: Infinity }}
+            />
+            <span className="text-sm text-white">
+              Appel vers <span className="font-bold">{callingUser.targetUsername}</span>...
+            </span>
+            <button
+              onClick={cancelCall}
+              className="ml-2 p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition"
+              title="Annuler"
+            >
+              <PhoneOff className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Voice error */}
       <AnimatePresence>

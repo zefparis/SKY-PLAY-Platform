@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Socket } from 'socket.io-client'
 import { VoiceUser } from '@/types/voice'
+import { useCallRingtone } from './useCallRingtone'
 
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
@@ -32,6 +33,8 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
   const [error, setError] = useState<string | null>(null)
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null)
   const [voiceChannelCounts, setVoiceChannelCounts] = useState<Record<string, number>>({})
+  const [callingUser, setCallingUser] = useState<{ targetUserId: string; targetUsername: string; voiceRoom: string } | null>(null)
+  const callTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const localStreamRef = useRef<MediaStream | null>(null)
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map())
@@ -236,12 +239,28 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
 
   // Call a user
   const callUser = useCallback(
-    (targetUserId: string, voiceRoom: string) => {
+    (targetUserId: string, targetUsername: string, voiceRoom: string) => {
       if (!socket || !isConnected) return
       socket.emit('call_request', { targetUserId, voiceRoom })
+      setCallingUser({ targetUserId, targetUsername, voiceRoom })
+      // Auto-cancel after 30s if no response
+      if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current)
+      callTimeoutRef.current = setTimeout(() => {
+        setCallingUser(null)
+        setError(`${targetUsername} n'a pas répondu`)
+        setTimeout(() => setError(null), 4000)
+      }, 30000)
     },
     [socket, isConnected],
   )
+
+  // Cancel outgoing call
+  const cancelCall = useCallback(() => {
+    if (!callingUser) return
+    if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current)
+    socket?.emit('call_cancelled', { targetUserId: callingUser.targetUserId })
+    setCallingUser(null)
+  }, [callingUser, socket])
 
   // Accept an incoming call
   const acceptCall = useCallback(
@@ -383,12 +402,20 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     }
 
     const handleCallAccepted = async (data: { fromUserId: string; fromUsername: string; voiceRoom: string }) => {
+      if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current)
+      setCallingUser(null)
       await joinVoiceRoom(data.voiceRoom)
     }
 
     const handleCallDeclined = (data: { fromUserId: string; fromUsername: string }) => {
+      if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current)
+      setCallingUser(null)
       setError(`${data.fromUsername} a refusé l'appel`)
       setTimeout(() => setError(null), 4000)
+    }
+
+    const handleCallCancelled = () => {
+      setIncomingCall(null)
     }
 
     socket.on('voice_room_users', handleVoiceRoomUsers)
@@ -403,6 +430,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     socket.on('call_request', handleCallRequest)
     socket.on('call_accepted', handleCallAccepted)
     socket.on('call_declined', handleCallDeclined)
+    socket.on('call_cancelled', handleCallCancelled)
 
     return () => {
       socket.off('voice_room_users', handleVoiceRoomUsers)
@@ -417,8 +445,20 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       socket.off('call_request', handleCallRequest)
       socket.off('call_accepted', handleCallAccepted)
       socket.off('call_declined', handleCallDeclined)
+      socket.off('call_cancelled', handleCallCancelled)
     }
   }, [socket, currentVoiceRoom, createPeerConnection])
+
+  // Ringback tone (côté appelant)
+  const { startRing: startRingback, stopRing: stopRingback } = useCallRingtone()
+  useEffect(() => {
+    if (callingUser) {
+      startRingback('ringback')
+    } else {
+      stopRingback()
+    }
+    return () => stopRingback()
+  }, [callingUser?.targetUserId])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -437,6 +477,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     isSpeaking,
     error,
     incomingCall,
+    callingUser,
     voiceChannelCounts,
     joinVoiceRoom,
     leaveVoiceRoom,
@@ -444,5 +485,6 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     callUser,
     acceptCall,
     declineCall,
+    cancelCall,
   }
 }

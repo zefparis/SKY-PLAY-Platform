@@ -782,6 +782,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @SubscribeMessage('call_cancelled')
+  handleCallCancelled(
+    @MessageBody() data: { targetUserId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+    this.server.to(`user_${data.targetUserId}`).emit('call_cancelled', {
+      fromUserId: user.id,
+    });
+  }
+
   // ===== CONVERSATION HANDLERS =====
 
   @SubscribeMessage('join_conversation')
