@@ -9,7 +9,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChatService } from '../chat/chat.service';
-import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION } from './challenges.constants';
+import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION, MANUAL_REVIEW_THRESHOLD, AUTO_APPROVE_DELAY_MS } from './challenges.constants';
 
 type ChallengeTypeKey = keyof typeof CHALLENGE_TYPES;
 
@@ -331,8 +331,8 @@ export class ChallengesService {
       await this.walletService.credit(admin.id, commission, 'COMMISSION', `Commission défi: ${challenge.title}`);
     }
 
-    // Sort results by rank
     const sorted = [...challenge.results].sort((a, b) => a.declaredRank - b.declaredRank);
+    const participantIds = challenge.participants.map((p) => p.userId);
 
     const prizes: Record<number, number> = {
       1: Math.floor(netPot * PRIZE_DISTRIBUTION.FIRST),
@@ -340,72 +340,84 @@ export class ChallengesService {
       3: Math.floor(netPot * PRIZE_DISTRIBUTION.THIRD),
     };
 
-    const participantIds = challenge.participants.map((p) => p.userId);
-
     for (const result of sorted) {
       const winnings = prizes[result.declaredRank] ?? 0;
 
       if (winnings > 0) {
-        // ─── Vérification anti-fraude : device flaggé + grosse prime ───────────
-        const REVIEW_THRESHOLD = 10000;
         const flaggedDevice = await (this.prisma as any).deviceFingerprint.findFirst({
           where: { userId: result.userId, isFlagged: true },
         });
 
-        if (flaggedDevice && winnings > REVIEW_THRESHOLD) {
+        const needsManualReview = winnings >= MANUAL_REVIEW_THRESHOLD || !!flaggedDevice;
+
+        if (needsManualReview) {
+          // ─── PENDING_REVIEW : validation admin obligatoire ────────────────
+          await (this.prisma.challengeParticipant as any).update({
+            where: { challengeId_userId: { challengeId, userId: result.userId } },
+            data: { rank: result.declaredRank, winnings, winningsStatus: 'PENDING_REVIEW' },
+          });
           await this.prisma.adminLog.create({
             data: {
               adminId: 'SYSTEM',
               action: 'WINNINGS_PENDING_REVIEW',
               targetId: result.userId,
               targetType: 'USER',
-              details: { challengeId, winnings, rank: result.declaredRank, reason: 'DEVICE_FLAGGED' },
+              details: {
+                challengeId,
+                winnings,
+                rank: result.declaredRank,
+                reason: flaggedDevice ? 'DEVICE_FLAGGED' : 'AMOUNT_THRESHOLD',
+              },
+            },
+          });
+          await this.prisma.notification.create({
+            data: {
+              userId: result.userId,
+              type: 'WINNINGS_REVIEW' as any,
+              title: '� Tu as gagné !',
+              body: `Ton gain de ${winnings.toLocaleString('fr-FR')} SKY est en cours de validation (24h max). Tu seras notifié dès la validation.`,
+              data: { challengeId, winnings },
+            },
+          });
+        } else {
+          // ─── AUTO_APPROVED : crédit après délai de 30 min ────────────────
+          const winningsReviewAt = new Date(Date.now() + AUTO_APPROVE_DELAY_MS);
+          await (this.prisma.challengeParticipant as any).update({
+            where: { challengeId_userId: { challengeId, userId: result.userId } },
+            data: {
+              rank: result.declaredRank,
+              winnings,
+              winningsStatus: 'AUTO_APPROVED',
+              winningsReviewAt,
             },
           });
           await this.prisma.notification.create({
             data: {
               userId: result.userId,
               type: 'CHALLENGE_WON' as any,
-              title: '🏆 Gain en vérification',
-              body: `Votre gain de ${winnings.toLocaleString('fr-FR')} CFA est en cours de vérification. Contactez support@skyplay.cm.`,
-              data: { challengeId },
+              title: `🏆 Tu as gagné ${winnings.toLocaleString('fr-FR')} SKY !`,
+              body: `Tu as terminé ${result.declaredRank === 1 ? '1er' : result.declaredRank === 2 ? '2ème' : '3ème'} dans "${challenge.title}". Tes gains seront crédités dans 30 min.`,
+              data: { challengeId, winnings, winningsReviewAt },
             },
           });
-          await this.prisma.challengeParticipant.update({
-            where: { challengeId_userId: { challengeId, userId: result.userId } },
-            data: { rank: result.declaredRank, winnings: 0 },
-          });
-          await this.prisma.user.update({ where: { id: result.userId }, data: { gamesPlayed: { increment: 1 }, ...(result.declaredRank === 1 ? { gamesWon: { increment: 1 } } : {}) } });
-          continue;
         }
-
-        await this.walletService.credit(
-          result.userId,
-          winnings,
-          'CHALLENGE_WIN',
-          `Gain défi ${result.declaredRank === 1 ? '🥇' : result.declaredRank === 2 ? '🥈' : '🥉'}: ${challenge.title}`,
-        );
+      } else {
+        // ─── Pas de gains ─────────────────────────────────────────────────
+        await (this.prisma.challengeParticipant as any).update({
+          where: { challengeId_userId: { challengeId, userId: result.userId } },
+          data: { rank: result.declaredRank, winnings: 0, winningsStatus: 'PAID' },
+        });
+        await this.prisma.notification.create({
+          data: {
+            userId: result.userId,
+            type: 'CHALLENGE_LOST' as any,
+            title: 'Défi terminé',
+            body: `Tu n'as pas remporté de gains dans "${challenge.title}"`,
+            data: { challengeId },
+          },
+        });
       }
 
-      await this.prisma.challengeParticipant.update({
-        where: { challengeId_userId: { challengeId, userId: result.userId } },
-        data: { rank: result.declaredRank, winnings },
-      });
-
-      // Notifications
-      await this.prisma.notification.create({
-        data: {
-          userId: result.userId,
-          type: winnings > 0 ? ('CHALLENGE_WON' as any) : ('CHALLENGE_LOST' as any),
-          title: winnings > 0 ? `🏆 Tu as gagné ${winnings.toLocaleString('fr-FR')} CFA !` : 'Défi terminé',
-          body: winnings > 0
-            ? `Tu as terminé ${result.declaredRank === 1 ? '1er' : result.declaredRank === 2 ? '2ème' : '3ème'} dans "${challenge.title}"`
-            : `Tu n'as pas remporté de gains dans "${challenge.title}"`,
-          data: { challengeId },
-        },
-      });
-
-      // Update stats
       await this.prisma.user.update({
         where: { id: result.userId },
         data: {
@@ -415,13 +427,9 @@ export class ChallengesService {
       });
     }
 
-    // Notify participants who didn't submit
     for (const userId of participantIds) {
       if (!sorted.find((r) => r.userId === userId)) {
-        await this.prisma.user.update({
-          where: { id: userId },
-          data: { gamesPlayed: { increment: 1 } },
-        });
+        await this.prisma.user.update({ where: { id: userId }, data: { gamesPlayed: { increment: 1 } } });
       }
     }
 
@@ -433,6 +441,233 @@ export class ChallengesService {
     const final = await this.findOne(challengeId);
     this.notifyChallenge(challengeId, 'challenge_completed', { challengeId, results: final.results });
     return final;
+  }
+
+  // ─── PROCESS AUTO-APPROVED WINNINGS (job toutes les 5 min) ───────────────────
+
+  async processAutoApprovedWinnings() {
+    const ready = await (this.prisma.challengeParticipant as any).findMany({
+      where: {
+        winningsStatus: 'AUTO_APPROVED',
+        winningsReviewAt: { lte: new Date() },
+        winnings: { gt: 0 },
+      },
+      include: {
+        challenge: { select: { title: true } },
+        user: { select: { id: true, username: true } },
+      },
+    });
+
+    for (const participant of ready) {
+      await this.walletService.credit(
+        participant.userId,
+        participant.winnings!,
+        'CHALLENGE_WIN',
+        `Gain défi: ${participant.challenge.title}`,
+      );
+      await (this.prisma.challengeParticipant as any).update({
+        where: { id: participant.id },
+        data: { winningsStatus: 'PAID', winningsApprovedAt: new Date() },
+      });
+      await this.prisma.notification.create({
+        data: {
+          userId: participant.userId,
+          type: 'CHALLENGE_WON' as any,
+          title: '✅ Gains crédités !',
+          body: `${participant.winnings!.toLocaleString('fr-FR')} SKY ont été crédités sur ton compte.`,
+          data: { challengeId: participant.challengeId, winnings: participant.winnings },
+        },
+      });
+    }
+
+    return { processed: ready.length };
+  }
+
+  // ─── WINNINGS ADMIN REVIEW ────────────────────────────────────────────────────
+
+  async getWinningsPending() {
+    return (this.prisma.challengeParticipant as any).findMany({
+      where: { winningsStatus: 'PENDING_REVIEW' },
+      include: {
+        challenge: { select: { id: true, title: true, game: true } },
+        user: {
+          select: {
+            id: true, username: true, email: true, avatar: true, kycStatus: true,
+            deviceFingerprints: { where: { isFlagged: true }, select: { id: true } },
+          },
+        },
+        // include screenshot via ChallengeResult
+      },
+      orderBy: { joinedAt: 'desc' },
+    });
+  }
+
+  async approveWinnings(participantId: string, adminId: string) {
+    const participant = await this.prisma.challengeParticipant.findUnique({
+      where: { id: participantId },
+      include: { challenge: { select: { title: true } } },
+    });
+    if (!participant) throw new NotFoundException('Participant introuvable');
+    if ((participant as any).winningsStatus !== 'PENDING_REVIEW') {
+      throw new BadRequestException('Ce gain n\'est pas en attente de validation');
+    }
+
+    await this.walletService.credit(
+      participant.userId,
+      participant.winnings!,
+      'CHALLENGE_WIN',
+      `Gain validé par admin: ${participant.challenge.title}`,
+    );
+    await (this.prisma.challengeParticipant as any).update({
+      where: { id: participantId },
+      data: { winningsStatus: 'PAID', winningsApprovedAt: new Date() },
+    });
+    await this.prisma.adminLog.create({
+      data: {
+        adminId,
+        action: 'WINNINGS_APPROVED',
+        targetId: participant.userId,
+        targetType: 'USER',
+        details: { participantId, winnings: participant.winnings, challengeId: participant.challengeId },
+      },
+    });
+    await this.prisma.notification.create({
+      data: {
+        userId: participant.userId,
+        type: 'CHALLENGE_WON' as any,
+        title: '✅ Gains validés et crédités !',
+        body: `Tes gains de ${participant.winnings!.toLocaleString('fr-FR')} SKY ont été validés et crédités sur ton compte.`,
+        data: { challengeId: participant.challengeId, winnings: participant.winnings },
+      },
+    });
+    return { approved: true, winnings: participant.winnings };
+  }
+
+  async rejectWinnings(participantId: string, reason: string, adminId: string) {
+    const participant = await this.prisma.challengeParticipant.findUnique({
+      where: { id: participantId },
+      include: { challenge: { select: { title: true } } },
+    });
+    if (!participant) throw new NotFoundException('Participant introuvable');
+
+    await (this.prisma.challengeParticipant as any).update({
+      where: { id: participantId },
+      data: {
+        winningsStatus: 'REJECTED',
+        winningsRejectedAt: new Date(),
+        winningsRejectReason: reason,
+      },
+    });
+    await this.prisma.adminLog.create({
+      data: {
+        adminId,
+        action: 'WINNINGS_REJECTED',
+        targetId: participant.userId,
+        targetType: 'USER',
+        details: { participantId, winnings: participant.winnings, reason, challengeId: participant.challengeId },
+      },
+    });
+    await this.prisma.notification.create({
+      data: {
+        userId: participant.userId,
+        type: 'WINNINGS_REVIEW' as any,
+        title: '❌ Validation refusée',
+        body: `Tes gains de ${participant.winnings!.toLocaleString('fr-FR')} SKY n'ont pas été validés. Raison : ${reason}. Contactez support@skyplay.cm.`,
+        data: { challengeId: participant.challengeId, reason },
+      },
+    });
+    return { rejected: true, reason };
+  }
+
+  // ─── CANCEL CHALLENGE (admin) + REMBOURSEMENT ─────────────────────────────────
+
+  async cancelChallenge(challengeId: string, reason: string, adminId: string) {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+      include: { participants: { where: { hasPaid: true } } },
+    });
+    if (!challenge) throw new NotFoundException('Défi introuvable');
+    if (challenge.status === 'CANCELLED') throw new BadRequestException('Défi déjà annulé');
+
+    let refundCount = 0;
+    for (const participant of challenge.participants) {
+      await this.walletService.credit(
+        participant.userId,
+        challenge.entryFee,
+        'REFUND' as any,
+        `Remboursement — ${reason}`,
+      );
+      await this.prisma.notification.create({
+        data: {
+          userId: participant.userId,
+          type: 'REFUND' as any,
+          title: '💸 Remboursement effectué',
+          body: `${challenge.entryFee.toLocaleString('fr-FR')} SKY remboursés suite à : ${reason}`,
+          data: { challengeId, amount: challenge.entryFee },
+        },
+      });
+      refundCount++;
+    }
+
+    await this.prisma.challenge.update({
+      where: { id: challengeId },
+      data: { status: 'CANCELLED' as any },
+    });
+
+    if (adminId !== 'SYSTEM') {
+      await this.prisma.adminLog.create({
+        data: {
+          adminId,
+          action: 'CHALLENGE_CANCELLED',
+          targetId: challengeId,
+          targetType: 'CHALLENGE',
+          details: { reason, refundCount, entryFee: challenge.entryFee },
+        },
+      });
+    }
+
+    return { cancelled: true, refundCount };
+  }
+
+  // ─── CREATOR CANCEL (avant tout autre participant) ────────────────────────────
+
+  async creatorCancelChallenge(challengeId: string, userId: string) {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+      include: { participants: true },
+    });
+    if (!challenge) throw new NotFoundException('Défi introuvable');
+    if (challenge.creatorId !== userId) throw new ForbiddenException('Seul le créateur peut annuler ce défi');
+    if (challenge.status !== 'OPEN') throw new BadRequestException('Impossible d\'annuler un défi en cours ou terminé');
+
+    const otherParticipants = challenge.participants.filter((p) => p.userId !== userId);
+    if (otherParticipants.length > 0) {
+      throw new BadRequestException('Impossible d\'annuler un défi avec des participants');
+    }
+
+    return this.cancelChallenge(challengeId, 'Annulé par le créateur', 'SYSTEM');
+  }
+
+  // ─── PROCESS EXPIRED CHALLENGES (job toutes les heures) ───────────────────────
+
+  async processExpiredChallenges() {
+    const expired = await this.prisma.challenge.findMany({
+      where: {
+        status: 'OPEN',
+        expiresAt: { lte: new Date() },
+      },
+      select: { id: true, title: true },
+    });
+
+    for (const challenge of expired) {
+      await this.cancelChallenge(
+        challenge.id,
+        'Défi expiré — nombre de joueurs insuffisant',
+        'SYSTEM',
+      );
+    }
+
+    return { processed: expired.length };
   }
 
   // ─── CREATE DISPUTE ──────────────────────────────────────────────────────────

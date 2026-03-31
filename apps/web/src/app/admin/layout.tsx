@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Utilisateurs', icon: Users },
-  { href: '/admin/challenges', label: 'Défis', icon: Trophy },
+  { href: '/admin/challenges', label: 'Défis', icon: Trophy, badge: 'winnings' },
   { href: '/admin/disputes', label: 'Litiges', icon: AlertTriangle, badge: 'disputes' },
   { href: '/admin/exclusions', label: 'Exclusions', icon: Shield },
   { href: '/admin/security', label: 'Sécurité', icon: ShieldAlert, badge: 'security' },
@@ -27,6 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [disputeCount, setDisputeCount] = useState(0)
   const [securityCount, setSecurityCount] = useState(0)
+  const [winningsCount, setWinningsCount] = useState(0)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -51,6 +52,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       })
         .then(res => res.json())
         .then(data => setSecurityCount((data?.multiAccountAlerts || 0) + (data?.flaggedDevices || 0)))
+        .catch(() => {})
+
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/challenges/winnings/pending`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.json())
+        .then(data => setWinningsCount(Array.isArray(data) ? data.length : 0))
         .catch(() => {})
     }
   }, [user])
@@ -124,6 +132,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   {item.badge === 'security' && securityCount > 0 && (
                     <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
                       {securityCount}
+                    </span>
+                  )}
+                  {item.badge === 'winnings' && winningsCount > 0 && (
+                    <span className="ml-auto bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {winningsCount}
                     </span>
                   )}
                 </Link>

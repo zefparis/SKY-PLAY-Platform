@@ -193,6 +193,7 @@ model Challenge {
   startedAt   DateTime?
   endedAt     DateTime?
   expiresAt   DateTime
+  refundPolicy RefundPolicy @default(STANDARD)
 
   @@index([status])
   @@index([game])
@@ -202,18 +203,24 @@ model Challenge {
 }
 
 model ChallengeParticipant {
-  id          String    @id @default(cuid())
-  challengeId String
-  userId      String
-  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  joinedAt    DateTime  @default(now())
-  hasPaid     Boolean   @default(false)
-  rank        Int?
-  winnings    Int?
+  id                   String         @id @default(cuid())
+  challengeId          String
+  userId               String
+  challenge            Challenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt             DateTime       @default(now())
+  hasPaid              Boolean        @default(false)
+  rank                 Int?
+  winnings             Int?
+  winningsStatus       WinningsStatus @default(PENDING)
+  winningsReviewAt     DateTime?
+  winningsApprovedAt   DateTime?
+  winningsRejectedAt   DateTime?
+  winningsRejectReason String?
 
   @@unique([challengeId, userId])
   @@index([userId])
+  @@index([winningsStatus])
   @@map("challenge_participants")
 }
 
@@ -270,6 +277,21 @@ enum DisputeStatus {
   PENDING
   REVIEWING
   RESOLVED
+}
+
+enum WinningsStatus {
+  PENDING
+  AUTO_APPROVED
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum RefundPolicy {
+  STANDARD
+  NO_REFUND
+  PARTIAL
 }
 
 model Participant {
@@ -366,6 +388,8 @@ enum NotificationType {
   KYC_SUBMITTED
   KYC_VERIFIED
   KYC_REJECTED
+  REFUND
+  WINNINGS_REVIEW
 }
 
 model Friendship {

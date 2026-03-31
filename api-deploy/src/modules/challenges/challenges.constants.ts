@@ -12,3 +12,6 @@ export const PRIZE_DISTRIBUTION = {
   SECOND: 0.25,
   THIRD: 0.15,
 } as const;
+
+export const MANUAL_REVIEW_THRESHOLD = 10000; // 10 000 SKY — validation admin obligatoire
+export const AUTO_APPROVE_DELAY_MS = 30 * 60 * 1000; // 30 min avant crédit automatique

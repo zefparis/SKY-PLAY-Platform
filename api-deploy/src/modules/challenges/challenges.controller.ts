@@ -281,6 +281,12 @@ export class ChallengesController {
   delete(@Param('id') id: string, @Request() req) {
     return this.challengesService.deleteChallenge(id, req.user.id);
   }
+
+  @UseGuards(JwtDualGuard)
+  @Post(':id/cancel')
+  creatorCancel(@Param('id') id: string, @Request() req) {
+    return this.challengesService.creatorCancelChallenge(id, req.user.id);
+  }
 }
 
 @Controller('admin/challenges')
@@ -314,5 +320,29 @@ export class AdminChallengesController {
   ) {
     this.ensureAdmin(req);
     return this.challengesService.resolveDispute(id, dto.winnerId, dto.adminNote, req.user.id);
+  }
+
+  @Get('winnings/pending')
+  getWinningsPending(@Request() req) {
+    this.ensureAdmin(req);
+    return this.challengesService.getWinningsPending();
+  }
+
+  @Post('winnings/:id/approve')
+  approveWinnings(@Param('id') id: string, @Request() req) {
+    this.ensureAdmin(req);
+    return this.challengesService.approveWinnings(id, req.user.id);
+  }
+
+  @Post('winnings/:id/reject')
+  rejectWinnings(@Param('id') id: string, @Body() body: { reason: string }, @Request() req) {
+    this.ensureAdmin(req);
+    return this.challengesService.rejectWinnings(id, body.reason, req.user.id);
+  }
+
+  @Post(':id/cancel')
+  adminCancelChallenge(@Param('id') id: string, @Body() body: { reason: string }, @Request() req) {
+    this.ensureAdmin(req);
+    return this.challengesService.cancelChallenge(id, body.reason ?? 'Annulé par admin', req.user.id);
   }
 }

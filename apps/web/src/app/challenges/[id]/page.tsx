@@ -119,6 +119,7 @@ export default function ChallengePage() {
   const prizes = computePrizes(netPot);
   const statusInfo = STATUS_LABELS[challenge.status] ?? { label: challenge.status, color: 'text-gray-400 bg-gray-400/10' };
   const isParticipant = challenge.participants?.some((p: any) => p.userId === currentUserId);
+  const myParticipant = challenge.participants?.find((p: any) => p.userId === currentUserId);
   const myResult = challenge.results?.find((r: any) => r.userId === currentUserId);
   const sortedResults = challenge.results ? [...challenge.results].sort((a: any, b: any) => a.declaredRank - b.declaredRank) : [];
 
@@ -153,6 +154,63 @@ export default function ChallengePage() {
             </span>
           </div>
         </div>
+
+        {/* Banner Gains en attente / Remboursement */}
+        {isParticipant && challenge.status === 'CANCELLED' && myParticipant?.hasPaid && (
+          <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 mb-4 flex items-start gap-3">
+            <span className="text-xl">💸</span>
+            <div>
+              <p className="font-bold text-yellow-400 text-sm">Défi annulé — Remboursement effectué</p>
+              <p className="text-xs text-yellow-400/70 mt-0.5">
+                {Number(challenge.entryFee ?? 0).toLocaleString('fr-FR')} SKY ont été remboursés sur ton portefeuille.
+              </p>
+            </div>
+          </div>
+        )}
+        {isParticipant && challenge.status === 'COMPLETED' && myParticipant?.winningsStatus === 'PENDING_REVIEW' && (
+          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 mb-4 flex items-start gap-3">
+            <span className="text-xl">🔍</span>
+            <div>
+              <p className="font-bold text-amber-400 text-sm">Tes gains sont en cours de validation</p>
+              <p className="text-xs text-amber-400/70 mt-0.5">
+                Gain de {Number(myParticipant?.winnings ?? 0).toLocaleString('fr-FR')} SKY — validation sous 24h max. Tu seras notifié.
+              </p>
+            </div>
+          </div>
+        )}
+        {isParticipant && challenge.status === 'COMPLETED' && myParticipant?.winningsStatus === 'AUTO_APPROVED' && (
+          <div className="rounded-2xl bg-blue-500/10 border border-blue-500/30 p-4 mb-4 flex items-start gap-3">
+            <span className="text-xl">⏳</span>
+            <div>
+              <p className="font-bold text-blue-400 text-sm">Gains approuvés — crédit en cours</p>
+              <p className="text-xs text-blue-400/70 mt-0.5">
+                {Number(myParticipant?.winnings ?? 0).toLocaleString('fr-FR')} SKY seront crédités automatiquement d&apos;ici quelques minutes.
+              </p>
+            </div>
+          </div>
+        )}
+        {isParticipant && challenge.status === 'COMPLETED' && myParticipant?.winningsStatus === 'REJECTED' && (
+          <div className="rounded-2xl bg-red-500/10 border border-red-500/30 p-4 mb-4 flex items-start gap-3">
+            <span className="text-xl">❌</span>
+            <div>
+              <p className="font-bold text-red-400 text-sm">Validation refusée</p>
+              <p className="text-xs text-red-400/70 mt-0.5">
+                {myParticipant?.winningsRejectReason ?? 'Contactez support@skyplay.cm pour plus d\'informations.'}
+              </p>
+            </div>
+          </div>
+        )}
+        {isParticipant && challenge.status === 'COMPLETED' && myParticipant?.winningsStatus === 'PAID' && (myParticipant?.winnings ?? 0) > 0 && (
+          <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 p-4 mb-4 flex items-start gap-3">
+            <span className="text-xl">✅</span>
+            <div>
+              <p className="font-bold text-emerald-400 text-sm">Gains crédités sur ton compte</p>
+              <p className="text-xs text-emerald-400/70 mt-0.5">
+                {Number(myParticipant?.winnings ?? 0).toLocaleString('fr-FR')} SKY ont été ajoutés à ton portefeuille.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Section 2 — Pot & Distribution */}
         <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">

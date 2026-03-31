@@ -16,6 +16,8 @@ import { ChatModule } from './modules/chat/chat.module';
 import { FriendshipsModule } from './modules/friendships/friendships.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { SchedulerModule } from './modules/scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { AdminModule } from './modules/admin/admin.module';
     FriendshipsModule,
     NotificationsModule,
     AdminModule,
+    ScheduleModule.forRoot(),
+    SchedulerModule,
   ],
   providers: [
     // Active la limitation de débit globalement (les routes peuvent surcharger via @Throttle/@SkipThrottle)

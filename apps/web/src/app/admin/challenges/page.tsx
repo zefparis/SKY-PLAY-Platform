@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { XCircle, Trophy, RefreshCw, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { XCircle, Trophy, RefreshCw, ChevronLeft, ChevronRight, X, DollarSign, CheckCircle } from 'lucide-react'
 import AdminBadge from '@/components/admin/AdminBadge'
 import { useAuthStore } from '@/lib/auth-store'
 
@@ -15,6 +15,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ChallengesPage() {
   const idToken = useAuthStore((s) => s.tokens?.idToken)
+  const [activeTab, setActiveTab] = useState<'challenges' | 'winnings'>('challenges')
+
   const [challenges, setChallenges] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -30,6 +32,59 @@ export default function ChallengesPage() {
   const [forceLoading, setForceLoading] = useState(false)
 
   const [actionMsg, setActionMsg] = useState('')
+
+  // ── Gains en attente ──────────────────────────────────────────────────────
+  const [winnings, setWinnings] = useState<any[]>([])
+  const [winningsLoading, setWinningsLoading] = useState(false)
+  const [rejectModal, setRejectModal] = useState<any>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejectLoading, setRejectLoading] = useState(false)
+
+  const loadWinnings = useCallback(async () => {
+    if (!idToken) return
+    setWinningsLoading(true)
+    try {
+      const res = await fetch(`${API}/admin/challenges/winnings/pending`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      })
+      setWinnings(await res.json())
+    } catch {}
+    finally { setWinningsLoading(false) }
+  }, [idToken])
+
+  useEffect(() => { if (activeTab === 'winnings') loadWinnings() }, [activeTab, loadWinnings])
+
+  const handleApprove = async (id: string) => {
+    if (!idToken) return
+    try {
+      const res = await fetch(`${API}/admin/challenges/winnings/${id}/approve`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      })
+      if (!res.ok) throw new Error()
+      setActionMsg('✅ Gains validés et crédités')
+      loadWinnings()
+    } catch { setActionMsg('Erreur') }
+    finally { setTimeout(() => setActionMsg(''), 3000) }
+  }
+
+  const handleReject = async () => {
+    if (!rejectModal || !rejectReason || !idToken) return
+    setRejectLoading(true)
+    try {
+      const res = await fetch(`${API}/admin/challenges/winnings/${rejectModal.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ reason: rejectReason }),
+      })
+      if (!res.ok) throw new Error()
+      setActionMsg('❌ Gains refusés')
+      setRejectModal(null)
+      setRejectReason('')
+      loadWinnings()
+    } catch { setActionMsg('Erreur') }
+    finally { setRejectLoading(false); setTimeout(() => setActionMsg(''), 3000) }
+  }
 
   const load = useCallback(async () => {
     if (!idToken) return
@@ -107,14 +162,101 @@ export default function ChallengesPage() {
           <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F]">Défis</h1>
           <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">{total} défis au total</p>
         </div>
-        <button onClick={load} className="p-2 rounded-xl dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F]">
+        <button onClick={activeTab === 'challenges' ? load : loadWinnings} className="p-2 rounded-xl dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F]">
           <RefreshCw className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('challenges')}
+          className={`px-4 py-2 rounded-xl text-sm font-bold transition ${activeTab === 'challenges' ? 'bg-[#0097FC] text-white' : 'dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white/70 text-[#00165F]/70'}`}
+        >
+          📋 Défis
+        </button>
+        <button
+          onClick={() => setActiveTab('winnings')}
+          className={`px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2 ${activeTab === 'winnings' ? 'bg-amber-500 text-white' : 'dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white/70 text-[#00165F]/70'}`}
+        >
+          <DollarSign className="w-4 h-4" />
+          Gains en attente
+          {winnings.length > 0 && (
+            <span className="bg-red-500 text-white text-xs font-black px-1.5 py-0.5 rounded-full">{winnings.length}</span>
+          )}
         </button>
       </div>
 
       {actionMsg && (
         <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">{actionMsg}</div>
       )}
+
+      {/* ── TAB : Gains en attente ──────────────────────────────────────────── */}
+      {activeTab === 'winnings' && (
+        <div className="space-y-4">
+          {winningsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+            </div>
+          ) : winnings.length === 0 ? (
+            <div className="bg-white dark:bg-[#00165F]/40 rounded-2xl border dark:border-white/10 border-[#00165F]/10 p-12 text-center">
+              <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+              <p className="dark:text-white/60 text-[#00165F]/60 text-sm">Aucun gain en attente de validation</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {winnings.map((w: any) => {
+                const flagged = (w.user?.deviceFingerprints?.length ?? 0) > 0
+                const kycOk = w.user?.kycStatus === 'VERIFIED'
+                return (
+                  <div key={w.id} className="bg-white dark:bg-[#00165F]/40 rounded-2xl border dark:border-white/10 border-[#00165F]/10 p-5">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-black dark:text-white text-[#00165F] text-base">{w.user?.username ?? '—'}</span>
+                          <span className="text-white/40 text-sm">→</span>
+                          <span className="font-semibold dark:text-white/80 text-[#00165F]/80 text-sm">{w.challenge?.title ?? '—'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs flex-wrap">
+                          <span className={`font-bold ${flagged ? 'text-red-400' : 'text-emerald-400'}`}>
+                            Device : {flagged ? '🚨 Flaggé' : '✅ Clean'}
+                          </span>
+                          <span className={`font-bold ${kycOk ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            KYC : {kycOk ? '✅ Vérifié' : '⚠️ Non vérifié'}
+                          </span>
+                          <span className="dark:text-white/40 text-[#00165F]/40">{w.challenge?.game}</span>
+                          <span className="dark:text-white/40 text-[#00165F]/40">Rang #{w.rank ?? '?'}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-black text-amber-400">{Number(w.winnings ?? 0).toLocaleString('fr-FR')} SKY</p>
+                        <p className="text-xs dark:text-white/40 text-[#00165F]/40 mt-0.5">{new Date(w.joinedAt).toLocaleDateString('fr-FR')}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => handleApprove(w.id)}
+                        className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle className="w-4 h-4" /> Approuver
+                      </button>
+                      <button
+                        onClick={() => { setRejectModal(w); setRejectReason('') }}
+                        className="flex-1 py-2.5 rounded-xl bg-red-500/10 text-red-400 font-bold text-sm hover:bg-red-500/20 transition flex items-center justify-center gap-2"
+                      >
+                        <XCircle className="w-4 h-4" /> Rejeter
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TAB : Défis ─────────────────────────────────────────────────────── */}
+      {activeTab === 'challenges' && <>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
@@ -290,6 +432,41 @@ export default function ChallengesPage() {
                 className="flex-1 py-2.5 rounded-xl bg-[#0097FC] text-white font-bold text-sm disabled:opacity-50 hover:bg-[#0097FC]/90 transition flex items-center justify-center gap-2">
                 {forceLoading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                 <Trophy className="w-4 h-4" /> Forcer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </>}
+
+      {/* Reject Winnings Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#00165F] rounded-2xl p-6 max-w-md w-full border dark:border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black dark:text-white text-[#00165F]">Rejeter les gains</h3>
+              <button onClick={() => setRejectModal(null)} className="dark:text-white/50 text-[#00165F]/50 hover:text-red-400"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-sm dark:text-white/60 text-[#00165F]/60 mb-1">
+              <strong className="dark:text-white text-[#00165F]">{rejectModal.user?.username}</strong> — {Number(rejectModal.winnings ?? 0).toLocaleString('fr-FR')} SKY
+            </p>
+            <p className="text-xs dark:text-white/40 text-[#00165F]/40 mb-4">Le joueur sera notifié avec la raison du rejet.</p>
+            <textarea
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              rows={3}
+              placeholder="Raison du rejet (ex: preuve insuffisante, fraude suspectée…)"
+              className="w-full px-4 py-3 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC] text-sm resize-none mb-4"
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setRejectModal(null)}
+                className="flex-1 py-2.5 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] font-semibold text-sm">
+                Annuler
+              </button>
+              <button onClick={handleReject} disabled={!rejectReason.trim() || rejectLoading}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm disabled:opacity-50 hover:bg-red-600 transition flex items-center justify-center gap-2">
+                {rejectLoading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                Confirmer le rejet
               </button>
             </div>
           </div>

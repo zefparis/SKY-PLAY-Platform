@@ -220,6 +220,16 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
                   <p className="text-xs text-[#FD2E5F]">prime de performance si tu arrives 1er 🏆</p>
                 </div>
 
+                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 mb-4">
+                  <p className="text-xs font-bold text-yellow-400 mb-1">💸 Politique de remboursement</p>
+                  <ul className="text-[10px] text-yellow-400/70 space-y-0.5 list-disc list-inside">
+                    <li>Remboursement intégral si le défi expire ou est annulé sans avoir commencé.</li>
+                    <li>Gains &ge; 10 000 SKY : validation admin obligatoire (délai 24h max).</li>
+                    <li>Autres gains : crédit automatique dans les 30 minutes.</li>
+                    <li>Tous les remboursements sont en SKY uniquement.</li>
+                  </ul>
+                </div>
+
                 {error && (
                   <p className="text-sm text-red-500 bg-red-500/10 rounded-lg px-3 py-2 mb-3">{error}</p>
                 )}

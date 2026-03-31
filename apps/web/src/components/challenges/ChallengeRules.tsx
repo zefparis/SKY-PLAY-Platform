@@ -147,6 +147,19 @@ export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCanc
             <span className="text-[10px] dark:text-white/30 text-[#00165F]/30 font-mono">#{rulesHash}</span>
           </div>
 
+          {/* Politique de remboursement */}
+          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 space-y-1.5">
+            <p className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">💸 Politique de remboursement</p>
+            <ul className="text-[10px] dark:text-white/50 text-[#00165F]/50 space-y-0.5 list-disc list-inside">
+              <li>Remboursement intégral si le défi expire sans participants suffisants.</li>
+              <li>Remboursement intégral si annulation avant que d&apos;autres joueurs rejoignent.</li>
+              <li>Aucun remboursement après le début de la compétition.</li>
+              <li>Gains &ge; 10 000 SKY soumis à validation admin (délai 24h max).</li>
+              <li>Autres gains crédités automatiquement dans les 30 minutes.</li>
+              <li>Remboursements en SKY uniquement — jamais en CFA direct.</li>
+            </ul>
+          </div>
+
           {/* Note légale discrète */}
           <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 text-center leading-relaxed">
             (1 SKY = 1 CFA — conversion lors du retrait · Sky Credits non convertibles en dehors de la plateforme)
