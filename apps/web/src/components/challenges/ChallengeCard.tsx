@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Users, Gamepad2, Clock, Trash2 } from 'lucide-react';
-import { formatCFA, computeNetPot, computePrizes } from '@/lib/currency';
+import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import { getAuthToken } from '@/lib/get-auth-token';
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -140,16 +140,16 @@ const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: Challenge
         {/* Pot */}
         <div className="mb-3 text-center py-2 rounded-lg dark:bg-white/5 bg-[#0097FC]/5">
           <p className="text-xs dark:text-white/50 text-[#00165F]/50 mb-0.5">🏆 Dotation</p>
-          <p className="text-xl font-black text-[#0097FC]">{formatCFA(challenge.potTotal)}</p>
+          <p className="text-xl font-black text-[#0097FC]">🪙 {formatSKY(challenge.potTotal)}</p>
           <p className="text-xs text-[#FD2E5F] font-semibold">
-            Prime 1er : {formatCFA(prizes.first)}
+            Prime 1er : {formatSKY(prizes.first)}
           </p>
         </div>
 
         {/* Pass */}
         <div className="flex items-center justify-between text-xs mb-2">
           <span className="dark:text-white/50 text-[#00165F]/50">Pass</span>
-          <span className="dark:text-white text-[#00165F] font-semibold">{formatCFA(challenge.entryFee)}</span>
+          <span className="dark:text-white text-[#00165F] font-semibold">🪙 {formatSKY(challenge.entryFee)}</span>
         </div>
 
         {/* Progress */}

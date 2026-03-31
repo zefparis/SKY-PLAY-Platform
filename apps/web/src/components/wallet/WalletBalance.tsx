@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Wallet, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { formatCFA } from '@/lib/currency';
+import { formatSKY } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
 import DepositModal from './DepositModal';
 
@@ -51,10 +51,10 @@ export default function WalletBalance() {
         <button
           onClick={() => setShowDeposit(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 hover:border-[#0097FC]/50 transition-all group"
-          title="Sky Credits — cliquer pour recharger"
+          title="Sky Credits — 1 SKY = 1 CFA · cliquer pour recharger"
         >
-          <Wallet className="w-3.5 h-3.5 text-[#0097FC]" />
-          <span className="text-sm font-bold dark:text-white text-[#00165F]">{formatCFA(balance)}</span>
+          <span className="text-sm">🪙</span>
+          <span className="text-sm font-bold dark:text-white text-[#00165F]">{formatSKY(balance)}</span>
           <Plus className="w-3 h-3 dark:text-white/40 text-[#00165F]/40 group-hover:text-[#0097FC] transition-colors" />
         </button>
         {hasTestCredits && (

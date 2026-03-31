@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FileText, Download, CheckSquare, Square, Trophy, Users, Clock, AlertTriangle } from 'lucide-react';
-import { formatCFA } from '@/lib/currency';
+import { formatSKY } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -78,10 +78,10 @@ export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCanc
             {[
               { label: 'Organisateur', value: 'SKY PLAY ENTERTAINMENT' },
               { label: 'Type', value: `${typeLabel} — ${challenge.game}` },
-              { label: "Frais d'inscription", value: formatCFA(challenge.entryFee), highlight: true },
+              { label: "Frais d'inscription", value: `🪙 ${formatSKY(challenge.entryFee)}`, highlight: true },
               { label: 'Format', value: challenge.maxPlayers === 2 ? 'Match unique' : `${challenge.maxPlayers} joueurs` },
-              { label: 'Prime de performance 1er', value: formatCFA(prizeFirst), highlight: true },
-              { label: "Frais d'organisation", value: `${formatCFA(Math.round(challenge.potTotal * challenge.commission))} (${orgFee}%)` },
+              { label: 'Prime de performance 1er', value: `🪙 ${formatSKY(prizeFirst)}`, highlight: true },
+              { label: "Frais d'organisation", value: `${formatSKY(Math.round(challenge.potTotal * challenge.commission))} (${orgFee}%)` },
             ].map(({ label, value, highlight }) => (
               <div key={label} className="flex items-center justify-between px-4 py-2.5 text-sm">
                 <span className="dark:text-white/60 text-[#00165F]/60">{label}</span>
@@ -121,6 +121,11 @@ export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCanc
               </div>
             </div>
           </div>
+
+          {/* Note légale discrète */}
+          <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 text-center leading-relaxed">
+            (1 SKY = 1 CFA — conversion lors du retrait · Sky Credits non convertibles en dehors de la plateforme)
+          </p>
 
           {/* Download PDF */}
           <button

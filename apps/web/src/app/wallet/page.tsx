@@ -6,7 +6,7 @@ import {
   Wallet, Plus, ArrowUpRight, ArrowDownLeft, Gamepad2,
   RefreshCw, TrendingUp, TrendingDown, Trophy, FlaskConical,
 } from 'lucide-react';
-import { formatCFA } from '@/lib/currency';
+import { formatSKY } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
 import DepositModal from '@/components/wallet/DepositModal';
 import WithdrawModal from '@/components/wallet/WithdrawModal';
@@ -177,7 +177,7 @@ export default function WalletPage() {
               animate={{ scale: 1, opacity: 1 }}
               className="text-4xl sm:text-5xl font-black text-white mb-6 tracking-tight"
             >
-              {formatCFA(balance)}
+              🪙 {formatSKY(balance)}
             </motion.p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -214,7 +214,7 @@ export default function WalletPage() {
           ].map(({ label, value, icon, color }) => (
             <div key={label} className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4">
               <div className="flex items-center gap-2 mb-2">{icon}<p className="text-xs dark:text-white/50 text-[#00165F]/50">{label}</p></div>
-              <p className={`text-lg font-black ${color} tabular-nums leading-none`}>{formatCFA(Math.abs(value))}</p>
+              <p className={`text-lg font-black ${color} tabular-nums leading-none`}>{formatSKY(Math.abs(value))}</p>
             </div>
           ))}
         </div>
@@ -293,7 +293,7 @@ export default function WalletPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className={`text-sm font-black tabular-nums ${isCredit ? 'text-green-400' : 'text-red-400'}`}>
-                        {isCredit ? '+' : ''}{formatCFA(Math.abs(Number(tx.amount)))}
+                        {isCredit ? '+' : ''}{formatSKY(Math.abs(Number(tx.amount)))}
                       </p>
                       <span className={`text-xs px-1.5 py-0.5 rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>
                     </div>

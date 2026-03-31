@@ -23,8 +23,8 @@ L'utilisation de la plateforme implique l'acceptation pleine et entière des pr�
           title: "2. Définitions",
           content: `• **Plateforme** : désigne SKY PLAY ENTERTAINMENT, accessible via le site web et les applications mobiles.
 • **Utilisateur** : toute personne physique inscrite sur la plateforme et disposant d'un compte actif.
-• **Compétition** : événement e-sport fondé sur l'habileté, organisé entre joueurs sur des jeux vidéo avec un pass de participation en Franc CFA (XAF).
-• **Sky Credits** : portefeuille électronique SKY PLAY permettant de recharger, retirer et gérer vos fonds.
+• **Compétition** : événement e-sport fondé sur l'habileté, organisé entre joueurs sur des jeux vidéo avec un pass de participation en Sky Credits (SKY).
+• **Sky Credits (SKY)** : monnaie interne d'usage de la plateforme, non présentée comme monnaie électronique autonome. 1 Sky Credit = 1 Franc CFA lors de la conversion au retrait. Permettent de recharger, retirer et gérer vos fonds sur SKY PLAY.
 • **Frais d'organisation** : pourcentage prélevé par SKY PLAY sur chaque compétition pour l'organisation et l'infrastructure de la plateforme.`
         },
         {

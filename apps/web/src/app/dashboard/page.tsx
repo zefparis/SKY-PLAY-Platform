@@ -10,7 +10,7 @@ import Container from '@/components/ui/Container'
 import Badge from '@/components/ui/Badge'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { useAuthStore } from '@/lib/auth-store'
-import { formatCFA } from '@/lib/currency'
+import { formatSKY } from '@/lib/currency'
 import DepositModal from '@/components/wallet/DepositModal'
 import WithdrawModal from '@/components/wallet/WithdrawModal'
 
@@ -126,7 +126,7 @@ export default function DashboardPage() {
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm text-white/70">{t('wallet.balance')}</p>
                   <motion.p key={balance} initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-3xl sm:text-4xl font-black text-white leading-tight">
-                    {formatCFA(balance)}
+                    🪙 {formatSKY(balance)}
                   </motion.p>
                 </div>
               </div>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                 ].map((s, i) => (
                   <div key={i} className="rounded-xl bg-white/10 p-3">
                     <p className="text-xs text-white/60 mb-1">{s.label}</p>
-                    <p className={`text-lg font-black ${s.color}`}>{formatCFA(Math.abs(s.value))}</p>
+                    <p className={`text-lg font-black ${s.color}`}>{formatSKY(Math.abs(s.value))}</p>
                   </div>
                 ))}
               </div>

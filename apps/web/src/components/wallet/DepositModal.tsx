@@ -171,8 +171,9 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
                 </div>
                 {finalAmount >= 500 && (
                   <div className="rounded-xl bg-[#0097FC]/10 border border-[#0097FC]/20 px-4 py-3 text-center">
-                    <p className="text-2xl font-black text-[#0097FC]">{formatCFA(finalAmount)}</p>
-                    <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">seront crédités sur vos Sky Credits</p>
+                    <p className="text-xs dark:text-white/60 text-[#00165F]/60 mb-1">Vous rechargez {formatCFA(finalAmount)}</p>
+                    <p className="text-2xl font-black text-[#0097FC]">🪙 +{new Intl.NumberFormat('fr-FR').format(finalAmount)} SKY</p>
+                    <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">crédités instantanément sur votre compte</p>
                   </div>
                 )}
               </motion.div>
@@ -269,7 +270,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
                   <>
                     <CheckCircle className="w-14 h-14 text-green-400 mx-auto mb-4" />
                     <p className="font-black dark:text-white text-[#00165F] text-xl">Dépôt confirmé ! 🎉</p>
-                    <p className="text-sm dark:text-white/60 text-[#00165F]/60 mt-2">{formatCFA(finalAmount)} crédités sur vos Sky Credits</p>
+                    <p className="text-sm dark:text-white/60 text-[#00165F]/60 mt-2">✅ {new Intl.NumberFormat('fr-FR').format(finalAmount)} SKY crédités sur votre compte</p>
                   </>
                 )}
                 {pollStatus === 'failed' && (

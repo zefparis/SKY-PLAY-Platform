@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload } from 'lucide-react';
-import { formatCFA, computeNetPot, computePrizes } from '@/lib/currency';
+import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import ChallengeRules from '@/components/challenges/ChallengeRules';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -158,7 +158,7 @@ export default function ChallengePage() {
         <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
           <div className="text-center mb-4">
             <p className="text-xs dark:text-white/50 text-[#00165F]/50 mb-1">🏆 Dotation de la compétition</p>
-            <p className="text-3xl sm:text-4xl font-black text-[#0097FC]">{formatCFA(challenge.potTotal)}</p>
+            <p className="text-3xl sm:text-4xl font-black text-[#0097FC]">🪙 {formatSKY(challenge.potTotal)}</p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             {[
@@ -169,7 +169,7 @@ export default function ChallengePage() {
               <div key={label} className="rounded-xl dark:bg-white/5 bg-gray-50 p-3">
                 <p className="text-lg">{medal}</p>
                 <p className="text-xs dark:text-white/50 text-[#00165F]/50">{label}</p>
-                <p className="font-bold text-[#FD2E5F] text-sm">{formatCFA(amount)}</p>
+                <p className="font-bold text-[#FD2E5F] text-sm">{formatSKY(amount)}</p>
               </div>
             ))}
           </div>
@@ -198,7 +198,7 @@ export default function ChallengePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {p.rank && <span className="text-xs font-bold text-[#FD2E5F]">#{p.rank}</span>}
-                    {p.winnings && p.winnings > 0 && <span className="text-xs text-[#0097FC]">{formatCFA(p.winnings)}</span>}
+                    {p.winnings && p.winnings > 0 && <span className="text-xs text-[#0097FC]">🪙 {formatSKY(p.winnings)}</span>}
                     {p.hasPaid ? (
                       <CheckCircle className="w-4 h-4 text-green-400" />
                     ) : (
@@ -224,14 +224,14 @@ export default function ChallengePage() {
             <h2 className="font-bold dark:text-white text-[#00165F] mb-3">S'inscrire à la compétition</h2>
             <div className="rounded-xl dark:bg-[#FD2E5F]/10 bg-red-50 border border-[#FD2E5F]/20 p-3 mb-4">
               <p className="text-sm text-[#FD2E5F] font-semibold text-center">
-                Frais d'inscription : {formatCFA(challenge.entryFee)} Sky Credits
+                🪙 Frais d'inscription : {formatSKY(challenge.entryFee)}
               </p>
             </div>
             <button
               onClick={() => setShowRules(true)}
               className="w-full py-3 rounded-xl bg-[#0097FC] hover:bg-[#0097FC]/90 text-white font-bold transition-all hover:scale-[1.02]"
             >
-              Voir le règlement et s'inscrire ({formatCFA(challenge.entryFee)})
+              Voir le règlement et s'inscrire (🪙 {formatSKY(challenge.entryFee)})
             </button>
           </div>
         )}
@@ -312,7 +312,7 @@ export default function ChallengePage() {
                   </div>
                   {r.declaredRank <= 3 && (
                     <span className="font-black text-[#FD2E5F]">
-                      {formatCFA(r.declaredRank === 1 ? prizes.first : r.declaredRank === 2 ? prizes.second : prizes.third)}
+                      🪙 {formatSKY(r.declaredRank === 1 ? prizes.first : r.declaredRank === 2 ? prizes.second : prizes.third)}
                     </span>
                   )}
                 </motion.div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, CheckCircle, X, ChevronDown, ExternalLink } from 'lucide-react';
-import { formatCFA } from '@/lib/currency';
+import { formatSKY } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader2, AlertTriangle } from 'lucide-react';
-import { formatCFA } from '@/lib/currency';
+import { formatCFA, formatSKY } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -59,7 +59,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
         <div className="flex items-center justify-between p-4 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
             <h2 className="text-lg font-black dark:text-white text-[#00165F]">Retirer des fonds</h2>
-            <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">Solde disponible : {formatCFA(balance)}</p>
+            <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">🪙 Solde disponible : {formatSKY(balance)}</p>
           </div>
           <button onClick={onClose} className="p-1 dark:text-white/70 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors">
             <X className="w-5 h-5" />
@@ -70,7 +70,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
         <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
           {/* Montant */}
           <div>
-            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Montant à retirer (min. 1 000 XAF)</label>
+            <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Montant à retirer en SKY (min. 1 000)</label>
             <div className="relative">
               <input
                 type="number"
@@ -81,13 +81,16 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
                 max={balance}
                 className="w-full px-4 py-3 pr-14 rounded-xl dark:bg-white/10 bg-gray-50 dark:text-white text-[#00165F] border dark:border-white/10 border-gray-200 focus:outline-none focus:border-[#0097FC] text-sm"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs dark:text-white/60 text-[#00165F]/40 font-medium">XAF</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs dark:text-white/60 text-[#00165F]/40 font-medium">SKY</span>
             </div>
+            {amountNum >= 1000 && amountNum <= balance && (
+              <p className="text-xs text-[#0097FC] mt-1">🪙 Vous retirez {formatSKY(amountNum)} → vous recevez {formatCFA(amountNum)} sur Mobile Money</p>
+            )}
             {amountNum > 0 && amountNum > balance && (
-              <p className="text-xs text-red-400 mt-1">Solde insuffisant ({formatCFA(balance)} disponible)</p>
+              <p className="text-xs text-red-400 mt-1">Solde insuffisant (🪙 {formatSKY(balance)} disponible)</p>
             )}
             {amountNum > 0 && amountNum < 1000 && (
-              <p className="text-xs text-red-400 mt-1">Minimum 1 000 XAF</p>
+              <p className="text-xs text-red-400 mt-1">Minimum 1 000 SKY</p>
             )}
           </div>
 
@@ -142,8 +145,8 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
             <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-4 space-y-2">
               <p className="text-xs font-semibold dark:text-white/70 text-[#00165F]/50 uppercase tracking-wide mb-2">Récapitulatif</p>
               <div className="flex justify-between text-sm">
-                <span className="dark:text-white/60 text-[#00165F]/60">Montant</span>
-                <span className="font-bold text-[#FD2E5F]">{formatCFA(amountNum)}</span>
+                <span className="dark:text-white/60 text-[#00165F]/60">Vous retirez</span>
+                <span className="font-bold text-[#0097FC]">🪙 {formatSKY(amountNum)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="dark:text-white/60 text-[#00165F]/60">Réseau</span>
@@ -154,8 +157,12 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
                 <span className="font-semibold dark:text-white text-[#00165F]">{phone}</span>
               </div>
               <div className="flex justify-between text-sm">
+                <span className="dark:text-white/60 text-[#00165F]/60">Envoi Mobile Money</span>
+                <span className="font-bold text-[#FD2E5F]">{formatCFA(amountNum)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
                 <span className="dark:text-white/60 text-[#00165F]/60">Solde après</span>
-                <span className="font-semibold dark:text-white text-[#00165F]">{formatCFA(balance - amountNum)}</span>
+                <span className="font-semibold dark:text-white text-[#00165F]">🪙 {formatSKY(balance - amountNum)}</span>
               </div>
             </div>
           )}
@@ -182,7 +189,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
             className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#FD2E5F] text-white font-bold text-sm disabled:opacity-40 hover:bg-[#FD2E5F]/90"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {loading ? 'Traitement...' : `Retirer ${amountNum >= 1000 ? formatCFA(amountNum) : ''}`}
+            {loading ? 'Traitement...' : `Retirer ${amountNum >= 1000 ? formatSKY(amountNum) : ''}`}
           </button>
         </div>
       </motion.div>
