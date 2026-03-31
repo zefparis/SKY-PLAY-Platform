@@ -22,14 +22,6 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 const ROOMS = [
   { id: 'global', label: '🌍 Global' },
-  { id: 'fr',     label: '🇫🇷 Français' },
-  { id: 'en',     label: '🇬🇧 English' },
-]
-
-const VOICE_CHANNELS = [
-  { id: 'voice_global', name: 'Global',   userCount: 0, maxUsers: 10 },
-  { id: 'voice_fr',     name: 'Français', userCount: 0, maxUsers: 10 },
-  { id: 'voice_en',     name: 'English',  userCount: 0, maxUsers: 10 },
 ]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -448,8 +440,6 @@ export default function ChatPage() {
           <SectionLabel>Vocal</SectionLabel>
           {[
             { id: 'voice_global', label: 'Global', emoji: '🌍' },
-            { id: 'voice_fr',     label: 'Français', emoji: '🇫🇷' },
-            { id: 'voice_en',     label: 'English',  emoji: '🇬🇧' },
           ].map(ch => {
             const count = voiceChannelCounts[ch.id] ?? 0
             const isActive = currentVoiceRoom === ch.id
@@ -517,7 +507,7 @@ export default function ChatPage() {
               )}
               {isInVoice && (
                 <motion.span
-                  className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                  className="hidden sm:flex shrink-0 items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                   animate={{ opacity: [1, 0.6, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 >
@@ -527,13 +517,15 @@ export default function ChatPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Voir le défi / Soumettre / Vocal défi */}
             {activeConv.type === 'CHALLENGE' && activeConv.conv.challengeId && (
               <>
                 <Link href={`/challenges/${activeConv.conv.challengeId}`}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/8 text-xs text-white/70 hover:bg-white/15 transition flex items-center gap-1">
-                  <ChevronRight className="w-3.5 h-3.5" /> Voir
+                  title="Voir le défi"
+                  className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-white/8 text-white/70 hover:bg-white/15 transition flex items-center gap-1">
+                  <ChevronRight className="w-4 h-4" />
+                  <span className="hidden sm:inline text-xs">Voir</span>
                 </Link>
                 {activeConv.conv.challenge?.status === 'IN_PROGRESS' && (
                   <>
@@ -542,18 +534,23 @@ export default function ChatPage() {
                         const room = `voice_challenge_${activeConv.conv.challengeId}`
                         currentVoiceRoom === room ? leaveVoiceRoom() : joinVoiceRoom(room)
                       }}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1 transition border ${
+                      title={currentVoiceRoom === `voice_challenge_${activeConv.conv.challengeId}` ? 'Quitter vocal' : 'Rejoindre vocal'}
+                      className={`p-2 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center gap-1 transition border ${
                         currentVoiceRoom === `voice_challenge_${activeConv.conv.challengeId}`
                           ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                           : 'bg-white/8 text-white/70 border-white/15 hover:bg-white/15'
                       }`}
                     >
-                      <Volume2 className="w-3.5 h-3.5" />
-                      {currentVoiceRoom === `voice_challenge_${activeConv.conv.challengeId}` ? 'Vocal ✓' : 'Vocal'}
+                      <Volume2 className="w-4 h-4" />
+                      <span className="hidden sm:inline text-xs">
+                        {currentVoiceRoom === `voice_challenge_${activeConv.conv.challengeId}` ? 'Vocal ✓' : 'Vocal'}
+                      </span>
                     </button>
                     <button onClick={() => setShowSubmit(true)}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#FD2E5F]/20 text-xs text-[#FD2E5F] border border-[#FD2E5F]/30 hover:bg-[#FD2E5F]/30 transition">
-                      📸 Résultat
+                      title="Soumettre résultat"
+                      className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-[#FD2E5F]/20 text-[#FD2E5F] border border-[#FD2E5F]/30 hover:bg-[#FD2E5F]/30 transition flex items-center gap-1">
+                      <span className="text-sm leading-none">📸</span>
+                      <span className="hidden sm:inline text-xs">Résultat</span>
                     </button>
                   </>
                 )}
@@ -764,7 +761,7 @@ export default function ChatPage() {
                     </button>
                   </div>
                   <div className="px-5 py-4">
-                    <VoiceChannelList channels={VOICE_CHANNELS} currentVoiceRoom={currentVoiceRoom}
+                    <VoiceChannelList channels={[{ id: 'voice_global', name: 'Global', userCount: 0, maxUsers: 10 }]} currentVoiceRoom={currentVoiceRoom}
                       onJoin={(id) => { joinVoiceRoom(id); setShowVoice(false) }} />
                     {isInVoice && currentVoiceRoom && (
                       <div className="mt-4 pt-4 border-t border-white/10">
