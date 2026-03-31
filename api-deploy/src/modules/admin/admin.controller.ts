@@ -185,4 +185,36 @@ export class AdminController {
   async reactivateUser(@Param('id') id: string, @Body() body: { justification: string }, @Request() req) {
     return this.adminService.adminReactivateUser(id, body.justification, req.user.id);
   }
+
+  // ─── SÉCURITÉ / DEVICE FINGERPRINT ──────────────────────────────────────────
+
+  @Get('security/alerts')
+  async getSecurityAlerts() {
+    return this.adminService.getSecurityAlerts();
+  }
+
+  @Get('security/devices/flagged')
+  async getFlaggedDevices() {
+    return this.adminService.getFlaggedDevices();
+  }
+
+  @Get('security/stats')
+  async getDeviceStats() {
+    return this.adminService.getDeviceStats();
+  }
+
+  @Get('users/:id/devices')
+  async getUserDevices(@Param('id') id: string) {
+    return this.adminService.getUserDevices(id);
+  }
+
+  @Post('security/devices/:id/unflag')
+  async unflagDevice(@Param('id') id: string, @Request() req) {
+    return this.adminService.unflagDevice(id, req.user.id);
+  }
+
+  @Post('security/fingerprint/:fingerprint/ban-all')
+  async banAllLinkedAccounts(@Param('fingerprint') fingerprint: string, @Request() req) {
+    return this.adminService.banAllLinkedAccounts(fingerprint, req.user.id);
+  }
 }

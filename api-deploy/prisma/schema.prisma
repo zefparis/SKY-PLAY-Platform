@@ -75,6 +75,7 @@ model User {
   exclusionReason      String?
   exclusionRequestedAt DateTime?
   exclusionHistory     ExclusionHistory[]
+  deviceFingerprints   DeviceFingerprint[]
 
   @@index([status])
   @@index([exclusionStatus])
@@ -492,6 +493,30 @@ model ExclusionHistory {
 
   @@index([userId])
   @@map("exclusion_history")
+}
+
+// ─── DEVICE FINGERPRINT ─────────────────────────────────────────────────────
+
+model DeviceFingerprint {
+  id          String   @id @default(cuid())
+  userId      String
+  fingerprint String
+  userAgent   String?
+  language    String?
+  timezone    String?
+  screen      String?
+  ipAddress   String?
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @updatedAt
+  isFlagged   Boolean  @default(false)
+  flagReason  String?
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, fingerprint])
+  @@index([fingerprint])
+  @@index([userId])
+  @@index([ipAddress])
+  @@map("device_fingerprints")
 }
 
 // ─── RULE ACCEPTANCE ─────────────────────────────────────────────────────────

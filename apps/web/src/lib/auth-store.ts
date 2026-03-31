@@ -8,6 +8,7 @@ import {
   CognitoUserPool,
 } from 'amazon-cognito-identity-js'
 import { create } from 'zustand'
+import { getFingerprint } from './fingerprint'
 
 export type AuthTokens = {
   accessToken: string
@@ -192,6 +193,29 @@ const translateCognitoError = (error: unknown): string => {
   return 'Une erreur est survenue pendant l’authentification'
 }
 
+const sendDeviceFingerprint = async (idToken: string): Promise<void> => {
+  try {
+    const fingerprint = await getFingerprint()
+    const apiUrl = COGNITO_CONFIG.apiUrl.replace(/\/+$/, '')
+    await fetch(`${apiUrl}/users/device`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        fingerprint,
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        screen: `${screen.width}x${screen.height}`,
+      }),
+    })
+  } catch {
+    // non-blocking: fingerprint errors should never break login flow
+  }
+}
+
 const syncUser = async (tokens: AuthTokens): Promise<AuthUser> => {
   const apiUrl = COGNITO_CONFIG.apiUrl.replace(/\/+$/, '')
 
@@ -355,6 +379,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
       persistState({ tokens, user, confirmEmail: null })
       writeCachedPassword(null)
+      sendDeviceFingerprint(tokens.idToken)
     } catch (error) {
       const message = translateCognitoError(error)
       set({ isLoading: false, error: message })
@@ -443,6 +468,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       })
 
       persistState({ tokens, user: data.user, confirmEmail: null })
+      sendDeviceFingerprint(tokens.idToken)
       window.location.assign('/')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erreur lors de l\'authentification Discord'
@@ -505,6 +531,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       })
 
       persistState({ tokens, user, confirmEmail: null })
+      sendDeviceFingerprint(tokens.idToken)
       window.location.assign('/')
     } catch (error) {
       const message = translateCognitoError(error)

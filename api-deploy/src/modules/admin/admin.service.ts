@@ -822,6 +822,68 @@ export class AdminService {
     });
   }
 
+  // ─── SÉCURITÉ / DEVICE FINGERPRINT ─────────────────────────────────────────
+
+  async getSecurityAlerts() {
+    return this.prisma.adminLog.findMany({
+      where: { action: { in: ['MULTI_ACCOUNT_DETECTED', 'IP_MULTI_ACCOUNT_SOFT_FLAG', 'WINNINGS_PENDING_REVIEW'] } },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+  }
+
+  async getFlaggedDevices() {
+    return (this.prisma as any).deviceFingerprint.findMany({
+      where: { isFlagged: true },
+      include: { user: { select: { id: true, username: true, email: true, avatar: true, isBanned: true } } },
+      orderBy: { lastSeenAt: 'desc' },
+    });
+  }
+
+  async getDeviceStats() {
+    const [totalDevices, flaggedDevices, multiAccountAlerts, ipAlerts, pendingWinnings] = await Promise.all([
+      (this.prisma as any).deviceFingerprint.count(),
+      (this.prisma as any).deviceFingerprint.count({ where: { isFlagged: true } }),
+      this.prisma.adminLog.count({ where: { action: 'MULTI_ACCOUNT_DETECTED' } }),
+      this.prisma.adminLog.count({ where: { action: 'IP_MULTI_ACCOUNT_SOFT_FLAG' } }),
+      this.prisma.adminLog.count({ where: { action: 'WINNINGS_PENDING_REVIEW' } }),
+    ]);
+    return { totalDevices, flaggedDevices, multiAccountAlerts, ipAlerts, pendingWinnings };
+  }
+
+  async unflagDevice(deviceId: string, adminId: string) {
+    await this.createAdminLog(adminId, 'DEVICE_UNFLAGGED', deviceId, 'DEVICE', { reason: 'Admin validated as false positive' });
+    return (this.prisma as any).deviceFingerprint.update({
+      where: { id: deviceId },
+      data: { isFlagged: false, flagReason: null },
+    });
+  }
+
+  async banAllLinkedAccounts(fingerprint: string, adminId: string) {
+    const devices = await (this.prisma as any).deviceFingerprint.findMany({
+      where: { fingerprint },
+      select: { userId: true },
+    });
+    const userIds = [...new Set(devices.map((d: any) => d.userId))] as string[];
+
+    for (const userId of userIds) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { isBanned: true, banReason: 'Multi-compte détecté (même device)' } as any,
+      });
+      await this.createAdminLog(adminId, 'BAN_MULTI_ACCOUNT', userId, 'USER', { fingerprint });
+    }
+
+    return { banned: userIds.length, userIds };
+  }
+
+  async getUserDevices(userId: string) {
+    return (this.prisma as any).deviceFingerprint.findMany({
+      where: { userId },
+      orderBy: { lastSeenAt: 'desc' },
+    });
+  }
+
   async getRecentUsersForTest(limit = 10) {
     const users = await this.prisma.user.findMany({
       where: { isBanned: false },

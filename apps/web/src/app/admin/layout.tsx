@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Users, Trophy, AlertTriangle, Wallet, FileText, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Trophy, AlertTriangle, Wallet, FileText, LogOut, Menu, X, ShieldAlert, Shield } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -11,7 +11,9 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Utilisateurs', icon: Users },
   { href: '/admin/challenges', label: 'Défis', icon: Trophy },
-  { href: '/admin/disputes', label: 'Litiges', icon: AlertTriangle, badge: true },
+  { href: '/admin/disputes', label: 'Litiges', icon: AlertTriangle, badge: 'disputes' },
+  { href: '/admin/exclusions', label: 'Exclusions', icon: Shield },
+  { href: '/admin/security', label: 'Sécurité', icon: ShieldAlert, badge: 'security' },
   { href: '/admin/wallet', label: 'Wallet', icon: Wallet },
   { href: '/admin/logs', label: 'Logs', icon: FileText },
 ]
@@ -24,6 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [disputeCount, setDisputeCount] = useState(0)
+  const [securityCount, setSecurityCount] = useState(0)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -35,11 +38,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (user?.role === 'ADMIN') {
+      const token = useAuthStore.getState().tokens?.idToken
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/challenges/disputes?status=PENDING`, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().tokens?.idToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => res.json())
         .then(data => setDisputeCount(data?.length || 0))
+        .catch(() => {})
+
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/security/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.json())
+        .then(data => setSecurityCount((data?.multiAccountAlerts || 0) + (data?.flaggedDevices || 0)))
         .catch(() => {})
     }
   }, [user])
@@ -105,9 +116,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-semibold text-sm">{item.label}</span>
-                  {item.badge && disputeCount > 0 && (
+                  {item.badge === 'disputes' && disputeCount > 0 && (
                     <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                       {disputeCount}
+                    </span>
+                  )}
+                  {item.badge === 'security' && securityCount > 0 && (
+                    <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                      {securityCount}
                     </span>
                   )}
                 </Link>
@@ -143,6 +159,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="lg:hidden text-sm font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>SKY PLAY Admin</span>
             </div>
             <div className="flex items-center gap-3">
+              {securityCount > 0 && (
+                <a href="/admin/security" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold hover:bg-red-500/30 transition animate-pulse">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  {securityCount} alerte{securityCount > 1 ? 's' : ''}
+                </a>
+              )}
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0097FC] to-[#003399] flex items-center justify-center text-white font-black text-sm">
                 {user.username?.[0]?.toUpperCase()}
               </div>

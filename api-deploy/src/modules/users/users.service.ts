@@ -674,6 +674,114 @@ export class UsersService {
     return user;
   }
 
+  // ─── DEVICE FINGERPRINT / ANTI-MULTI-ACCOUNT ─────────────────────────────────
+
+  async registerDevice(
+    userId: string,
+    deviceData: { fingerprint: string; userAgent?: string; language?: string; timezone?: string; screen?: string },
+    ipAddress?: string,
+  ) {
+    // 1. Upsert device record
+    await (this.prisma.deviceFingerprint as any).upsert({
+      where: { userId_fingerprint: { userId, fingerprint: deviceData.fingerprint } },
+      create: { userId, ...deviceData, ipAddress },
+      update: { lastSeenAt: new Date(), ipAddress },
+    });
+
+    // 2. Check if this fingerprint belongs to OTHER users
+    const otherUsers = await (this.prisma.deviceFingerprint as any).findMany({
+      where: {
+        fingerprint: deviceData.fingerprint,
+        userId: { not: userId },
+        isFlagged: false,
+      },
+      include: { user: { select: { id: true, username: true, email: true } } },
+    });
+
+    if (otherUsers.length > 0) {
+      await this.flagMultiAccount(userId, otherUsers, deviceData.fingerprint);
+    }
+
+    // 3. IP-based soft flag: > 3 distinct accounts from same IP
+    if (ipAddress) {
+      const ipAccounts = await (this.prisma.deviceFingerprint as any).findMany({
+        where: { ipAddress, userId: { not: userId } },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+
+      if (ipAccounts.length >= 3) {
+        await this.prisma.adminLog.create({
+          data: {
+            adminId: 'SYSTEM',
+            action: 'IP_MULTI_ACCOUNT_SOFT_FLAG',
+            targetId: userId,
+            targetType: 'USER',
+            details: { ipAddress, linkedAccountCount: ipAccounts.length + 1, linkedAccounts: ipAccounts.map((a: any) => a.userId) },
+          },
+        });
+      }
+    }
+
+    return { registered: true };
+  }
+
+  private async flagMultiAccount(userId: string, otherUsers: any[], fingerprint: string) {
+    // Flag all devices sharing this fingerprint
+    await (this.prisma.deviceFingerprint as any).updateMany({
+      where: { fingerprint },
+      data: { isFlagged: true, flagReason: 'MULTI_ACCOUNT_DETECTED' },
+    });
+
+    // Admin log
+    await this.prisma.adminLog.create({
+      data: {
+        adminId: 'SYSTEM',
+        action: 'MULTI_ACCOUNT_DETECTED',
+        targetId: userId,
+        targetType: 'USER',
+        details: {
+          fingerprint,
+          linkedAccounts: otherUsers.map((u: any) => ({ userId: u.userId, username: u.user?.username, email: u.user?.email })),
+        },
+      },
+    });
+  }
+
+  async getSecurityAlerts() {
+    const alerts = await this.prisma.adminLog.findMany({
+      where: { action: { in: ['MULTI_ACCOUNT_DETECTED', 'IP_MULTI_ACCOUNT_SOFT_FLAG'] } },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+    return alerts;
+  }
+
+  async getFlaggedDevices() {
+    return (this.prisma.deviceFingerprint as any).findMany({
+      where: { isFlagged: true },
+      include: { user: { select: { id: true, username: true, email: true, avatar: true } } },
+      orderBy: { lastSeenAt: 'desc' },
+    });
+  }
+
+  async unflagDevice(deviceId: string) {
+    return (this.prisma.deviceFingerprint as any).update({
+      where: { id: deviceId },
+      data: { isFlagged: false, flagReason: null },
+    });
+  }
+
+  async getDeviceStats() {
+    const [total, flagged, multiAccountAlerts, ipAlerts] = await Promise.all([
+      (this.prisma.deviceFingerprint as any).count(),
+      (this.prisma.deviceFingerprint as any).count({ where: { isFlagged: true } }),
+      this.prisma.adminLog.count({ where: { action: 'MULTI_ACCOUNT_DETECTED' } }),
+      this.prisma.adminLog.count({ where: { action: 'IP_MULTI_ACCOUNT_SOFT_FLAG' } }),
+    ]);
+    return { totalDevices: total, flaggedDevices: flagged, multiAccountAlerts, ipAlerts };
+  }
+
   async getDiscordStatus(userId: string) {
     // Vérifier le cache (60s)
     const cached = this.discordStatusCache.get(userId);

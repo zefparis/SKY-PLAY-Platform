@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { Response } from 'express';
-import * as PDFDocument from 'pdfkit';
+import PDFDocument = require('pdfkit');
 import { ChallengesService } from './challenges.service';
 import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import {

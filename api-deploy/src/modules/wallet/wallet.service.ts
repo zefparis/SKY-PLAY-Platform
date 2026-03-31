@@ -303,6 +303,16 @@ export class WalletService {
       throw new ForbiddenException(statusMsg);
     }
 
+    // ─── Vérification device flaggé (multi-compte) ───────────────────────────
+    const flaggedDevice = await (this.prisma as any).deviceFingerprint.findFirst({
+      where: { userId, isFlagged: true },
+    });
+    if (flaggedDevice) {
+      throw new ForbiddenException(
+        'Votre compte est en cours de vérification de sécurité. Contactez support@skyplay.cm',
+      );
+    }
+
     const wallet = await this.getOrCreateWallet(userId);
 
     // ─── Retrait depuis rewardBalance uniquement ──────────────────────────────

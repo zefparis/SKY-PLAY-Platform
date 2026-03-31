@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 const EXCLUDED_PATHS = [
   '/auth',
   '/users/self-exclude/status',
+  '/users/device',
   '/health',
   '/wallet/webhook',
 ];

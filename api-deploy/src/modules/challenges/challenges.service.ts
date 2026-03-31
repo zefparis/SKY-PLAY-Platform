@@ -346,6 +346,39 @@ export class ChallengesService {
       const winnings = prizes[result.declaredRank] ?? 0;
 
       if (winnings > 0) {
+        // ─── Vérification anti-fraude : device flaggé + grosse prime ───────────
+        const REVIEW_THRESHOLD = 10000;
+        const flaggedDevice = await (this.prisma as any).deviceFingerprint.findFirst({
+          where: { userId: result.userId, isFlagged: true },
+        });
+
+        if (flaggedDevice && winnings > REVIEW_THRESHOLD) {
+          await this.prisma.adminLog.create({
+            data: {
+              adminId: 'SYSTEM',
+              action: 'WINNINGS_PENDING_REVIEW',
+              targetId: result.userId,
+              targetType: 'USER',
+              details: { challengeId, winnings, rank: result.declaredRank, reason: 'DEVICE_FLAGGED' },
+            },
+          });
+          await this.prisma.notification.create({
+            data: {
+              userId: result.userId,
+              type: 'CHALLENGE_WON' as any,
+              title: '🏆 Gain en vérification',
+              body: `Votre gain de ${winnings.toLocaleString('fr-FR')} CFA est en cours de vérification. Contactez support@skyplay.cm.`,
+              data: { challengeId },
+            },
+          });
+          await this.prisma.challengeParticipant.update({
+            where: { challengeId_userId: { challengeId, userId: result.userId } },
+            data: { rank: result.declaredRank, winnings: 0 },
+          });
+          await this.prisma.user.update({ where: { id: result.userId }, data: { gamesPlayed: { increment: 1 }, ...(result.declaredRank === 1 ? { gamesWon: { increment: 1 } } : {}) } });
+          continue;
+        }
+
         await this.walletService.credit(
           result.userId,
           winnings,

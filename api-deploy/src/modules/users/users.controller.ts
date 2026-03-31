@@ -340,4 +340,18 @@ export class UsersController {
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
+
+  // ─── DEVICE FINGERPRINT ───────────────────────────────────────────────────
+
+  @SkipThrottle()
+  @UseGuards(JwtDualGuard)
+  @Post('device')
+  async registerDevice(@Req() req: Request, @Body() body: { fingerprint: string; userAgent?: string; language?: string; timezone?: string; screen?: string }) {
+    const userPayload = req.user as any;
+    if (!userPayload?.id) throw new HttpException('Non authentifié', HttpStatus.UNAUTHORIZED);
+    const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
+      || (req as any).connection?.remoteAddress
+      || undefined;
+    return this.usersService.registerDevice(userPayload.id, body, ipAddress);
+  }
 }

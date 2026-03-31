@@ -777,6 +777,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // ===== FRIEND NOTIFICATIONS =====
 
+  emitSecurityAlert(data: { type: string; severity: string; details: any; timestamp: Date }) {
+    for (const [socketId, user] of this.connectedUsers.entries()) {
+      if ((user as any).role === 'ADMIN') {
+        this.server.to(socketId).emit('security_alert', data);
+      }
+    }
+    // Also broadcast to admin room if exists
+    this.server.to('admin_room').emit('security_alert', data);
+    this.logger.warn(`[SECURITY] ${data.type} — ${JSON.stringify(data.details)}`);
+  }
+
   emitFriendRequest(receiverId: string, data: { from: { id: string; username: string; avatar?: string } }) {
     // Find the receiver's socket
     for (const [socketId, user] of this.connectedUsers.entries()) {
