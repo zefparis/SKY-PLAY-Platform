@@ -243,6 +243,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.emit('room_history', { room: 'global', messages: globalHistory });
       }
 
+      // Envoyer les compteurs vocaux actuels au nouveau connecté
+      const initialCounts: Record<string, number> = {};
+      this.voiceRooms.forEach((users, room) => { initialCounts[room] = users.size; });
+      client.emit('voice_counts', initialCounts);
+
       client.emit('connected', {
         userId: user.id,
         username: user.username,
@@ -554,7 +559,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.userLastVoiceAction.set(user.id, now);
 
     // Validate room
-    if (!VOICE_ROOMS.includes(room) && !room.startsWith('voice_match_')) {
+    if (!VOICE_ROOMS.includes(room) &&
+        !room.startsWith('voice_match_') &&
+        !room.startsWith('voice_challenge_') &&
+        !room.startsWith('voice_dm_')) {
       client.emit('error', { message: 'Invalid voice room' });
       return;
     }
@@ -598,6 +606,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.emit('voice_room_users', { room, users: roomUsers });
 
     this.logger.log(`User ${user.username} joined voice room ${room}`);
+    this.broadcastVoiceCounts();
   }
 
   @SubscribeMessage('voice_leave')
@@ -710,7 +719,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       this.logger.log(`User ${voiceUser.username} left voice room ${room}`);
+      this.broadcastVoiceCounts();
     }
+  }
+
+  private broadcastVoiceCounts() {
+    const counts: Record<string, number> = {};
+    this.voiceRooms.forEach((users, room) => { counts[room] = users.size; });
+    this.server.emit('voice_counts', counts);
   }
 
   private removeUserFromAllVoiceRooms(socketId: string) {
@@ -718,6 +734,51 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (voiceRoom.has(socketId)) {
         this.removeUserFromVoiceRoom(socketId, room);
       }
+    });
+  }
+
+  // ===== CALL HANDLERS =====
+
+  @SubscribeMessage('call_request')
+  handleCallRequest(
+    @MessageBody() data: { targetUserId: string; voiceRoom: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+    this.server.to(`user_${data.targetUserId}`).emit('call_request', {
+      fromUserId: user.id,
+      fromUsername: user.username,
+      fromAvatar: user.avatar,
+      voiceRoom: data.voiceRoom,
+    });
+    this.logger.log(`Call request from ${user.username} to user ${data.targetUserId}`);
+  }
+
+  @SubscribeMessage('call_accepted')
+  handleCallAccepted(
+    @MessageBody() data: { callerUserId: string; voiceRoom: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+    this.server.to(`user_${data.callerUserId}`).emit('call_accepted', {
+      fromUserId: user.id,
+      fromUsername: user.username,
+      voiceRoom: data.voiceRoom,
+    });
+  }
+
+  @SubscribeMessage('call_declined')
+  handleCallDeclined(
+    @MessageBody() data: { callerUserId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+    this.server.to(`user_${data.callerUserId}`).emit('call_declined', {
+      fromUserId: user.id,
+      fromUsername: user.username,
     });
   }
 

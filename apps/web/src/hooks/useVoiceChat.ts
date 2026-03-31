@@ -16,6 +16,13 @@ type UseVoiceChatProps = {
   isConnected: boolean
 }
 
+type IncomingCall = {
+  fromUserId: string
+  fromUsername: string
+  fromAvatar?: string
+  voiceRoom: string
+}
+
 export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
   const [isInVoice, setIsInVoice] = useState(false)
   const [currentVoiceRoom, setCurrentVoiceRoom] = useState<string | null>(null)
@@ -23,6 +30,8 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null)
+  const [voiceChannelCounts, setVoiceChannelCounts] = useState<Record<string, number>>({})
 
   const localStreamRef = useRef<MediaStream | null>(null)
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map())
@@ -225,6 +234,34 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     retryCountRef.current.clear()
   }, [currentVoiceRoom, socket])
 
+  // Call a user
+  const callUser = useCallback(
+    (targetUserId: string, voiceRoom: string) => {
+      if (!socket || !isConnected) return
+      socket.emit('call_request', { targetUserId, voiceRoom })
+    },
+    [socket, isConnected],
+  )
+
+  // Accept an incoming call
+  const acceptCall = useCallback(
+    async (call: IncomingCall) => {
+      setIncomingCall(null)
+      socket?.emit('call_accepted', { callerUserId: call.fromUserId, voiceRoom: call.voiceRoom })
+      await joinVoiceRoom(call.voiceRoom)
+    },
+    [socket, joinVoiceRoom],
+  )
+
+  // Decline an incoming call
+  const declineCall = useCallback(
+    (call: IncomingCall) => {
+      setIncomingCall(null)
+      socket?.emit('call_declined', { callerUserId: call.fromUserId })
+    },
+    [socket],
+  )
+
   // Toggle mute
   const toggleMute = useCallback(() => {
     if (!localStreamRef.current || !currentVoiceRoom || !socket) return
@@ -337,6 +374,23 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       )
     }
 
+    const handleVoiceCounts = (counts: Record<string, number>) => {
+      setVoiceChannelCounts(counts)
+    }
+
+    const handleCallRequest = (data: IncomingCall) => {
+      setIncomingCall(data)
+    }
+
+    const handleCallAccepted = async (data: { fromUserId: string; fromUsername: string; voiceRoom: string }) => {
+      await joinVoiceRoom(data.voiceRoom)
+    }
+
+    const handleCallDeclined = (data: { fromUserId: string; fromUsername: string }) => {
+      setError(`${data.fromUsername} a refusé l'appel`)
+      setTimeout(() => setError(null), 4000)
+    }
+
     socket.on('voice_room_users', handleVoiceRoomUsers)
     socket.on('voice_user_joined', handleVoiceUserJoined)
     socket.on('voice_user_left', handleVoiceUserLeft)
@@ -345,6 +399,10 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     socket.on('voice_ice_candidate', handleVoiceIceCandidate)
     socket.on('voice_speaking', handleVoiceSpeaking)
     socket.on('voice_mute_update', handleVoiceMuteUpdate)
+    socket.on('voice_counts', handleVoiceCounts)
+    socket.on('call_request', handleCallRequest)
+    socket.on('call_accepted', handleCallAccepted)
+    socket.on('call_declined', handleCallDeclined)
 
     return () => {
       socket.off('voice_room_users', handleVoiceRoomUsers)
@@ -355,6 +413,10 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       socket.off('voice_ice_candidate', handleVoiceIceCandidate)
       socket.off('voice_speaking', handleVoiceSpeaking)
       socket.off('voice_mute_update', handleVoiceMuteUpdate)
+      socket.off('voice_counts', handleVoiceCounts)
+      socket.off('call_request', handleCallRequest)
+      socket.off('call_accepted', handleCallAccepted)
+      socket.off('call_declined', handleCallDeclined)
     }
   }, [socket, currentVoiceRoom, createPeerConnection])
 
@@ -374,8 +436,13 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     isMuted,
     isSpeaking,
     error,
+    incomingCall,
+    voiceChannelCounts,
     joinVoiceRoom,
     leaveVoiceRoom,
     toggleMute,
+    callUser,
+    acceptCall,
+    declineCall,
   }
 }

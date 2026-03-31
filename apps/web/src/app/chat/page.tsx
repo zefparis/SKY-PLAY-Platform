@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2 } from 'lucide-react'
+import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2, Phone, Volume2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
@@ -16,6 +16,7 @@ import EmojiPicker from '@/components/chat/EmojiPicker'
 import VoiceChannelList from '@/components/voice/VoiceChannelList'
 import VoiceRoom from '@/components/voice/VoiceRoom'
 import VoiceIndicator from '@/components/voice/VoiceIndicator'
+import IncomingCallModal from '@/components/voice/IncomingCallModal'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -107,7 +108,7 @@ export default function ChatPage() {
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   const { messages: globalMsgs, connectedUsers, currentRoom, isConnected, socket, sendMessage: sendGlobal, joinRoom } = useChat()
-  const { isInVoice, currentVoiceRoom, voiceUsers, isMuted, error: voiceError, joinVoiceRoom, leaveVoiceRoom, toggleMute } = useVoiceChat({ socket, isConnected })
+  const { isInVoice, currentVoiceRoom, voiceUsers, isMuted, error: voiceError, incomingCall, voiceChannelCounts, joinVoiceRoom, leaveVoiceRoom, toggleMute, callUser, acceptCall, declineCall } = useVoiceChat({ socket, isConnected })
   const { dms, challenges, openDm, markAsRead } = useConversations(socket)
   const convId = activeConv.type !== 'GLOBAL' ? activeConv.conversationId : null
   const { messages: convMsgs, sendMessage: sendConv, sendImage } = useMessages(convId, socket)
@@ -315,29 +316,43 @@ export default function ChatPage() {
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
-          {dms.filter(d => !search || d.members.some(m => m.user.username.toLowerCase().includes(search.toLowerCase()))).map(dm => {
-            const peer = dm.members.find(m => m.userId !== currentUser.id)
+          {dms.filter(dm => {
+            const p = dm.members.find(m => m.userId !== currentUser?.id)
+            return !search || p?.user?.username?.toLowerCase().includes(search.toLowerCase())
+          }).map(dm => {
+            const peer = dm.members.find(m => m.userId !== currentUser?.id)
+            const dmVoiceRoom = `voice_dm_${[currentUser?.id, peer?.userId].filter(Boolean).sort().join('_')}`
             const isActive = activeConv.type === 'DM' && activeConv.conversationId === dm.id
             return (
-              <button
-                key={dm.id}
-                onClick={() => { setActiveConv({ type: 'DM', conversationId: dm.id, conv: dm }); setSidebarOpen(false) }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 transition ${isActive ? 'bg-[#0097FC]/20 border-l-[3px] border-[#0097FC]' : 'hover:bg-white/5 border-l-[3px] border-transparent'}`}
-              >
-                <div className="relative shrink-0">
-                  <Avatar name={peer?.user.username ?? '?'} src={peer?.user.avatar} size={9} />
-                  {peer?.user.status === 'ONLINE' && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-[#00165F]" />}
-                </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-semibold text-white truncate">{peer?.user.username}</p>
-                  <p className="text-xs text-white/40 truncate">{dm.messages[0]?.content ?? 'Nouveau message'}</p>
-                </div>
-                {dm.unreadCount > 0 && (
-                  <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-[#FD2E5F] text-white text-[10px] font-black flex items-center justify-center px-1">
-                    {dm.unreadCount}
-                  </span>
+              <div key={dm.id} className={`flex items-center gap-1 transition group border-l-[3px] ${isActive ? 'bg-[#0097FC]/20 border-[#0097FC]' : 'hover:bg-white/5 border-transparent'}`}>
+                <button
+                  onClick={() => { setActiveConv({ type: 'DM', conversationId: dm.id, conv: dm }); setSidebarOpen(false) }}
+                  className="flex-1 flex items-center gap-3 px-3 py-2.5 min-w-0"
+                >
+                  <div className="relative shrink-0">
+                    <Avatar name={peer?.user.username ?? '?'} src={peer?.user.avatar} size={9} />
+                    {peer?.user.status === 'ONLINE' && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-[#00165F]" />}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-semibold text-white truncate">{peer?.user.username}</p>
+                    <p className="text-xs text-white/40 truncate">{dm.messages[0]?.content ?? 'Nouveau message'}</p>
+                  </div>
+                  {dm.unreadCount > 0 && (
+                    <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-[#FD2E5F] text-white text-[10px] font-black flex items-center justify-center px-1">
+                      {dm.unreadCount}
+                    </span>
+                  )}
+                </button>
+                {peer && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); callUser(peer.userId, dmVoiceRoom) }}
+                    title="Appeler"
+                    className="shrink-0 p-1.5 mr-1 rounded-lg text-white/30 hover:text-emerald-400 hover:bg-emerald-400/10 transition opacity-0 group-hover:opacity-100"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                  </button>
                 )}
-              </button>
+              </div>
             )
           })}
 
@@ -346,24 +361,31 @@ export default function ChatPage() {
             <>
               <SectionLabel>En ligne ({connectedUsers.filter(u => u.id !== currentUser?.id).length})</SectionLabel>
               {connectedUsers.filter(u => u.id !== currentUser?.id).slice(0, 8).map(u => (
-                <button
-                  key={u.id}
-                  onClick={async () => {
-                    const conv = await openDm(u.id)
-                    if (conv) { setActiveConv({ type: 'DM', conversationId: conv.id, conv }); setSidebarOpen(false) }
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2 transition hover:bg-white/5 border-l-[3px] border-transparent"
-                >
-                  <div className="relative shrink-0">
-                    <Avatar name={u.username} src={u.avatar} size={8} />
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-[#00165F]" />
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm text-white truncate">{u.username}</p>
-                    <p className="text-[11px] text-emerald-400/70">En ligne</p>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-white/20 shrink-0" />
-                </button>
+                <div key={u.id} className="flex items-center gap-1 px-3 py-1.5 hover:bg-white/5 transition group">
+                  <button
+                    onClick={async () => {
+                      const conv = await openDm(u.id)
+                      if (conv) { setActiveConv({ type: 'DM', conversationId: conv.id, conv }); setSidebarOpen(false) }
+                    }}
+                    className="flex items-center gap-3 flex-1 min-w-0"
+                  >
+                    <div className="relative shrink-0">
+                      <Avatar name={u.username} src={u.avatar} size={8} />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-[#00165F]" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm text-white truncate">{u.username}</p>
+                      <p className="text-[11px] text-emerald-400/70">En ligne</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => callUser(u.id, `voice_dm_${[currentUser?.id, u.id].sort().join('_')}`)}
+                    title="Appeler"
+                    className="shrink-0 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition text-emerald-400 hover:bg-emerald-400/10"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               ))}
             </>
           )}
@@ -422,16 +444,37 @@ export default function ChatPage() {
             )
           })}
 
-          {/* Voice */}
+          {/* Voice channels */}
           <SectionLabel>Vocal</SectionLabel>
-          <button
-            onClick={() => setShowVoice(true)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 transition hover:bg-white/5 border-l-[3px] ${isInVoice ? 'border-[#0097FC] bg-[#0097FC]/10' : 'border-transparent'}`}
-          >
-            <span className="text-xl w-9 text-center">🎙</span>
-            <span className="text-sm text-white/80 font-medium">{isInVoice ? `Connecté` : 'Rejoindre vocal'}</span>
-            {isInVoice && <span className="ml-auto w-2 h-2 rounded-full bg-[#0097FC] animate-pulse" />}
-          </button>
+          {[
+            { id: 'voice_global', label: 'Global', emoji: '🌍' },
+            { id: 'voice_fr',     label: 'Français', emoji: '🇫🇷' },
+            { id: 'voice_en',     label: 'English',  emoji: '🇬🇧' },
+          ].map(ch => {
+            const count = voiceChannelCounts[ch.id] ?? 0
+            const isActive = currentVoiceRoom === ch.id
+            return (
+              <button
+                key={ch.id}
+                onClick={() => isActive ? leaveVoiceRoom() : joinVoiceRoom(ch.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 transition border-l-[3px] ${
+                  isActive ? 'border-[#0097FC] bg-[#0097FC]/10' : 'border-transparent hover:bg-white/5'
+                }`}
+              >
+                <span className="text-base w-9 text-center flex items-center justify-center">
+                  <Volume2 className={`w-4 h-4 ${isActive ? 'text-[#0097FC]' : 'text-white/40'}`} />
+                </span>
+                <span className={`text-sm font-medium flex-1 text-left ${isActive ? 'text-[#0097FC]' : 'text-white/70'}`}>{ch.emoji} {ch.label}</span>
+                {count > 0 && (
+                  <span className="text-xs text-white/40 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{count}
+                  </span>
+                )}
+                {isActive && <span className="w-2 h-2 rounded-full bg-[#0097FC] animate-pulse shrink-0" />}
+              </button>
+            )
+          })
+          }
         </div>
       </aside>
 
@@ -461,7 +504,7 @@ export default function ChatPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Voir le défi / Soumettre */}
+            {/* Voir le défi / Soumettre / Vocal défi */}
             {activeConv.type === 'CHALLENGE' && activeConv.conv.challengeId && (
               <>
                 <Link href={`/challenges/${activeConv.conv.challengeId}`}
@@ -469,10 +512,26 @@ export default function ChatPage() {
                   <ChevronRight className="w-3.5 h-3.5" /> Voir
                 </Link>
                 {activeConv.conv.challenge?.status === 'IN_PROGRESS' && (
-                  <button onClick={() => setShowSubmit(true)}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#FD2E5F]/20 text-xs text-[#FD2E5F] border border-[#FD2E5F]/30 hover:bg-[#FD2E5F]/30 transition">
-                    📸 Résultat
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        const room = `voice_challenge_${activeConv.conv.challengeId}`
+                        currentVoiceRoom === room ? leaveVoiceRoom() : joinVoiceRoom(room)
+                      }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1 transition border ${
+                        currentVoiceRoom === `voice_challenge_${activeConv.conv.challengeId}`
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                          : 'bg-white/8 text-white/70 border-white/15 hover:bg-white/15'
+                      }`}
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                      {currentVoiceRoom === `voice_challenge_${activeConv.conv.challengeId}` ? 'Vocal ✓' : 'Vocal'}
+                    </button>
+                    <button onClick={() => setShowSubmit(true)}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#FD2E5F]/20 text-xs text-[#FD2E5F] border border-[#FD2E5F]/30 hover:bg-[#FD2E5F]/30 transition">
+                      📸 Résultat
+                    </button>
+                  </>
                 )}
               </>
             )}
@@ -838,6 +897,13 @@ export default function ChatPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Incoming call modal */}
+      <IncomingCallModal
+        call={incomingCall}
+        onAccept={(call) => acceptCall(call)}
+        onDecline={(call) => declineCall(call)}
+      />
 
       {/* Voice indicator */}
       {isInVoice && currentVoiceRoom && (
