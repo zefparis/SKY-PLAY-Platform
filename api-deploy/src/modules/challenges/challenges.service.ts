@@ -355,9 +355,9 @@ export class ChallengesService {
       const winnings = prizes[result.declaredRank] ?? 0;
 
       if (winnings > 0) {
-        const flaggedDevice = await (this.prisma as any).deviceFingerprint.findFirst({
+        const flaggedDevice = await (this.prisma as any).deviceFingerprint?.findFirst({
           where: { userId: result.userId, isFlagged: true },
-        });
+        }) ?? null;
 
         const needsManualReview = winnings >= MANUAL_REVIEW_THRESHOLD || !!flaggedDevice;
 
