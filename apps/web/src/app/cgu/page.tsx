@@ -23,9 +23,9 @@ L'utilisation de la plateforme implique l'acceptation pleine et entière des pr�
           title: "2. Définitions",
           content: `• **Plateforme** : désigne SKY PLAY ENTERTAINMENT, accessible via le site web et les applications mobiles.
 • **Utilisateur** : toute personne physique inscrite sur la plateforme et disposant d'un compte actif.
-• **Défi** : compétition organisée entre joueurs sur des jeux vidéo avec mise en Franc CFA (XAF).
-• **Wallet** : portefeuille électronique SKY PLAY permettant de déposer, retirer et gérer vos fonds.
-• **Commission** : pourcentage prélevé par SKY PLAY sur chaque défi pour l'organisation et la gestion de la plateforme.`
+• **Compétition** : événement e-sport fondé sur l'habileté, organisé entre joueurs sur des jeux vidéo avec un pass de participation en Franc CFA (XAF).
+• **Sky Credits** : portefeuille électronique SKY PLAY permettant de recharger, retirer et gérer vos fonds.
+• **Frais d'organisation** : pourcentage prélevé par SKY PLAY sur chaque compétition pour l'organisation et l'infrastructure de la plateforme.`
         },
         {
           title: "3. Inscription et compte",
@@ -44,48 +44,54 @@ L'utilisation de la plateforme implique l'acceptation pleine et entière des pr�
 SKY PLAY se réserve le droit de suspendre ou fermer tout compte en cas de violation des présentes CGU, de fraude avérée ou de comportement inapproprié.`
         },
         {
-          title: "4. Système de défis et mises",
-          content: `**Fonctionnement des défis :**
-• Les mises sont effectuées en Franc CFA (XAF) depuis votre Wallet SKY PLAY.
-• Une commission est prélevée par SKY PLAY sur chaque défi (entre 10% et 25% selon le type de défi).
-• Les gains sont distribués automatiquement au(x) vainqueur(s) après validation des résultats.
+          title: "4. Nature du service",
+          content: `SKY PLAY ENTERTAINMENT est une plateforme de compétitions e-sport et de divertissement numérique fondées sur l'habileté. Les paiements rémunèrent l'accès aux services numériques, l'organisation des événements et l'infrastructure compétitive.
+
+Les compétitions proposées ne constituent pas des jeux de hasard. Le résultat dépend exclusivement de la maîtrise du jeu, de la stratégie et des capacités des participants. SKY PLAY n'intervient pas dans le déroulement des parties et ne peut influer sur leur issue.`
+        },
+        {
+          title: "5. Système de compétitions et pass de participation",
+          content: `**Fonctionnement des compétitions :**
+• Les pass de participation sont achetés en Franc CFA (XAF) depuis vos Sky Credits SKY PLAY.
+• Des frais d'organisation sont prélevés par SKY PLAY sur chaque compétition (entre 10% et 25% selon le format).
+• Les primes de performance sont distribuées automatiquement au(x) vainqueur(s) après validation des résultats.
 
 **Déclaration des résultats :**
 • Les résultats sont déclarés sous la responsabilité exclusive des joueurs participants.
 • Vous devez fournir des preuves valides (captures d'écran, vidéos) en cas de litige.
-• Toute déclaration de faux résultat entraîne la suspension immédiate du compte et la confiscation des gains.
+• Toute déclaration de faux résultat entraîne la suspension immédiate du compte et la confiscation des primes.
 
-**Annulation de défi :**
-• Un défi peut être annulé si aucun adversaire ne se présente dans le délai imparti.
-• En cas d'annulation, les mises sont intégralement remboursées sur le Wallet.
-• SKY PLAY se réserve le droit d'annuler tout défi suspect ou frauduleux.`
+**Annulation de compétition :**
+• Une compétition peut être annulée si aucun adversaire ne se présente dans le délai imparti.
+• En cas d'annulation, les pass de participation sont intégralement remboursés sur vos Sky Credits.
+• SKY PLAY se réserve le droit d'annuler toute compétition suspecte ou frauduleuse.`
         },
         {
-          title: "5. Wallet et paiements",
-          content: `**Dépôt de fonds :**
+          title: "6. Sky Credits et paiements",
+          content: `**Rechargement :**
 • Méthodes acceptées : Mobile Money (MTN Mobile Money, Orange Money) et carte bancaire.
-• Montant minimum de dépôt : 500 CFA.
-• Les fonds sont crédités instantanément ou sous 5 minutes maximum.
+• Montant minimum de rechargement : 500 CFA.
+• Les Sky Credits sont crédités instantanément ou sous 5 minutes maximum.
 
 **Retrait de fonds :**
 • Retraits uniquement vers Mobile Money (MTN ou Orange).
 • Montant minimum de retrait : 1 000 CFA.
-• Délai de traitement : 24 à 48 heures ouvrées.
+• Délai de traitement : 24 à 48 heures ouverées.
 • Des frais de traitement peuvent s'appliquer selon l'opérateur.
 
 **Important :**
 • SKY PLAY n'est pas un établissement financier et ne propose pas de services bancaires.
-• Les fonds du Wallet ne génèrent aucun intérêt.
+• Les Sky Credits ne génèrent aucun intérêt.
 • SKY PLAY utilise des prestataires tiers sécurisés (Flutterwave, MTN, Orange) pour le traitement des paiements.`
         },
         {
-          title: "6. Propriété intellectuelle",
+          title: "7. Propriété intellectuelle",
           content: `Tous les éléments de la plateforme SKY PLAY (logos, marques, designs, textes, images, vidéos, code source) sont la propriété exclusive de SKY PLAY ENTERTAINMENT et sont protégés par les lois camerounaises et internationales sur la propriété intellectuelle.
 
 Toute reproduction, représentation, modification, publication ou adaptation totale ou partielle sans autorisation écrite préalable est strictement interdite et constitue une contrefaçon sanctionnée par le Code pénal camerounais.`
         },
         {
-          title: "7. Responsabilités",
+          title: "8. Responsabilités",
           content: `**Responsabilité de SKY PLAY :**
 • SKY PLAY n'est pas responsable des résultats des jeux vidéo tiers (FIFA, Call of Duty, etc.).
 • SKY PLAY n'est pas l'éditeur de ces jeux et ne contrôle pas leur fonctionnement.
@@ -101,7 +107,7 @@ Toute reproduction, représentation, modification, publication ou adaptation tot
 SKY PLAY ne pourra être tenu responsable des dommages indirects, pertes de profits, pertes de données ou tout autre préjudice résultant de l'utilisation ou de l'impossibilité d'utiliser la plateforme.`
         },
         {
-          title: "8. Litiges et arbitrage",
+          title: "9. Litiges et arbitrage",
           content: `**Litiges entre joueurs :**
 • En cas de désaccord sur un résultat, contactez support@skyplay.cm avec vos preuves.
 • L'équipe SKY PLAY examine les preuves et rend une décision sous 48-72 heures.
@@ -115,13 +121,13 @@ Email : support@skyplay.cm
 Délai de réponse : 24-48 heures`
         },
         {
-          title: "9. Droit applicable et juridiction",
+          title: "10. Droit applicable et juridiction",
           content: `Les présentes CGU sont soumises au droit camerounais.
 
 En cas de litige non résolu à l'amiable, les tribunaux de Douala, Cameroun, seront seuls compétents, nonobstant pluralité de défendeurs ou appel en garantie.`
         },
         {
-          title: "10. Modification des CGU",
+          title: "11. Modification des CGU",
           content: `SKY PLAY se réserve le droit de modifier les présentes CGU à tout moment pour s'adapter aux évolutions légales, techniques ou commerciales.
 
 Les utilisateurs seront informés de toute modification substantielle par email au moins 7 jours avant leur entrée en vigueur.
@@ -147,9 +153,9 @@ Use of the platform implies full and complete acceptance of these T&C. If you do
           title: "2. Definitions",
           content: `• **Platform**: refers to SKY PLAY ENTERTAINMENT, accessible via the website and mobile applications.
 • **User**: any natural person registered on the platform with an active account.
-• **Challenge**: competition organized between players on video games with stakes in CFA Franc (XAF).
-• **Wallet**: SKY PLAY electronic wallet allowing you to deposit, withdraw and manage your funds.
-• **Commission**: percentage charged by SKY PLAY on each challenge for platform organization and management.`
+• **Competition**: skill-based event organized between players on video games with a participation pass in CFA Franc (XAF).
+• **Sky Credits**: SKY PLAY electronic wallet allowing you to top up, withdraw and manage your funds.
+• **Organization fee**: percentage charged by SKY PLAY on each competition for event organization and platform infrastructure.`
         },
         {
           title: "3. Registration and Account",
@@ -168,28 +174,34 @@ Use of the platform implies full and complete acceptance of these T&C. If you do
 SKY PLAY reserves the right to suspend or close any account in case of violation of these T&C, proven fraud or inappropriate behavior.`
         },
         {
-          title: "4. Challenge System and Stakes",
-          content: `**How challenges work:**
-• Stakes are made in CFA Franc (XAF) from your SKY PLAY Wallet.
-• A commission is charged by SKY PLAY on each challenge (between 10% and 25% depending on challenge type).
-• Winnings are automatically distributed to the winner(s) after result validation.
+          title: "4. Nature of the Service",
+          content: `SKY PLAY ENTERTAINMENT is a skill-based e-sport competition and digital entertainment platform. Payments remunerate access to digital services, event organization and competitive infrastructure.
+
+The competitions offered do not constitute games of chance. Results depend exclusively on game mastery, strategy and participant capabilities. SKY PLAY does not intervene in gameplay and cannot influence its outcome.`
+        },
+        {
+          title: "5. Competition System and Participation Pass",
+          content: `**How competitions work:**
+• Participation passes are purchased in CFA Franc (XAF) from your SKY PLAY Sky Credits.
+• An organization fee is charged by SKY PLAY on each competition (between 10% and 25% depending on competition format).
+• Performance rewards are automatically distributed to the winner(s) after result validation.
 
 **Result declaration:**
 • Results are declared under the exclusive responsibility of participating players.
 • You must provide valid proof (screenshots, videos) in case of dispute.
-• Any false result declaration results in immediate account suspension and winnings confiscation.
+• Any false result declaration results in immediate account suspension and reward confiscation.
 
-**Challenge cancellation:**
-• A challenge can be cancelled if no opponent shows up within the allotted time.
-• In case of cancellation, stakes are fully refunded to the Wallet.
-• SKY PLAY reserves the right to cancel any suspicious or fraudulent challenge.`
+**Competition cancellation:**
+• A competition can be cancelled if no opponent shows up within the allotted time.
+• In case of cancellation, participation passes are fully refunded to Sky Credits.
+• SKY PLAY reserves the right to cancel any suspicious or fraudulent competition.`
         },
         {
-          title: "5. Wallet and Payments",
-          content: `**Fund deposit:**
+          title: "6. Sky Credits and Payments",
+          content: `**Top-up:**
 • Accepted methods: Mobile Money (MTN Mobile Money, Orange Money) and credit card.
-• Minimum deposit amount: 500 CFA.
-• Funds are credited instantly or within 5 minutes maximum.
+• Minimum top-up amount: 500 CFA.
+• Sky Credits are credited instantly or within 5 minutes maximum.
 
 **Fund withdrawal:**
 • Withdrawals only to Mobile Money (MTN or Orange).
@@ -199,17 +211,17 @@ SKY PLAY reserves the right to suspend or close any account in case of violation
 
 **Important:**
 • SKY PLAY is not a financial institution and does not offer banking services.
-• Wallet funds do not generate any interest.
+• Sky Credits do not generate any interest.
 • SKY PLAY uses secure third-party providers (Flutterwave, MTN, Orange) for payment processing.`
         },
         {
-          title: "6. Intellectual Property",
+          title: "7. Intellectual Property",
           content: `All elements of the SKY PLAY platform (logos, trademarks, designs, texts, images, videos, source code) are the exclusive property of SKY PLAY ENTERTAINMENT and are protected by Cameroonian and international intellectual property laws.
 
 Any reproduction, representation, modification, publication or total or partial adaptation without prior written authorization is strictly prohibited and constitutes counterfeiting punishable under the Cameroonian Penal Code.`
         },
         {
-          title: "7. Responsibilities",
+          title: "8. Responsibilities",
           content: `**SKY PLAY's responsibility:**
 • SKY PLAY is not responsible for third-party video game results (FIFA, Call of Duty, etc.).
 • SKY PLAY is not the publisher of these games and does not control their operation.
@@ -225,7 +237,7 @@ Any reproduction, representation, modification, publication or total or partial 
 SKY PLAY cannot be held responsible for indirect damages, loss of profits, data loss or any other damage resulting from the use or inability to use the platform.`
         },
         {
-          title: "8. Disputes and Arbitration",
+          title: "9. Disputes and Arbitration",
           content: `**Disputes between players:**
 • In case of disagreement on a result, contact support@skyplay.cm with your evidence.
 • The SKY PLAY team examines the evidence and makes a decision within 48-72 hours.
@@ -239,13 +251,13 @@ Email: support@skyplay.cm
 Response time: 24-48 hours`
         },
         {
-          title: "9. Applicable Law and Jurisdiction",
+          title: "10. Applicable Law and Jurisdiction",
           content: `These T&C are governed by Cameroonian law.
 
 In case of dispute not resolved amicably, the courts of Douala, Cameroon, shall have sole jurisdiction, notwithstanding plurality of defendants or third-party claims.`
         },
         {
-          title: "10. Modification of T&C",
+          title: "11. Modification of T&C",
           content: `SKY PLAY reserves the right to modify these T&C at any time to adapt to legal, technical or commercial developments.
 
 Users will be informed of any substantial modification by email at least 7 days before they come into effect.

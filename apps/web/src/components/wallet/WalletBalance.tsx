@@ -47,7 +47,7 @@ export default function WalletBalance() {
       <button
         onClick={() => setShowDeposit(true)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 hover:border-[#0097FC]/50 transition-all group"
-        title="Wallet — cliquer pour déposer"
+        title="Sky Credits — cliquer pour recharger"
       >
         <Wallet className="w-3.5 h-3.5 text-[#0097FC]" />
         <span className="text-sm font-bold dark:text-white text-[#00165F]">{formatCFA(balance)}</span>

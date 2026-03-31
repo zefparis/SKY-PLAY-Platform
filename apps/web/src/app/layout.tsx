@@ -6,12 +6,12 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import SessionRestorer from '@/components/providers/SessionRestorer'
 
 export const metadata: Metadata = {
-  title: 'SKY PLAY — Défie. Joue. Gagne. | Plateforme gaming Afrique',
-  description: "Première plateforme de défis gaming avec mise en argent réel en Afrique centrale. FIFA, COD, Free Fire. Gagnez jusqu'\u00e0 450\u00a0000 CFA.",
-  keywords: 'gaming, défis, argent, Cameroun, Mobile Money, FIFA, COD, Free Fire, SKY PLAY',
+  title: 'SKY PLAY ENTERTAINMENT — Compétitions e-sport fondées sur l\'habileté | Cameroun',
+  description: "SKY PLAY ENTERTAINMENT — Plateforme de compétitions e-sport fondées sur l'habileté au Cameroun. Accédez à des duels, ligues et tournois via des pass de participation. FIFA, COD, Free Fire.",
+  keywords: 'e-sport, compétitions, habileté, Cameroun, Mobile Money, FIFA, COD, Free Fire, SKY PLAY, tournoi, pass de participation',
   openGraph: {
-    title: 'SKY PLAY — Défie. Joue. Gagne.',
-    description: "Gagnez jusqu'\u00e0 450\u00a0000 CFA en jouant \u00e0 vos jeux préférés.",
+    title: 'SKY PLAY ENTERTAINMENT — Compétitions e-sport | Cameroun',
+    description: "Compétitions e-sport fondées sur l'habileté au Cameroun. Pass de participation dès 2 000 CFA.",
     url: 'https://sky-play-platform.vercel.app',
     siteName: 'SKY PLAY',
     type: 'website',

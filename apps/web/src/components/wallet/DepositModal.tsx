@@ -108,7 +108,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
-            <h2 className="text-lg font-black dark:text-white text-[#00165F]">Déposer des fonds</h2>
+            <h2 className="text-lg font-black dark:text-white text-[#00165F]">Recharger Sky Credits</h2>
             <p className="text-xs dark:text-white/50 text-[#00165F]/50 mt-0.5">
               {step === 1 ? 'Choisir le montant' : step === 2 ? 'Méthode de paiement' : 'En attente de paiement'}
             </p>
@@ -172,7 +172,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
                 {finalAmount >= 500 && (
                   <div className="rounded-xl bg-[#0097FC]/10 border border-[#0097FC]/20 px-4 py-3 text-center">
                     <p className="text-2xl font-black text-[#0097FC]">{formatCFA(finalAmount)}</p>
-                    <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">seront crédités sur votre wallet</p>
+                    <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">seront crédités sur vos Sky Credits</p>
                   </div>
                 )}
               </motion.div>
@@ -243,7 +243,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
 
                 {/* Récap */}
                 <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-3 flex justify-between items-center">
-                  <span className="text-sm dark:text-white/60 text-[#00165F]/60">Montant à déposer</span>
+                  <span className="text-sm dark:text-white/60 text-[#00165F]/60">Montant à recharger</span>
                   <span className="font-black text-[#0097FC]">{formatCFA(finalAmount)}</span>
                 </div>
               </motion.div>
@@ -269,7 +269,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
                   <>
                     <CheckCircle className="w-14 h-14 text-green-400 mx-auto mb-4" />
                     <p className="font-black dark:text-white text-[#00165F] text-xl">Dépôt confirmé ! 🎉</p>
-                    <p className="text-sm dark:text-white/60 text-[#00165F]/60 mt-2">{formatCFA(finalAmount)} crédités sur votre wallet</p>
+                    <p className="text-sm dark:text-white/60 text-[#00165F]/60 mt-2">{formatCFA(finalAmount)} crédités sur vos Sky Credits</p>
                   </>
                 )}
                 {pollStatus === 'failed' && (
@@ -325,7 +325,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#0097FC] text-white font-bold text-sm disabled:opacity-40 hover:bg-[#0097FC]/90"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {method === 'CARD' ? 'Payer par carte' : 'Confirmer le dépôt'}
+                {method === 'CARD' ? 'Payer par carte' : 'Confirmer le rechargement'}
               </button>
             )}
           </div>

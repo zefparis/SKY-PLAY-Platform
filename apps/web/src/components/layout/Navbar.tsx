@@ -43,7 +43,7 @@ const Navbar = () => {
     { href: '/dashboard', label: 'Jeux',   icon: Gamepad2 },
     { href: '/challenges', label: 'Défis',  icon: Trophy },
     { href: '/chat',       label: 'Chat',   icon: MessageCircle },
-    { href: '/wallet',     label: 'Wallet', icon: Wallet },
+    { href: '/wallet',     label: 'Sky Credits', icon: Wallet },
   ]
 
   return (

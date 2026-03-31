@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload } from 'lucide-react';
 import { formatCFA, computeNetPot, computePrizes } from '@/lib/currency';
+import ChallengeRules from '@/components/challenges/ChallengeRules';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -46,6 +47,7 @@ export default function ChallengePage() {
   const [rank, setRank] = useState(1);
   const [screenshotUrl, setScreenshotUrl] = useState('');
   const [disputeReason, setDisputeReason] = useState('');
+  const [showRules, setShowRules] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -155,7 +157,7 @@ export default function ChallengePage() {
         {/* Section 2 — Pot & Distribution */}
         <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
           <div className="text-center mb-4">
-            <p className="text-xs dark:text-white/50 text-[#00165F]/50 mb-1">💰 Pot total</p>
+            <p className="text-xs dark:text-white/50 text-[#00165F]/50 mb-1">🏆 Dotation de la compétition</p>
             <p className="text-3xl sm:text-4xl font-black text-[#0097FC]">{formatCFA(challenge.potTotal)}</p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
@@ -172,7 +174,7 @@ export default function ChallengePage() {
             ))}
           </div>
           <p className="text-xs dark:text-white/40 text-[#00165F]/40 text-center mt-3">
-            Commission plateforme: {Math.round(challenge.commission * 100)}%
+            Frais d\'organisation : {Math.round(challenge.commission * 100)}%
           </p>
         </div>
 
@@ -216,23 +218,33 @@ export default function ChallengePage() {
           </div>
         )}
 
-        {/* OPEN — Rejoindre */}
+        {/* OPEN — S'inscrire */}
         {challenge.status === 'OPEN' && !isParticipant && (
           <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
-            <h2 className="font-bold dark:text-white text-[#00165F] mb-3">Rejoindre ce défi</h2>
+            <h2 className="font-bold dark:text-white text-[#00165F] mb-3">S'inscrire à la compétition</h2>
             <div className="rounded-xl dark:bg-[#FD2E5F]/10 bg-red-50 border border-[#FD2E5F]/20 p-3 mb-4">
               <p className="text-sm text-[#FD2E5F] font-semibold text-center">
-                {formatCFA(challenge.entryFee)} seront débités de ton wallet
+                Frais d'inscription : {formatCFA(challenge.entryFee)} Sky Credits
               </p>
             </div>
             <button
-              onClick={() => doAction('join', {})}
-              disabled={actionLoading}
-              className="w-full py-3 rounded-xl bg-[#0097FC] hover:bg-[#0097FC]/90 text-white font-bold transition-all hover:scale-[1.02] disabled:opacity-50"
+              onClick={() => setShowRules(true)}
+              className="w-full py-3 rounded-xl bg-[#0097FC] hover:bg-[#0097FC]/90 text-white font-bold transition-all hover:scale-[1.02]"
             >
-              {actionLoading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> : `Rejoindre (${formatCFA(challenge.entryFee)})`}
+              Voir le règlement et s'inscrire ({formatCFA(challenge.entryFee)})
             </button>
           </div>
+        )}
+
+        {/* Règlement de compétition modal */}
+        {showRules && (
+          <ChallengeRules
+            challenge={challenge}
+            prizeFirst={prizes.first}
+            onAccept={() => { setShowRules(false); doAction('join', {}); }}
+            onCancel={() => setShowRules(false)}
+            actionLoading={actionLoading}
+          />
         )}
 
         {/* IN_PROGRESS — Déclarer résultat */}

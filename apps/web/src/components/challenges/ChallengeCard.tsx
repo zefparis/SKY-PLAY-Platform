@@ -8,10 +8,10 @@ import { formatCFA, computeNetPot, computePrizes } from '@/lib/currency';
 import { getAuthToken } from '@/lib/get-auth-token';
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  DUEL: { label: '1v1 Duel', color: 'bg-blue-500' },
+  DUEL: { label: 'Duel Classé', color: 'bg-blue-500' },
   SMALL_CHALLENGE: { label: 'Challenge', color: 'bg-green-500' },
   STANDARD: { label: 'Standard', color: 'bg-purple-500' },
-  MEDIUM_TOURNAMENT: { label: 'Tournoi M', color: 'bg-orange-500' },
+  MEDIUM_TOURNAMENT: { label: 'Tournoi', color: 'bg-orange-500' },
   BIG_TOURNAMENT: { label: 'Tournoi L', color: 'bg-red-500' },
   PREMIUM_TOURNAMENT: { label: 'Premium', color: 'bg-yellow-500' },
 };
@@ -81,7 +81,7 @@ const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: Challenge
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce défi ? Votre mise sera remboursée.')) return;
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette compétition ? Votre pass de participation sera remboursé.')) return;
     
     setDeleting(true);
     try {
@@ -139,16 +139,16 @@ const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: Challenge
 
         {/* Pot */}
         <div className="mb-3 text-center py-2 rounded-lg dark:bg-white/5 bg-[#0097FC]/5">
-          <p className="text-xs dark:text-white/50 text-[#00165F]/50 mb-0.5">💰 Pot total</p>
+          <p className="text-xs dark:text-white/50 text-[#00165F]/50 mb-0.5">🏆 Dotation</p>
           <p className="text-xl font-black text-[#0097FC]">{formatCFA(challenge.potTotal)}</p>
           <p className="text-xs text-[#FD2E5F] font-semibold">
-            1er peut gagner {formatCFA(prizes.first)}
+            Prime 1er : {formatCFA(prizes.first)}
           </p>
         </div>
 
-        {/* Entrée */}
+        {/* Pass */}
         <div className="flex items-center justify-between text-xs mb-2">
-          <span className="dark:text-white/50 text-[#00165F]/50">Entrée</span>
+          <span className="dark:text-white/50 text-[#00165F]/50">Pass</span>
           <span className="dark:text-white text-[#00165F] font-semibold">{formatCFA(challenge.entryFee)}</span>
         </div>
 
@@ -185,7 +185,7 @@ const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: Challenge
               onClick={(e) => { e.stopPropagation(); onJoin?.() ?? router.push(`/challenges/${challenge.id}`); }}
               className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#0097FC] hover:bg-[#0097FC]/90 text-white transition-colors hover:scale-105 transform"
             >
-              Rejoindre
+              S'inscrire
             </button>
           </div>
         )}

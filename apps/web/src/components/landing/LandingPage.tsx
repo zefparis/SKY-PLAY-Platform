@@ -34,11 +34,11 @@ const translations = {
     how: {
       title: 'Comment ça marche ?',
       steps: [
-        { icon: '🎮', title: 'Crée ton défi', desc: "Choisis ton jeu, définis la mise (dès 2 000 CFA) et lance ton défi. D'autres joueurs peuvent rejoindre." },
-        { icon: '⚔️', title: 'Joue sur ta plateforme', desc: "Jouez normalement sur FIFA, COD, Free Fire ou tout autre jeu. SKY PLAY ne modifie pas votre jeu." },
-        { icon: '💰', title: 'Récupère tes gains', desc: "Déclarez votre résultat, le gagnant est payé instantanément sur Mobile Money ou carte." },
+        { icon: '🎮', title: 'Achetez votre Pass de participation', desc: "Choisissez votre compétition et achetez votre pass d'accès. Votre paiement couvre l'organisation, l'animation et l'infrastructure de la compétition." },
+        { icon: '⚔️', title: 'Jouez sur votre plateforme', desc: "Jouez normalement sur FIFA, COD, Free Fire ou tout autre jeu. SKY PLAY ne modifie pas votre jeu." },
+        { icon: '🏆', title: 'Recevez votre prime de performance', desc: "Le vainqueur reçoit une prime de performance prédéfinie selon le règlement officiel de la compétition." },
       ],
-      cta: 'Je veux gagner !',
+      cta: 'Je veux participer !',
     },
     games: {
       title: 'Jeux supportés',
@@ -46,11 +46,11 @@ const translations = {
       note: '+ Tout autre jeu sur demande',
     },
     table: {
-      title: 'Combien pouvez-vous gagner ?',
-      subtitle: 'Basé sur notre modèle de commission transparent',
-      note: "SKY PLAY prélève une commission uniquement sur les défis complétés. Aucun frais d'abonnement.",
-      badge: 'MEILLEUR GAIN',
-      cols: ['Type', 'Joueurs', 'Mise', 'Pot total', '1er gagne', 'Commission'],
+      title: 'Dotations des compétitions',
+      subtitle: 'Primes de performance prédéfinies par règlement officiel',
+      note: "⚖️ Les primes sont prédéfinies et encadrées par un règlement officiel publié avant chaque compétition. SKY PLAY ENTERTAINMENT est une plateforme de compétitions e-sport fondées sur l'habileté.",
+      badge: 'MEILLEURE PRIME',
+      cols: ['Type', 'Joueurs', 'Pass', 'Dotation', 'Prime 1er', "Frais d'org."],
       rows: [
         { type: 'Duel 1v1', players: '2', stake: '2 000 CFA', pot: '4 000 CFA', winner: '3 000 CFA', fee: '25%', highlight: false },
         { type: 'Petit challenge', players: '5', stake: '2 000 CFA', pot: '10 000 CFA', winner: '5 000 CFA', fee: '20%', highlight: false },
@@ -71,13 +71,14 @@ const translations = {
     },
     footer: {
       tagline: 'La plateforme de défis gaming #1 en Afrique centrale',
+      legal: 'SKY PLAY ENTERTAINMENT — Plateforme de compétitions e-sport et de divertissement numérique fondées sur l\'habileté.',
       sections: [
-        { title: 'Plateforme', links: [{ text: 'Défis', href: '/challenges' }, { text: 'Wallet', href: '/wallet' }, { text: 'Classement', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
+        { title: 'Plateforme', links: [{ text: 'Compétitions', href: '/challenges' }, { text: 'Sky Credits', href: '/wallet' }, { text: 'Classement', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
         { title: 'Légal', links: [{ text: 'CGU', href: '/cgu' }, { text: 'Politique de confidentialité', href: '/politique-confidentialite' }, { text: 'Jeu responsable', href: '/jeu-responsable' }] },
         { title: 'Contact', links: [{ text: 'support@skyplay.cm', href: 'mailto:support@skyplay.cm' }, { text: 'Discord', href: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || 'https://discord.gg/skyplay' }, { text: 'Twitter / X', href: '#' }] },
       ],
-      copyright: '© 2026 SKY PLAY — Tous droits réservés',
-      disclaimer: 'SKY PLAY est une plateforme de divertissement. Jouez de manière responsable.',
+      copyright: '© 2026 SKY PLAY ENTERTAINMENT — Tous droits réservés',
+      disclaimer: 'Compétitions fondées sur l\'habileté. Jouez de manière responsable.',
     },
   },
   en: {
@@ -102,11 +103,11 @@ const translations = {
     how: {
       title: 'How it works?',
       steps: [
-        { icon: '🎮', title: 'Create your challenge', desc: "Choose your game, set your stake (from 2,000 XAF) and launch your challenge. Other players can join." },
+        { icon: '🎮', title: 'Buy your participation Pass', desc: "Choose your competition and buy your access pass. Your payment covers the organization, animation and infrastructure of the competition." },
         { icon: '⚔️', title: 'Play on your platform', desc: "Play normally on FIFA, COD, Free Fire or any game. SKY PLAY doesn't modify your game." },
-        { icon: '💰', title: 'Collect your winnings', desc: "Submit your result, the winner gets paid instantly via Mobile Money or card." },
+        { icon: '🏆', title: 'Receive your performance reward', desc: "The winner receives a predefined performance reward according to the official competition rules." },
       ],
-      cta: 'I want to win!',
+      cta: 'I want to compete!',
     },
     games: {
       title: 'Supported Games',
@@ -114,11 +115,11 @@ const translations = {
       note: '+ Any other game on request',
     },
     table: {
-      title: 'How much can you win?',
-      subtitle: 'Based on our transparent commission model',
-      note: 'SKY PLAY only takes a commission on completed challenges. No subscription fees.',
-      badge: 'BEST PRIZE',
-      cols: ['Type', 'Players', 'Stake', 'Total pot', '1st wins', 'Commission'],
+      title: 'Competition Prize Pools',
+      subtitle: 'Performance rewards predefined by official rules',
+      note: '⚖️ Prizes are predefined and governed by official rules published before each competition. SKY PLAY ENTERTAINMENT is a skill-based e-sport competition platform.',
+      badge: 'BEST REWARD',
+      cols: ['Type', 'Players', 'Pass', 'Prize Pool', '1st Prize', 'Org. Fee'],
       rows: [
         { type: '1v1 Duel', players: '2', stake: '2,000 XAF', pot: '4,000 XAF', winner: '3,000 XAF', fee: '25%', highlight: false },
         { type: 'Small challenge', players: '5', stake: '2,000 XAF', pot: '10,000 XAF', winner: '5,000 XAF', fee: '20%', highlight: false },
@@ -139,13 +140,14 @@ const translations = {
     },
     footer: {
       tagline: 'The #1 gaming challenge platform in Central Africa',
+      legal: 'SKY PLAY ENTERTAINMENT — Skill-based e-sport competition and digital entertainment platform.',
       sections: [
-        { title: 'Platform', links: [{ text: 'Challenges', href: '/challenges' }, { text: 'Wallet', href: '/wallet' }, { text: 'Leaderboard', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
+        { title: 'Platform', links: [{ text: 'Competitions', href: '/challenges' }, { text: 'Sky Credits', href: '/wallet' }, { text: 'Leaderboard', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
         { title: 'Legal', links: [{ text: 'Terms of Service', href: '/cgu' }, { text: 'Privacy Policy', href: '/politique-confidentialite' }, { text: 'Responsible Gaming', href: '/jeu-responsable' }] },
         { title: 'Contact', links: [{ text: 'support@skyplay.cm', href: 'mailto:support@skyplay.cm' }, { text: 'Discord', href: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || 'https://discord.gg/skyplay' }, { text: 'Twitter / X', href: '#' }] },
       ],
-      copyright: '© 2026 SKY PLAY — All rights reserved',
-      disclaimer: 'SKY PLAY is an entertainment platform. Play responsibly.',
+      copyright: '© 2026 SKY PLAY ENTERTAINMENT — All rights reserved',
+      disclaimer: 'Skill-based competitions. Play responsibly.',
     },
   },
 }
@@ -299,7 +301,7 @@ function HeroSection({ t, openSignup }: { t: Trans; openSignup: () => void }) {
               <div className="h-8 w-8 rounded-xl bg-[#0097FC] text-center text-lg leading-8">⚽</div>
               <div>
                 <div className="text-xs font-bold text-white">FIFA 25 — 1v1</div>
-                <div className="text-[10px] text-white/50">Mise : 5 000 CFA</div>
+                <div className="text-[10px] text-white/50">Pass : 5 000 CFA</div>
               </div>
             </div>
             <div className="h-1.5 w-full rounded-full bg-white/10">
@@ -567,9 +569,12 @@ function FooterSection({ t }: { t: Trans }) {
             </div>
           ))}
         </div>
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-white/8 pt-8 text-xs text-white/30 sm:flex-row">
-          <span>{t.footer.copyright}</span>
-          <span className="text-center">{t.footer.disclaimer}</span>
+        <div className="border-t border-white/8 pt-8 space-y-3">
+          <p className="text-xs text-white/40 text-center">{t.footer.legal}</p>
+          <div className="flex flex-col items-center justify-between gap-3 text-xs text-white/30 sm:flex-row">
+            <span>{t.footer.copyright}</span>
+            <span className="text-center">{t.footer.disclaimer}</span>
+          </div>
         </div>
       </div>
     </footer>

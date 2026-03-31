@@ -8,8 +8,12 @@ import {
   Query,
   UseGuards,
   Request,
+  Res,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
+import { Response } from 'express';
+import * as PDFDocument from 'pdfkit';
 import { ChallengesService } from './challenges.service';
 import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import {
@@ -49,6 +53,164 @@ export class ChallengesController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.challengesService.findOne(id);
+  }
+
+  @Get(':id/rules.pdf')
+  async downloadRulesPdf(@Param('id') id: string, @Res() res: Response) {
+    const challenge = await this.challengesService.findOne(id);
+    if (!challenge) throw new NotFoundException('Compétition introuvable');
+
+    const TYPE_LABELS: Record<string, string> = {
+      DUEL: 'Duel Classé 1v1',
+      SMALL_CHALLENGE: 'Petit Challenge',
+      STANDARD: 'Challenge Standard',
+      MEDIUM_TOURNAMENT: 'Tournoi Moyen',
+      BIG_TOURNAMENT: 'Grand Tournoi',
+      PREMIUM_TOURNAMENT: 'Tournoi Premium',
+    };
+
+    const entryFee: number = Number(challenge.entryFee);
+    const potTotal: number = Number(challenge.potTotal);
+    const commission: number = Number(challenge.commission);
+    const orgFee = Math.round(commission * 100);
+    const netPot = potTotal * (1 - commission);
+    const prizeFirst = Math.floor(netPot * 0.5);
+    const typeLabel = TYPE_LABELS[challenge.type] ?? challenge.type;
+    const formatCFA = (n: number) =>
+      new Intl.NumberFormat('fr-FR').format(Math.round(n)) + '\u00a0CFA';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('fr-FR', {
+      day: '2-digit', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    const filename = `reglement-${id}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    doc.pipe(res);
+
+    // ─── Header ───────────────────────────────────────────────────────────────
+    doc
+      .fillColor('#0097FC')
+      .fontSize(22)
+      .font('Helvetica-Bold')
+      .text('SKY PLAY ENTERTAINMENT', { align: 'center' });
+
+    doc
+      .fillColor('#333333')
+      .fontSize(10)
+      .font('Helvetica')
+      .text('Plateforme de compétitions e-sport fondées sur l\'habileté — Cameroun', { align: 'center' });
+
+    doc.moveDown(0.5);
+    doc
+      .moveTo(50, doc.y)
+      .lineTo(545, doc.y)
+      .strokeColor('#0097FC')
+      .lineWidth(2)
+      .stroke();
+    doc.moveDown(0.8);
+
+    // ─── Title ────────────────────────────────────────────────────────────────
+    doc
+      .fillColor('#111111')
+      .fontSize(16)
+      .font('Helvetica-Bold')
+      .text('RÈGLEMENT OFFICIEL', { align: 'center' });
+
+    doc
+      .fillColor('#333333')
+      .fontSize(13)
+      .font('Helvetica')
+      .text(challenge.title, { align: 'center' });
+
+    doc.moveDown(0.4);
+    doc
+      .fillColor('#888888')
+      .fontSize(9)
+      .text(`Généré le ${dateStr}`, { align: 'center' });
+    doc.moveDown(1);
+
+    // ─── Info table ───────────────────────────────────────────────────────────
+    const rows: [string, string][] = [
+      ['Organisateur', 'SKY PLAY ENTERTAINMENT'],
+      ['Type de compétition', typeLabel],
+      ['Jeu', challenge.game],
+      ['Frais d\'inscription (Pass)', formatCFA(entryFee)],
+      ['Format', challenge.maxPlayers === 2 ? 'Match unique' : `${challenge.maxPlayers} joueurs`],
+      ['Dotation totale', formatCFA(potTotal)],
+      ['Prime de performance — 1er', formatCFA(prizeFirst)],
+      ['Frais d\'organisation', `${formatCFA(Math.round(potTotal * commission))} (${orgFee}%)`],
+    ];
+
+    const colX = [50, 280];
+    const rowH = 22;
+    let y = doc.y;
+
+    rows.forEach(([label, value], i) => {
+      const bg = i % 2 === 0 ? '#f5f8ff' : '#ffffff';
+      doc.rect(50, y, 495, rowH).fillColor(bg).fill();
+      doc.fillColor('#555555').fontSize(10).font('Helvetica').text(label, colX[0] + 4, y + 6);
+      doc.fillColor('#111111').fontSize(10).font('Helvetica-Bold').text(value, colX[1], y + 6);
+      y += rowH;
+    });
+
+    doc.y = y + 10;
+    doc.moveDown(1);
+
+    // ─── Règles ───────────────────────────────────────────────────────────────
+    doc
+      .fillColor('#0097FC')
+      .fontSize(13)
+      .font('Helvetica-Bold')
+      .text('Règles de la compétition');
+    doc.moveDown(0.4);
+
+    const rules = [
+      ['Critères de victoire', 'Score le plus élevé déclaré avec capture d\'écran obligatoire.'],
+      ['Délai de contestation', '30 minutes après la déclaration du résultat.'],
+      ['Conditions d\'annulation', 'Remboursement intégral du pass si la compétition n\'est pas complétée sous 24h.'],
+      ['Fair-play', 'Tout logiciel de triche entraîne l\'annulation immédiate et la confiscation des primes.'],
+      ['Litiges', 'En cas de désaccord, contactez support@skyplay.cm avec preuves sous 30 minutes.'],
+    ];
+
+    rules.forEach(([title, desc]) => {
+      doc
+        .fillColor('#222222')
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .text(`• ${title} : `, { continued: true })
+        .font('Helvetica')
+        .fillColor('#444444')
+        .text(desc);
+      doc.moveDown(0.3);
+    });
+
+    doc.moveDown(0.8);
+
+    // ─── Footer légal ─────────────────────────────────────────────────────────
+    doc
+      .moveTo(50, doc.y)
+      .lineTo(545, doc.y)
+      .strokeColor('#cccccc')
+      .lineWidth(1)
+      .stroke();
+    doc.moveDown(0.5);
+
+    doc
+      .fillColor('#888888')
+      .fontSize(9)
+      .font('Helvetica')
+      .text(
+        'SKY PLAY ENTERTAINMENT — Compétition fondée sur l\'habileté — Cameroun\n' +
+        'Ce règlement est publié avant l\'ouverture de la compétition et fait foi entre les parties.\n' +
+        'support@skyplay.cm',
+        { align: 'center' },
+      );
+
+    doc.end();
   }
 
   @UseGuards(JwtDualGuard)

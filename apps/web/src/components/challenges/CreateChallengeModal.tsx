@@ -125,7 +125,7 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
                         <p className="font-bold text-sm dark:text-white text-[#00165F]">{type.label}</p>
                         <p className="text-xs dark:text-white/50 text-[#00165F]/50">{type.maxPlayers} joueurs max</p>
                         <p className="text-xs font-semibold text-[#0097FC] mt-1">{formatCFA(type.entryFee)}</p>
-                        <p className="text-xs text-[#FD2E5F]">Gagner jusqu'à {formatCFA(typePrizes.first)}</p>
+                        <p className="text-xs text-[#FD2E5F]">Prime de performance : {formatCFA(typePrizes.first)}</p>
                       </button>
                     );
                   })}
@@ -168,17 +168,17 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
 
                   {/* Financial summary */}
                   <div className="rounded-xl dark:bg-white/5 bg-gray-50 p-4 space-y-2">
-                    <p className="text-xs font-semibold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wide">Résumé financier</p>
+                    <p className="text-xs font-semibold dark:text-white/50 text-[#00165F]/50 uppercase tracking-wide">Résumé de la compétition</p>
                     <div className="flex justify-between text-sm">
-                      <span className="dark:text-white/70 text-[#00165F]/70">Entrée (débité)</span>
+                      <span className="dark:text-white/70 text-[#00165F]/70">Pass de participation</span>
                       <span className="font-bold text-[#FD2E5F]">{formatCFA(selectedType.entryFee)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="dark:text-white/70 text-[#00165F]/70">Pot si complet ({selectedType.maxPlayers} joueurs)</span>
+                      <span className="dark:text-white/70 text-[#00165F]/70">Dotation si complet ({selectedType.maxPlayers} joueurs)</span>
                       <span className="font-bold text-[#0097FC]">{formatCFA(selectedType.entryFee * selectedType.maxPlayers)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="dark:text-white/70 text-[#00165F]/70">1er prix possible</span>
+                      <span className="dark:text-white/70 text-[#00165F]/70">Prime de performance 1er</span>
                       <span className="font-bold text-[#FD2E5F]">{formatCFA(prizes.first)}</span>
                     </div>
                   </div>
@@ -209,15 +209,15 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
                   </div>
                   <div className="h-px dark:bg-white/10 bg-gray-200" />
                   <div className="flex justify-between">
-                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm font-semibold">Débit wallet</span>
+                    <span className="dark:text-white/60 text-[#00165F]/60 text-sm font-semibold">Frais d'inscription</span>
                     <span className="font-black text-[#FD2E5F]">{formatCFA(selectedType.entryFee)}</span>
                   </div>
                 </div>
 
                 <div className="rounded-xl bg-[#0097FC]/10 border border-[#0097FC]/30 p-4 text-center mb-4">
-                  <p className="text-sm dark:text-white/70 text-[#00165F]/70 mb-1">Si le défi se remplit ({selectedType.maxPlayers} joueurs)</p>
+                  <p className="text-sm dark:text-white/70 text-[#00165F]/70 mb-1">Si la compétition est complète ({selectedType.maxPlayers} joueurs)</p>
                   <p className="text-2xl font-black text-[#0097FC]">{formatCFA(prizes.first)}</p>
-                  <p className="text-xs text-[#FD2E5F]">tu peux gagner en arrivant 1er 🏆</p>
+                  <p className="text-xs text-[#FD2E5F]">prime de performance si tu arrives 1er 🏆</p>
                 </div>
 
                 {error && (
@@ -258,7 +258,7 @@ export default function CreateChallengeModal({ onClose, onCreated }: CreateChall
               ) : (
                 <Swords className="w-4 h-4" />
               )}
-              Créer et rejoindre
+              Créer et s'inscrire
             </button>
           )}
         </div>
