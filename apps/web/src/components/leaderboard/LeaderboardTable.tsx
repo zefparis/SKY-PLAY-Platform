@@ -1,5 +1,5 @@
 import { Trophy, Medal } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatSKY } from '@/lib/currency'
 import { useI18n } from '@/components/i18n/I18nProvider'
 
 interface LeaderboardEntry {
@@ -21,12 +21,12 @@ const LeaderboardTable = ({ entries, scoreLabel, formatScore }: LeaderboardTable
   const formatCompactEarnings = (value: number) => {
     if (formatScore) return formatScore(value)
     if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(value % 1000000 === 0 ? 0 : 1)}M XOF`
+      return `${(value / 1000000).toFixed(value % 1000000 === 0 ? 0 : 1)}M SKY`
     }
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}K XOF`
+      return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}K SKY`
     }
-    return formatCurrency(value)
+    return formatSKY(value)
   }
 
   const getRankIcon = (rank: number) => {
@@ -80,7 +80,7 @@ const LeaderboardTable = ({ entries, scoreLabel, formatScore }: LeaderboardTable
               <div className="min-w-0 sm:max-w-[180px]">
                 <p className="truncate text-sm font-bold text-secondary tabular-nums sm:text-lg">
                   <span className="sm:hidden">{formatCompactEarnings(entry.earnings)}</span>
-                  <span className="hidden sm:inline">{formatCurrency(entry.earnings)}</span>
+                  <span className="hidden sm:inline">{formatCompactEarnings(entry.earnings)}</span>
                 </p>
                 <p className="hidden text-xs text-primary/70 dark:text-white/60 sm:block">{scoreLabel ?? t('leaderboard.totalEarnings')}</p>
               </div>
