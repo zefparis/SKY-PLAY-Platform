@@ -61,6 +61,15 @@ export const useChat = (): UseChatReturn => {
       }
     }
 
+    const handleRoomHistory = (data: { room: string; messages: Message[] }) => {
+      setMessages((prev) => {
+        // Supprimer les éventuels doublons (même id) avant de fusionner
+        const existingIds = new Set(data.messages.map((m) => m.id))
+        const otherMsgs = prev.filter((m) => !existingIds.has(m.id))
+        return [...data.messages, ...otherMsgs]
+      })
+    }
+
     const handleMessage = (message: Message) => {
       setMessages((prev) => [...prev, message])
     }
@@ -90,6 +99,7 @@ export const useChat = (): UseChatReturn => {
     newSocket.on('connect', handleConnect)
     newSocket.on('disconnect', handleDisconnect)
     newSocket.on('connected', handleConnected)
+    newSocket.on('room_history', handleRoomHistory)
     newSocket.on('message', handleMessage)
     newSocket.on('private_message', handlePrivateMessage)
     newSocket.on('user_joined', handleUserJoined)
@@ -105,6 +115,7 @@ export const useChat = (): UseChatReturn => {
       newSocket.off('connect', handleConnect)
       newSocket.off('disconnect', handleDisconnect)
       newSocket.off('connected', handleConnected)
+      newSocket.off('room_history', handleRoomHistory)
       newSocket.off('message', handleMessage)
       newSocket.off('private_message', handlePrivateMessage)
       newSocket.off('user_joined', handleUserJoined)
@@ -147,7 +158,8 @@ export const useChat = (): UseChatReturn => {
 
       socket.emit('join_room', { room })
       setCurrentRoom(room)
-      setMessages([])
+      // Vider les messages de l'ancienne room — le serveur enverra room_history
+      setMessages((prev) => prev.filter((m) => m.room === room))
     },
     [socket, isConnected],
   )

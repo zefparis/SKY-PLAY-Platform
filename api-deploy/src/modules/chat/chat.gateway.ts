@@ -68,6 +68,8 @@ const VOICE_ROOMS = ['voice_global', 'voice_fr', 'voice_en'];
 const MAX_MESSAGE_LENGTH = 500;
 const RATE_LIMIT_MS = 1000;
 const MAX_VOICE_USERS = 10;
+const MESSAGE_TTL_MS = 20 * 60 * 1000; // 20 minutes
+const MAX_ROOM_MESSAGES = 200; // cap par room
 
 @WebSocketGateway({
   cors: {
@@ -83,6 +85,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onModuleInit() {
     this.challengesService.setServer(this.server);
     this.walletService.setServer(this.server);
+    // Nettoyage automatique des messages expirés toutes les minutes
+    setInterval(() => this.cleanupExpiredRoomMessages(), 60 * 1000);
+  }
+
+  private cleanupExpiredRoomMessages() {
+    const cutoff = Date.now() - MESSAGE_TTL_MS;
+    for (const [room, messages] of this.roomMessages.entries()) {
+      const fresh = messages.filter((m) => m.timestamp.getTime() > cutoff);
+      if (fresh.length === 0) this.roomMessages.delete(room);
+      else this.roomMessages.set(room, fresh);
+    }
+  }
+
+  private getRecentRoomMessages(room: string): Message[] {
+    const cutoff = Date.now() - MESSAGE_TTL_MS;
+    return (this.roomMessages.get(room) ?? []).filter(
+      (m) => m.timestamp.getTime() > cutoff,
+    );
+  }
+
+  private storeRoomMessage(message: Message) {
+    const messages = this.roomMessages.get(message.room) ?? [];
+    messages.push(message);
+    // Garder seulement les MAX_ROOM_MESSAGES derniers
+    if (messages.length > MAX_ROOM_MESSAGES) messages.splice(0, messages.length - MAX_ROOM_MESSAGES);
+    this.roomMessages.set(message.room, messages);
   }
 
   private logger = new Logger(ChatGateway.name);
@@ -90,6 +118,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private userLastMessage = new Map<string, number>();
   private voiceRooms = new Map<string, Map<string, VoiceUser>>();
   private userLastVoiceAction = new Map<string, number>();
+  private roomMessages = new Map<string, Message[]>();
   private jwksClient: jwksRsa.JwksClient;
 
   constructor(
@@ -206,6 +235,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       this.emitRoomUsers('global');
 
+      // Envoyer l'historique des 20 dernières minutes pour la room global
+      const globalHistory = this.getRecentRoomMessages('global');
+      if (globalHistory.length > 0) {
+        client.emit('room_history', { room: 'global', messages: globalHistory });
+      }
+
       client.emit('connected', {
         userId: user.id,
         username: user.username,
@@ -285,6 +320,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     this.emitRoomUsers(room);
+
+    // Envoyer l'historique des 20 dernières minutes pour cette room
+    const history = this.getRecentRoomMessages(room);
+    if (history.length > 0) {
+      client.emit('room_history', { room, messages: history });
+    }
 
     this.logger.log(`User ${user.username} joined room ${room}`);
   }
@@ -366,6 +407,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
       timestamp: new Date(),
     };
+
+    // Persister le message en mémoire avec TTL
+    this.storeRoomMessage(message);
 
     this.server.to(room).emit('message', message);
 
