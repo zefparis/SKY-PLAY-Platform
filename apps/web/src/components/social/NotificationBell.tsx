@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Bell } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
+import { io, Socket } from 'socket.io-client'
 
 type Notification = {
   id: string
@@ -20,8 +21,32 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const socketRef = useRef<Socket | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
+
+  // Connexion socket légère pour recevoir new_notification en temps réel
+  useEffect(() => {
+    if (!tokens?.idToken || !initialized) return
+
+    const API = process.env.NEXT_PUBLIC_API_URL || 'https://skyplayapi-production.up.railway.app'
+    const sock = io(`${API}/chat`, {
+      auth: { token: tokens.idToken },
+      transports: ['websocket'],
+      reconnection: true,
+    })
+    socketRef.current = sock
+
+    sock.on('new_notification', (notif: Notification) => {
+      setNotifications((prev) => [notif, ...prev].slice(0, 50))
+      setUnreadCount((prev) => prev + 1)
+    })
+
+    return () => {
+      sock.disconnect()
+      socketRef.current = null
+    }
+  }, [tokens?.idToken, initialized])
 
   useEffect(() => {
     if (!initialized || !tokens?.idToken) return

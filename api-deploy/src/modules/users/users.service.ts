@@ -1,9 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Server } from 'socket.io';
 
 @Injectable()
 export class UsersService {
+  private server: Server | null = null;
+
   constructor(private prisma: PrismaService) {}
+
+  setServer(server: Server) {
+    this.server = server;
+  }
+
+  private pushNotification(userId: string, notif: any) {
+    this.server?.to(`user_${userId}`).emit('new_notification', notif);
+  }
 
   private defaultUsernameFromEmail(email: string) {
     return email.split('@')[0];
@@ -508,7 +519,7 @@ export class UsersService {
     // Notifier les admins
     const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });
     for (const admin of admins) {
-      await this.prisma.notification.create({
+      const notif = await this.prisma.notification.create({
         data: {
           userId: admin.id,
           type: 'KYC_SUBMITTED' as any,
@@ -517,6 +528,7 @@ export class UsersService {
           data: { targetUserId: userId },
         },
       });
+      this.pushNotification(admin.id, notif);
     }
 
     return updated;
@@ -596,7 +608,7 @@ export class UsersService {
 
     const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });
     for (const admin of admins) {
-      await this.prisma.notification.create({
+      const notif = await this.prisma.notification.create({
         data: {
           userId: admin.id,
           type: 'SYSTEM' as any,
@@ -605,6 +617,7 @@ export class UsersService {
           data: { targetUserId: userId, duration: dto.duration },
         },
       });
+      this.pushNotification(admin.id, notif);
     }
 
     console.log(

@@ -61,7 +61,7 @@ export class FriendshipsService {
       },
     });
 
-    await this.prisma.notification.create({
+    const notifRequest = await this.prisma.notification.create({
       data: {
         userId: receiverId,
         type: 'FRIEND_REQUEST',
@@ -74,6 +74,7 @@ export class FriendshipsService {
         },
       },
     });
+    this.chatGateway.pushNotification(receiverId, notifRequest);
 
     // Emit Socket.io event to receiver
     this.chatGateway.emitFriendRequest(receiverId, {
@@ -137,7 +138,7 @@ export class FriendshipsService {
       },
     });
 
-    await this.prisma.notification.create({
+    const notifAccepted = await this.prisma.notification.create({
       data: {
         userId: senderId,
         type: 'FRIEND_ACCEPTED',
@@ -150,6 +151,8 @@ export class FriendshipsService {
         },
       },
     });
+
+    this.chatGateway.pushNotification(senderId, notifAccepted);
 
     // Emit Socket.io event to sender
     this.chatGateway.emitFriendAccepted(senderId, {

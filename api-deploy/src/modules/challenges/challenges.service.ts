@@ -45,6 +45,12 @@ export class ChallengesService {
     }
   }
 
+  private emitNotification(userId: string, notif: any) {
+    if (this.server) {
+      this.server.to(`user_${userId}`).emit('new_notification', notif);
+    }
+  }
+
   // ─── CREATE ──────────────────────────────────────────────────────────────────
 
   async create(userId: string, title: string, game: string, type: string) {
@@ -375,15 +381,16 @@ export class ChallengesService {
               },
             },
           });
-          await this.prisma.notification.create({
+          const notifReview = await this.prisma.notification.create({
             data: {
               userId: result.userId,
               type: 'WINNINGS_REVIEW' as any,
-              title: '� Tu as gagné !',
+              title: '🏆 Tu as gagné !',
               body: `Ton gain de ${winnings.toLocaleString('fr-FR')} SKY est en cours de validation (24h max). Tu seras notifié dès la validation.`,
               data: { challengeId, winnings },
             },
           });
+          this.emitNotification(result.userId, notifReview);
         } else {
           // ─── AUTO_APPROVED : crédit après délai de 30 min ────────────────
           const winningsReviewAt = new Date(Date.now() + AUTO_APPROVE_DELAY_MS);
@@ -396,7 +403,7 @@ export class ChallengesService {
               winningsReviewAt,
             },
           });
-          await this.prisma.notification.create({
+          const notifWon = await this.prisma.notification.create({
             data: {
               userId: result.userId,
               type: 'CHALLENGE_WON' as any,
@@ -405,6 +412,7 @@ export class ChallengesService {
               data: { challengeId, winnings, winningsReviewAt },
             },
           });
+          this.emitNotification(result.userId, notifWon);
         }
       } else {
         // ─── Pas de gains ─────────────────────────────────────────────────
@@ -412,7 +420,7 @@ export class ChallengesService {
           where: { challengeId_userId: { challengeId, userId: result.userId } },
           data: { rank: result.declaredRank, winnings: 0, winningsStatus: 'PAID' },
         });
-        await this.prisma.notification.create({
+        const notifLost = await this.prisma.notification.create({
           data: {
             userId: result.userId,
             type: 'CHALLENGE_LOST' as any,
@@ -421,6 +429,7 @@ export class ChallengesService {
             data: { challengeId },
           },
         });
+        this.emitNotification(result.userId, notifLost);
       }
 
       await this.prisma.user.update({
@@ -482,7 +491,7 @@ export class ChallengesService {
         where: { id: participant.id },
         data: { winningsStatus: 'PAID', winningsApprovedAt: new Date() },
       });
-      await this.prisma.notification.create({
+      const notifCredit = await this.prisma.notification.create({
         data: {
           userId: participant.userId,
           type: 'CHALLENGE_WON' as any,
@@ -491,6 +500,7 @@ export class ChallengesService {
           data: { challengeId: participant.challengeId, winnings: participant.winnings },
         },
       });
+      this.emitNotification(participant.userId, notifCredit);
     }
 
     return { processed: ready.length };
@@ -544,7 +554,7 @@ export class ChallengesService {
         details: { participantId, winnings: participant.winnings, challengeId: participant.challengeId },
       },
     });
-    await this.prisma.notification.create({
+    const notifApproved = await this.prisma.notification.create({
       data: {
         userId: participant.userId,
         type: 'CHALLENGE_WON' as any,
@@ -553,6 +563,7 @@ export class ChallengesService {
         data: { challengeId: participant.challengeId, winnings: participant.winnings },
       },
     });
+    this.emitNotification(participant.userId, notifApproved);
     return { approved: true, winnings: participant.winnings };
   }
 
@@ -580,7 +591,7 @@ export class ChallengesService {
         details: { participantId, winnings: participant.winnings, reason, challengeId: participant.challengeId },
       },
     });
-    await this.prisma.notification.create({
+    const notifRejected = await this.prisma.notification.create({
       data: {
         userId: participant.userId,
         type: 'WINNINGS_REVIEW' as any,
@@ -589,6 +600,7 @@ export class ChallengesService {
         data: { challengeId: participant.challengeId, reason },
       },
     });
+    this.emitNotification(participant.userId, notifRejected);
     return { rejected: true, reason };
   }
 
@@ -610,7 +622,7 @@ export class ChallengesService {
         'REFUND' as any,
         `Remboursement — ${reason}`,
       );
-      await this.prisma.notification.create({
+      const notifRefund = await this.prisma.notification.create({
         data: {
           userId: participant.userId,
           type: 'REFUND' as any,
@@ -619,6 +631,7 @@ export class ChallengesService {
           data: { challengeId, amount: challenge.entryFee },
         },
       });
+      this.emitNotification(participant.userId, notifRefund);
       refundCount++;
     }
 
@@ -699,7 +712,7 @@ export class ChallengesService {
 
     // Notify all participants
     for (const p of challenge.participants) {
-      await this.prisma.notification.create({
+      const notifDisputed = await this.prisma.notification.create({
         data: {
           userId: p.userId,
           type: 'CHALLENGE_DISPUTED' as any,
@@ -708,6 +721,7 @@ export class ChallengesService {
           data: { challengeId },
         },
       });
+      this.emitNotification(p.userId, notifDisputed);
     }
 
     this.notifyChallenge(challengeId, 'challenge_disputed', { challengeId, reason });
@@ -762,7 +776,7 @@ export class ChallengesService {
 
     // Notify participants
     for (const p of challenge.participants) {
-      await this.prisma.notification.create({
+      const notifResolved = await this.prisma.notification.create({
         data: {
           userId: p.userId,
           type: 'CHALLENGE_RESOLVED' as any,
@@ -771,6 +785,7 @@ export class ChallengesService {
           data: { challengeId: dispute.challengeId },
         },
       });
+      this.emitNotification(p.userId, notifResolved);
     }
 
     return this.findOne(dispute.challengeId);

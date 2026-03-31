@@ -88,7 +88,8 @@ export const useChat = (): UseChatReturn => {
 
     const handleRoomUsers = (data: { room: string; users: User[] }) => {
       if (data.room === currentRoom) {
-        setConnectedUsers(data.users)
+        const seen = new Set<string>()
+        setConnectedUsers(data.users.filter(u => { if (seen.has(u.id)) return false; seen.add(u.id); return true }))
       }
     }
 

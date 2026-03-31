@@ -86,6 +86,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.challengesService.setServer(this.server);
     this.walletService.setServer(this.server);
     this.chatService.setServer(this.server);
+    this.usersService.setServer(this.server);
     // Nettoyage automatique des messages expirés toutes les minutes
     setInterval(() => this.cleanupExpiredRoomMessages(), 60 * 1000);
   }
@@ -818,6 +819,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Méthode publique pour émettre depuis d'autres services (ex: ChallengesService)
   emitToConversation(conversationId: string, event: string, data: any) {
     this.server.to(`conv_${conversationId}`).emit(event, data);
+  }
+
+  pushNotification(userId: string, notif: any) {
+    this.server.to(`user_${userId}`).emit('new_notification', notif);
   }
 
   // ===== FRIEND NOTIFICATIONS =====
