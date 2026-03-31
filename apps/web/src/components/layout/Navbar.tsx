@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight } from 'lucide-react'
+import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight, Pause, Shield } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -20,14 +20,30 @@ const Navbar = () => {
   const pathname = usePathname()
   const [superMenuOpen, setSuperMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [exclusionStatus, setExclusionStatus] = useState<string>('ACTIVE')
+  const [exclusionUntil, setExclusionUntil] = useState<string | null>(null)
   const { t } = useI18n()
   const tokens = useAuthStore((s) => s.tokens)
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const { theme, toggleTheme } = useTheme()
+  const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => { if (superMenuOpen) document.body.style.overflow = 'hidden'; else document.body.style.overflow = '' }, [superMenuOpen])
+
+  useEffect(() => {
+    if (!tokens?.idToken) return
+    fetch(`${API}/users/self-exclude/status`, { headers: { Authorization: `Bearer ${tokens.idToken}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setExclusionStatus(data.exclusionStatus ?? 'ACTIVE')
+          setExclusionUntil(data.exclusionUntil ?? null)
+        }
+      })
+      .catch(() => {})
+  }, [tokens?.idToken])
 
   if (pathname === '/') return null
 
@@ -89,6 +105,13 @@ const Navbar = () => {
 
             {/* Desktop right actions */}
             <div className="hidden md:flex items-center space-x-4">
+              {mounted && tokens && exclusionStatus === 'COOLING_OFF' && (
+                <a href="/profile/responsabilite"
+                  title={exclusionUntil ? `Pause jusqu'au ${new Date(exclusionUntil).toLocaleDateString('fr-FR')}` : 'Pause active'}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-400/15 border border-orange-400/30 text-orange-400 text-xs font-bold hover:bg-orange-400/20 transition">
+                  <Pause className="w-3 h-3" /> Pause active
+                </a>
+              )}
               <NotificationBell />
               <FriendsList />
               <button onClick={toggleTheme} className="p-2 rounded-full transition-colors dark:text-white/60 dark:hover:text-white text-[#00165F]/70 hover:text-[#0097FC] hover:bg-black/5 dark:hover:bg-white/10" aria-label="Toggle theme">
@@ -243,6 +266,7 @@ const Navbar = () => {
                   {[
                     { href: '/leaderboard', label: 'Classement', icon: Trophy },
                     { href: '/profile', label: 'Mon profil', icon: User },
+                    { href: '/profile/responsabilite', label: 'Jeu responsable', icon: Shield },
                   ].map(item => {
                     const Icon = item.icon
                     return (

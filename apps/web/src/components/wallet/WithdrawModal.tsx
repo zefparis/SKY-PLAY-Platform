@@ -230,17 +230,28 @@ export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 
 
         {/* Footer */}
         <div className="px-4 sm:px-5 py-4 border-t dark:border-white/10 border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 shrink-0">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] text-sm font-medium">
-            Annuler
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!isValid || loading}
-            className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#FD2E5F] text-white font-bold text-sm disabled:opacity-40 hover:bg-[#FD2E5F]/90"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {loading ? 'Traitement...' : `Retirer ${amountNum >= 1000 ? formatSKY(amountNum) : ''}`}
-          </button>
+          <div className="text-center pb-1">
+            <a href="/profile/responsabilite" className="text-xs dark:text-white/30 text-[#00165F]/30 hover:text-orange-400 transition">
+              Besoin d'une pause ? →
+            </a>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl border dark:border-white/20 border-gray-300 text-sm font-semibold dark:text-white/70 text-[#00165F]/70"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!isValid || loading}
+              className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#FD2E5F] text-white font-bold text-sm disabled:opacity-40 hover:bg-[#FD2E5F]/90"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {loading ? 'Traitement...' : `Retirer ${amountNum >= 1000 ? formatSKY(amountNum) : ''}`}
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>

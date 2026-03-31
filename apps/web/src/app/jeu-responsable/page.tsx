@@ -539,6 +539,21 @@ If it's no longer the case, we're here to help you regain control.
           </a>
         </div>
 
+        {/* Auto-exclusion CTA */}
+        <div className="mt-8 rounded-2xl bg-white/5 border border-white/10 p-6 text-center">
+          <p className="text-white/80 text-sm mb-3">
+            {lang === 'fr'
+              ? 'Vous pouvez à tout moment suspendre votre compte ou activer une auto-exclusion.'
+              : 'You can suspend your account or activate self-exclusion at any time.'}
+          </p>
+          <a
+            href="/profile/responsabilite"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500/20 border border-orange-500/30 text-orange-300 font-bold text-sm hover:bg-orange-500/30 transition"
+          >
+            🛡️ {lang === 'fr' ? 'Gérer ma pause / auto-exclusion' : 'Manage my pause / self-exclusion'}
+          </a>
+        </div>
+
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-white/60 text-sm">
           <p>© 2026 SKY PLAY ENTERTAINMENT - Cameroun</p>

@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { cognitoConfig } from './common/config/cognito.config';
+import { ExclusionGuard } from './common/guards/exclusion.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ChallengesModule } from './modules/challenges/challenges.module';
@@ -47,6 +48,10 @@ import { AdminModule } from './modules/admin/admin.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ExclusionGuard,
     },
   ],
   controllers: [HealthController],

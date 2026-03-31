@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, CheckCircle, Ban, DollarSign, PlusCircle, MinusCircle, X, ChevronLeft, ChevronRight, Shield, ShieldCheck, ShieldX } from 'lucide-react'
+import { Search, CheckCircle, Ban, DollarSign, PlusCircle, MinusCircle, X, ChevronLeft, ChevronRight, Shield, ShieldCheck, ShieldX, Pause, Lock } from 'lucide-react'
 import AdminBadge from '@/components/admin/AdminBadge'
 import { useAuthStore } from '@/lib/auth-store'
 
@@ -20,6 +20,8 @@ type User = {
   kycStatus?: string
   kycFirstName?: string
   kycLastName?: string
+  exclusionStatus?: string
+  exclusionUntil?: string
 }
 
 export default function UsersPage() {
@@ -43,6 +45,12 @@ export default function UsersPage() {
   const [actionMsg, setActionMsg] = useState('')
   const [kycRejectUser, setKycRejectUser] = useState<User | null>(null)
   const [kycRejectReason, setKycRejectReason] = useState('')
+  const [exclusionFilterStatus, setExclusionFilterStatus] = useState('')
+  const [excludeUser, setExcludeUser] = useState<User | null>(null)
+  const [excludeDuration, setExcludeDuration] = useState('1_WEEK')
+  const [excludeReason, setExcludeReason] = useState('')
+  const [reactivateUser, setReactivateUser] = useState<User | null>(null)
+  const [reactivateJustification, setReactivateJustification] = useState('')
 
   const fetchUsers = async () => {
     if (!idToken) return
@@ -116,6 +124,36 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Failed to verify user:', error)
     }
+  }
+
+  const handleExclude = async () => {
+    if (!excludeUser || !idToken) return
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${excludeUser.id}/exclude`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ duration: excludeDuration, reason: excludeReason }),
+      })
+      setExcludeUser(null); setExcludeReason('')
+      setActionMsg(`Utilisateur ${excludeUser.username} exclu (${excludeDuration})`)
+      fetchUsers()
+    } catch { setActionMsg('Erreur exclusion') }
+    setTimeout(() => setActionMsg(''), 3500)
+  }
+
+  const handleReactivate = async () => {
+    if (!reactivateUser || !idToken || !reactivateJustification.trim()) return
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${reactivateUser.id}/reactivate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ justification: reactivateJustification }),
+      })
+      setReactivateUser(null); setReactivateJustification('')
+      setActionMsg(`Compte de ${reactivateUser.username} réactivé`)
+      fetchUsers()
+    } catch { setActionMsg('Erreur réactivation') }
+    setTimeout(() => setActionMsg(''), 3500)
   }
 
   const handleKycVerify = async (userId: string) => {
@@ -193,6 +231,21 @@ export default function UsersPage() {
           </button>
         ))}
       </div>
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: '', label: 'Tous statuts' },
+          { key: 'COOLING_OFF', label: '⏸️ Pause' },
+          { key: 'SELF_EXCLUDED', label: '🔒 Exclu' },
+          { key: 'PERMANENTLY_EXCLUDED', label: '🚫 Définitif' },
+        ].map(f => (
+          <button key={f.key} onClick={() => setExclusionFilterStatus(f.key)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+              exclusionFilterStatus === f.key ? 'bg-orange-500 text-white' : 'dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white/70 text-[#00165F]/70'
+            }`}>
+            {f.label}
+          </button>
+        ))}
+      </div>
 
       {/* Search */}
       <div className="flex gap-2 sm:gap-3">
@@ -231,6 +284,7 @@ export default function UsersPage() {
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Statut</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden sm:table-cell">Solde</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden xl:table-cell">KYC</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden xl:table-cell">Exclusion</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden lg:table-cell">Inscrit le</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Actions</th>
                 </tr>
@@ -274,6 +328,16 @@ export default function UsersPage() {
                         : <span className="text-xs dark:text-white/30 text-[#00165F]/30">—</span>
                       }
                     </td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 hidden xl:table-cell">
+                      {user.exclusionStatus === 'COOLING_OFF'
+                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-orange-400"><Pause className="w-3 h-3" /> Pause</span>
+                        : user.exclusionStatus === 'SELF_EXCLUDED'
+                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-red-400"><Lock className="w-3 h-3" /> Exclu</span>
+                        : user.exclusionStatus === 'PERMANENTLY_EXCLUDED'
+                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600"><Lock className="w-3 h-3" /> Définitif</span>
+                        : <span className="text-xs dark:text-white/30 text-[#00165F]/30">—</span>
+                      }
+                    </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden lg:table-cell">
                       {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                     </td>
@@ -312,6 +376,23 @@ export default function UsersPage() {
                               <ShieldX className="w-3.5 h-3.5" />
                             </button>
                           </>
+                        )}
+                        {(!user.exclusionStatus || user.exclusionStatus === 'ACTIVE') ? (
+                          <button
+                            onClick={() => { setExcludeUser(user); setExcludeDuration('1_WEEK'); setExcludeReason('') }}
+                            className="p-1.5 sm:p-2 rounded-lg bg-orange-400/15 text-orange-400 hover:bg-orange-400/25 transition"
+                            title="Exclure"
+                          >
+                            <Pause className="w-3.5 h-3.5" />
+                          </button>
+                        ) : user.exclusionStatus !== 'PERMANENTLY_EXCLUDED' && (
+                          <button
+                            onClick={() => { setReactivateUser(user); setReactivateJustification('') }}
+                            className="p-1.5 sm:p-2 rounded-lg bg-emerald-400/15 text-emerald-400 hover:bg-emerald-400/25 transition"
+                            title="Réactiver"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                          </button>
                         )}
                         {user.isBanned ? (
                           <button
@@ -393,6 +474,68 @@ export default function UsersPage() {
                   Confirmer
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exclude Modal */}
+      {excludeUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#00165F] rounded-2xl p-6 max-w-md w-full border dark:border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black dark:text-white text-[#00165F]">⏸️ Exclure — {excludeUser.username}</h3>
+              <button onClick={() => setExcludeUser(null)} className="dark:text-white/50 hover:text-red-400"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Durée</label>
+                <select value={excludeDuration} onChange={e => setExcludeDuration(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none">
+                  <option value="24H">24 heures (pause)</option>
+                  <option value="72H">72 heures (pause)</option>
+                  <option value="1_WEEK">1 semaine</option>
+                  <option value="1_MONTH">1 mois</option>
+                  <option value="3_MONTHS">3 mois</option>
+                  <option value="PERMANENT">Définitif</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Raison *</label>
+                <textarea value={excludeReason} onChange={e => setExcludeReason(e.target.value)} rows={2} placeholder="Raison de l'exclusion..."
+                  className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none resize-none" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setExcludeUser(null)} className="flex-1 py-2.5 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] font-semibold text-sm">Annuler</button>
+              <button onClick={handleExclude} disabled={!excludeReason.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-sm disabled:opacity-50 hover:bg-orange-600 transition">
+                Confirmer l'exclusion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reactivate Modal */}
+      {reactivateUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#00165F] rounded-2xl p-6 max-w-md w-full border dark:border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black dark:text-white text-[#00165F]">✅ Réactiver — {reactivateUser.username}</h3>
+              <button onClick={() => setReactivateUser(null)} className="dark:text-white/50 hover:text-red-400"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="rounded-xl bg-yellow-400/5 border border-yellow-400/20 p-3 mb-3">
+              <p className="text-xs text-yellow-400">⚠️ Réactivation uniquement en cas d'erreur avérée.</p>
+            </div>
+            <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Justification obligatoire *</label>
+            <textarea value={reactivateJustification} onChange={e => setReactivateJustification(e.target.value)} rows={3}
+              placeholder="Erreur technique, demande incorrecte..."
+              className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none resize-none mb-4" />
+            <div className="flex gap-3">
+              <button onClick={() => setReactivateUser(null)} className="flex-1 py-2.5 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] font-semibold text-sm">Annuler</button>
+              <button onClick={handleReactivate} disabled={!reactivateJustification.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold text-sm disabled:opacity-50 hover:bg-emerald-600 transition">Confirmer</button>
             </div>
           </div>
         </div>

@@ -168,4 +168,21 @@ export class AdminController {
   async rejectKyc(@Param('id') id: string, @Body() body: { reason: string }, @Request() req) {
     return this.adminService.rejectKyc(id, body.reason, req.user.id);
   }
+
+  // ─── EXCLUSION ──────────────────────────────────────────────────────
+
+  @Get('exclusions')
+  async getExcludedUsers() {
+    return this.adminService.getExcludedUsers();
+  }
+
+  @Post('users/:id/exclude')
+  async excludeUser(@Param('id') id: string, @Body() body: { duration: string; reason: string }, @Request() req) {
+    return this.adminService.adminExcludeUser(id, body, req.user.id);
+  }
+
+  @Post('users/:id/reactivate')
+  async reactivateUser(@Param('id') id: string, @Body() body: { justification: string }, @Request() req) {
+    return this.adminService.adminReactivateUser(id, body.justification, req.user.id);
+  }
 }

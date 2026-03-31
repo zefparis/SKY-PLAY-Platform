@@ -728,6 +728,100 @@ export class AdminService {
     });
   }
 
+  // ─── EXCLUSION ADMIN ─────────────────────────────────────────────────────────
+
+  async adminExcludeUser(userId: string, dto: { duration: string; reason: string }, adminId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true, username: true } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const durationMap: Record<string, number | null> = {
+      '24H':      24 * 60 * 60 * 1000,
+      '72H':      72 * 60 * 60 * 1000,
+      '1_WEEK':   7  * 24 * 60 * 60 * 1000,
+      '1_MONTH':  30 * 24 * 60 * 60 * 1000,
+      '3_MONTHS': 90 * 24 * 60 * 60 * 1000,
+      'PERMANENT': null,
+    };
+    const ms = durationMap[dto.duration];
+    const exclusionUntil = ms ? new Date(Date.now() + ms) : null;
+    const isCoolingOff = dto.duration === '24H' || dto.duration === '72H';
+    const isPermanent  = dto.duration === 'PERMANENT';
+    const exclusionStatus = isPermanent ? 'PERMANENTLY_EXCLUDED' : isCoolingOff ? 'COOLING_OFF' : 'SELF_EXCLUDED';
+
+    await (this.prisma.user as any).update({
+      where: { id: userId },
+      data: {
+        exclusionStatus,
+        exclusionUntil,
+        exclusionReason: dto.reason,
+        exclusionRequestedAt: new Date(),
+      } as any,
+    });
+
+    await (this.prisma as any).exclusionHistory.create({
+      data: {
+        userId,
+        type: exclusionStatus,
+        duration: dto.duration,
+        endsAt: exclusionUntil,
+        reason: dto.reason,
+        requestedBy: adminId,
+      },
+    });
+
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: 'SYSTEM' as any,
+        title: '🚫 Compte suspendu',
+        body: `Votre compte a été suspendu par un administrateur.${exclusionUntil ? ` Jusqu'au ${exclusionUntil.toLocaleDateString('fr-FR')}.` : ' Définitivement.'}`,
+        data: { reason: dto.reason },
+      },
+    });
+
+    await this.createAdminLog(adminId, 'EXCLUDE_USER', userId, 'USER', { duration: dto.duration, reason: dto.reason });
+    return { success: true, exclusionStatus, exclusionUntil };
+  }
+
+  async adminReactivateUser(userId: string, justification: string, adminId: string) {
+    if (!justification?.trim()) throw new BadRequestException('La justification est obligatoire pour réactiver un compte.');
+    const user = await (this.prisma.user as any).findUnique({
+      where: { id: userId },
+      select: { exclusionStatus: true } as any,
+    }) as { exclusionStatus: string } | null;
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.exclusionStatus === 'ACTIVE') throw new BadRequestException('Ce compte est déjà actif.');
+
+    await (this.prisma.user as any).update({
+      where: { id: userId },
+      data: { exclusionStatus: 'ACTIVE', exclusionUntil: null, exclusionReason: null } as any,
+    });
+
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: 'SYSTEM' as any,
+        title: '✅ Compte réactivé',
+        body: 'Votre compte a été réactivé par notre équipe. Vous pouvez vous reconnecter.',
+        data: {},
+      },
+    });
+
+    await this.createAdminLog(adminId, 'REACTIVATE_USER', userId, 'USER', { justification });
+    return { success: true, exclusionStatus: 'ACTIVE' };
+  }
+
+  async getExcludedUsers() {
+    return (this.prisma as any).user.findMany({
+      where: { exclusionStatus: { not: 'ACTIVE' } } as any,
+      select: {
+        id: true, username: true, email: true, avatar: true,
+        exclusionStatus: true, exclusionUntil: true, exclusionReason: true, exclusionRequestedAt: true,
+      } as any,
+      orderBy: { exclusionRequestedAt: 'desc' } as any,
+    });
+  }
+
   async getRecentUsersForTest(limit = 10) {
     const users = await this.prisma.user.findMany({
       where: { isBanned: false },

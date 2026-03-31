@@ -538,6 +538,142 @@ export class UsersService {
     });
   }
 
+  // ─── AUTO-EXCLUSION ───────────────────────────────────────────────────────────
+
+  private calcExclusionUntil(duration: string): Date | null {
+    const now = new Date();
+    const map: Record<string, number> = {
+      '24H':      24 * 60 * 60 * 1000,
+      '72H':      72 * 60 * 60 * 1000,
+      '1_WEEK':   7  * 24 * 60 * 60 * 1000,
+      '1_MONTH':  30 * 24 * 60 * 60 * 1000,
+      '3_MONTHS': 90 * 24 * 60 * 60 * 1000,
+    };
+    if (duration === 'PERMANENT') return null;
+    const ms = map[duration];
+    if (!ms) throw new Error(`Durée invalide : ${duration}`);
+    return new Date(now.getTime() + ms);
+  }
+
+  async selfExclude(userId: string, dto: { duration: string; reason?: string }) {
+    const user = await (this.prisma.user as any).findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, username: true, exclusionStatus: true } as any,
+    }) as { id: string; email: string; username: string; exclusionStatus: string } | null;
+
+    if (!user) throw new Error('Utilisateur introuvable');
+    if (user.exclusionStatus === 'PERMANENTLY_EXCLUDED') {
+      throw new Error('Votre compte est déjà définitivement fermé.');
+    }
+
+    const isCoolingOff = dto.duration === '24H' || dto.duration === '72H';
+    const isPermanent  = dto.duration === 'PERMANENT';
+    const exclusionStatus = isPermanent
+      ? 'PERMANENTLY_EXCLUDED'
+      : isCoolingOff ? 'COOLING_OFF' : 'SELF_EXCLUDED';
+    const exclusionUntil = this.calcExclusionUntil(dto.duration);
+
+    await (this.prisma.user as any).update({
+      where: { id: userId },
+      data: {
+        exclusionStatus,
+        exclusionUntil,
+        exclusionReason: dto.reason ?? null,
+        exclusionRequestedAt: new Date(),
+      } as any,
+    });
+
+    await (this.prisma as any).exclusionHistory.create({
+      data: {
+        userId,
+        type: exclusionStatus,
+        duration: dto.duration,
+        endsAt: exclusionUntil,
+        reason: dto.reason ?? null,
+        requestedBy: 'self',
+      },
+    });
+
+    const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });
+    for (const admin of admins) {
+      await this.prisma.notification.create({
+        data: {
+          userId: admin.id,
+          type: 'SYSTEM' as any,
+          title: `\u{1F6AB} Auto-exclusion — ${user.username}`,
+          body: `${user.username} s'est auto-exclu (${dto.duration}).${dto.reason ? ` Raison : ${dto.reason}` : ''}`,
+          data: { targetUserId: userId, duration: dto.duration },
+        },
+      });
+    }
+
+    console.log(
+      `[EMAIL] To: ${user.email} | Sujet: SKY PLAY — Confirmation de votre auto-exclusion | ` +
+      `Corps: Votre compte est suspendu${exclusionUntil ? ` jusqu'au ${exclusionUntil.toLocaleDateString('fr-FR')}` : ' définitivement'}. ` +
+      `Si vous n'êtes pas à l'origine de cette demande, contactez : support@skyplay.cm`,
+    );
+
+    return {
+      status: exclusionStatus,
+      exclusionUntil,
+      message: isPermanent
+        ? 'Votre compte a été définitivement fermé.'
+        : `Votre compte est suspendu jusqu'au ${exclusionUntil?.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.`,
+    };
+  }
+
+  async cancelExclusion(userId: string) {
+    const user = await (this.prisma.user as any).findUnique({
+      where: { id: userId },
+      select: { exclusionStatus: true, exclusionUntil: true } as any,
+    }) as { exclusionStatus: string; exclusionUntil: Date | null } | null;
+
+    if (!user) throw new Error('Utilisateur introuvable');
+
+    if (user.exclusionStatus !== 'COOLING_OFF') {
+      throw new Error(
+        user.exclusionStatus === 'PERMANENTLY_EXCLUDED'
+          ? 'L\'exclusion définitive ne peut pas être annulée.'
+          : 'L\'auto-exclusion de 1 semaine ou plus ne peut pas être annulée.',
+      );
+    }
+
+    await (this.prisma.user as any).update({
+      where: { id: userId },
+      data: { exclusionStatus: 'ACTIVE', exclusionUntil: null, exclusionReason: null } as any,
+    });
+
+    return { status: 'ACTIVE', message: 'Votre pause a été annulée. Votre compte est actif.' };
+  }
+
+  async getExclusionStatus(userId: string) {
+    const user = await (this.prisma.user as any).findUnique({
+      where: { id: userId },
+      select: {
+        exclusionStatus: true,
+        exclusionUntil: true,
+        exclusionReason: true,
+        exclusionRequestedAt: true,
+      } as any,
+    }) as { exclusionStatus: string; exclusionUntil: Date | null; exclusionReason: string | null; exclusionRequestedAt: Date | null } | null;
+
+    if (!user) return { exclusionStatus: 'ACTIVE', exclusionUntil: null };
+
+    const now = new Date();
+    if (
+      (user.exclusionStatus === 'COOLING_OFF' || user.exclusionStatus === 'SELF_EXCLUDED') &&
+      user.exclusionUntil && user.exclusionUntil <= now
+    ) {
+      await (this.prisma.user as any).update({
+        where: { id: userId },
+        data: { exclusionStatus: 'ACTIVE', exclusionUntil: null, exclusionReason: null } as any,
+      });
+      return { exclusionStatus: 'ACTIVE', exclusionUntil: null };
+    }
+
+    return user;
+  }
+
   async getDiscordStatus(userId: string) {
     // Vérifier le cache (60s)
     const cached = this.discordStatusCache.get(userId);

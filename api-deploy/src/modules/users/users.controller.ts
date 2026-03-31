@@ -300,4 +300,44 @@ export class UsersController {
     if (!userPayload?.id) throw new HttpException('Non authentifié', HttpStatus.UNAUTHORIZED);
     return this.usersService.getKycStatus(userPayload.id);
   }
+
+  // ─── AUTO-EXCLUSION ────────────────────────────────────────────────────────
+
+  @SkipThrottle()
+  @UseGuards(JwtDualGuard)
+  @Get('self-exclude/status')
+  async getExclusionStatus(@Req() req: Request) {
+    const userPayload = req.user as any;
+    if (!userPayload?.id) throw new HttpException('Non authentifié', HttpStatus.UNAUTHORIZED);
+    return this.usersService.getExclusionStatus(userPayload.id);
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtDualGuard)
+  @Post('self-exclude')
+  async selfExclude(
+    @Req() req: Request,
+    @Body() body: { duration: string; reason?: string },
+  ) {
+    const userPayload = req.user as any;
+    if (!userPayload?.id) throw new HttpException('Non authentifié', HttpStatus.UNAUTHORIZED);
+    try {
+      return await this.usersService.selfExclude(userPayload.id, body);
+    } catch (e: any) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtDualGuard)
+  @Post('self-exclude/cancel')
+  async cancelExclusion(@Req() req: Request) {
+    const userPayload = req.user as any;
+    if (!userPayload?.id) throw new HttpException('Non authentifié', HttpStatus.UNAUTHORIZED);
+    try {
+      return await this.usersService.cancelExclusion(userPayload.id);
+    } catch (e: any) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+  }
 }

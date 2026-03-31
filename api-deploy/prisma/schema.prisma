@@ -69,7 +69,15 @@ model User {
   limitsUpdatedAt      DateTime?
   limitsPendingIncrease Json?  // { field, newValue, applyAt }
 
+  // ─── Auto-exclusion ─────────────────────────────────────────────────────────
+  exclusionStatus      ExclusionStatus  @default(ACTIVE)
+  exclusionUntil       DateTime?
+  exclusionReason      String?
+  exclusionRequestedAt DateTime?
+  exclusionHistory     ExclusionHistory[]
+
   @@index([status])
+  @@index([exclusionStatus])
   @@index([level])
   @@index([xp])
   @@map("users")
@@ -79,6 +87,13 @@ enum UserRole {
   PLAYER
   ADMIN
   MODERATOR
+}
+
+enum ExclusionStatus {
+  ACTIVE
+  SELF_EXCLUDED
+  PERMANENTLY_EXCLUDED
+  COOLING_OFF
 }
 
 enum KYCStatus {
@@ -460,6 +475,23 @@ enum MessageType {
   TEXT
   IMAGE
   SYSTEM
+}
+
+// ─── EXCLUSION HISTORY ───────────────────────────────────────────────────────
+
+model ExclusionHistory {
+  id          String          @id @default(cuid())
+  userId      String
+  type        ExclusionStatus
+  duration    String
+  startedAt   DateTime        @default(now())
+  endsAt      DateTime?
+  reason      String?
+  requestedBy String
+  user        User            @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("exclusion_history")
 }
 
 // ─── RULE ACCEPTANCE ─────────────────────────────────────────────────────────
