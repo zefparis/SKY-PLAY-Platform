@@ -26,6 +26,7 @@ const TX_TYPE_COLORS: Record<string, { color: string; icon: string }> = {
   COMMISSION:       { color: 'text-gray-400',   icon: '·' },
   DEBIT:            { color: 'text-red-400',    icon: '↑' },
   CREDIT:           { color: 'text-green-400',  icon: '↓' },
+  TEST_CREDIT:      { color: 'text-amber-400',  icon: '🧪' },
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -154,6 +155,17 @@ export default function WalletPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
+        {/* Bannière crédits test */}
+        {wallet?.recentTransactions?.some((tx: any) => tx.type === 'TEST_CREDIT') && (
+          <div className="mb-4 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+            <span className="text-lg leading-none mt-0.5">🧪</span>
+            <div>
+              <p className="text-sm font-bold text-amber-500 dark:text-amber-400">Crédits de test actifs — Test credits active</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/60 mt-0.5">Ces Sky Credits sont des crédits de test. Ils ne sont pas convertibles en argent réel. · These credits are for testing only and cannot be converted to real money.</p>
+            </div>
+          </div>
+        )}
+
         {/* Hero — Solde */}
         <div className="relative rounded-2xl overflow-hidden mb-6 p-6 sm:p-8 bg-gradient-to-br from-[#00165F] via-[#003399] to-[#0097FC]">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
@@ -218,6 +230,7 @@ export default function WalletPage() {
                   { key: 'DEPOSIT',          label: t('wallet.filter.deposits') },
                   { key: 'WITHDRAWAL',       label: t('wallet.filter.withdrawals') },
                   { key: 'CHALLENGE_DEBIT',  label: t('wallet.filter.challenges') },
+                  { key: 'TEST_CREDIT',       label: '🧪 Test' },
                 ].map(f => (
                   <button
                     key={f.key}
@@ -252,6 +265,7 @@ export default function WalletPage() {
                   CHALLENGE_ENTRY: t('wallet.tx.challengeDebit'), CHALLENGE_WIN: t('wallet.tx.challengeCredit'),
                   REFUND: t('wallet.tx.refund'), COMMISSION: t('wallet.tx.commission'),
                   DEBIT: t('wallet.tx.debit'), CREDIT: t('wallet.tx.credit'),
+                  TEST_CREDIT: 'Crédit test',
                 };
                 const txStatusLabels: Record<string, string> = {
                   COMPLETED: t('wallet.status.completed'), PENDING: t('wallet.status.pending'),

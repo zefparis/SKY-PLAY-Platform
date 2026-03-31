@@ -147,6 +147,8 @@ export class UsersService {
         },
         include: { wallet: true },
       });
+
+      await this.maybeGrantWelcomeCredits(user.id);
       return user;
     } catch (err: any) {
       if (err?.code === 'P2002') {
@@ -193,7 +195,36 @@ export class UsersService {
       },
     });
 
+    await this.maybeGrantWelcomeCredits(user.id);
     return user;
+  }
+
+  private async maybeGrantWelcomeCredits(userId: string): Promise<void> {
+    const isTestMode =
+      process.env.TEST_MODE === 'true' || process.env.NODE_ENV !== 'production';
+    if (!isTestMode) return;
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) return;
+
+    const WELCOME_AMOUNT = 10_000;
+    await this.prisma.$transaction([
+      this.prisma.wallet.update({
+        where: { userId },
+        data: { balance: { increment: WELCOME_AMOUNT } },
+      }),
+      this.prisma.transaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'TEST_CREDIT' as any,
+          amount: WELCOME_AMOUNT,
+          status: 'COMPLETED' as any,
+          description: 'Crédit de bienvenue test — Welcome test credits',
+          balanceBefore: 0,
+          balanceAfter: WELCOME_AMOUNT,
+        },
+      }),
+    ]);
   }
 
   /**

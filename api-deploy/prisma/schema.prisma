@@ -116,6 +116,7 @@ enum TransactionType {
   COMMISSION
   DEBIT
   CREDIT
+  TEST_CREDIT
 }
 
 enum TransactionStatus {

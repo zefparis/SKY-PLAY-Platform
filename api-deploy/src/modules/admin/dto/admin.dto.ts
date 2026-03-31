@@ -124,6 +124,33 @@ export class GetTransactionsQueryDto {
   limit?: number = 20;
 }
 
+export class AddTestCreditsDto {
+  @IsString()
+  userId: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(100000)
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+export class DistributeTestCreditsDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(10000)
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
 export class GetLogsQueryDto {
   @IsOptional()
   @IsString()

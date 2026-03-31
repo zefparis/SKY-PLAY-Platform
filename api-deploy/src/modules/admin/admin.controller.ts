@@ -15,6 +15,8 @@ import {
   GetTransactionsQueryDto,
   GetLogsQueryDto,
   ResolveDisputeDto,
+  AddTestCreditsDto,
+  DistributeTestCreditsDto,
 } from './dto/admin.dto';
 
 @Controller('admin')
@@ -126,5 +128,27 @@ export class AdminController {
   @Get('logs')
   async getLogs(@Query() query: GetLogsQueryDto) {
     return this.adminService.getLogs(query);
+  }
+
+  // ─── TEST CREDITS ──────────────────────────────────────────────────────────
+
+  @Post('wallet/add-test-credits')
+  async addTestCredits(@Body() dto: AddTestCreditsDto, @Request() req) {
+    return this.adminService.addTestCredits(dto, req.user.id);
+  }
+
+  @Get('wallet/test-credits-stats')
+  async getTestCreditsStats() {
+    return this.adminService.getTestCreditsStats();
+  }
+
+  @Post('wallet/distribute-test-credits')
+  async distributeTestCredits(@Body() dto: DistributeTestCreditsDto, @Request() req) {
+    return this.adminService.distributeTestCredits(dto, req.user.id);
+  }
+
+  @Get('wallet/recent-users')
+  async getRecentUsersForTest() {
+    return this.adminService.getRecentUsersForTest(10);
   }
 }

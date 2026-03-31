@@ -11,7 +11,9 @@ import {
   GetStatsQueryDto,
   GetTransactionsQueryDto,
   GetLogsQueryDto,
-  ResolveDisputeDto
+  ResolveDisputeDto,
+  AddTestCreditsDto,
+  DistributeTestCreditsDto,
 } from './dto/admin.dto';
 
 @Injectable()
@@ -551,5 +553,133 @@ export class AdminService {
     ]);
 
     return { logs, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  // ─── TEST CREDITS ─────────────────────────────────────────────────────────
+
+  async addTestCredits(dto: AddTestCreditsDto, adminId: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId: dto.userId } });
+    if (!wallet) throw new NotFoundException('Wallet introuvable pour cet utilisateur');
+
+    const balanceBefore = Number(wallet.balance);
+    const balanceAfter = balanceBefore + dto.amount;
+    const description = `Crédit test — ${dto.note ?? 'Attribué par admin'}`;
+
+    const transaction = await this.prisma.$transaction(async (tx) => {
+      await tx.wallet.update({
+        where: { userId: dto.userId },
+        data: { balance: { increment: dto.amount } },
+      });
+      return tx.transaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'TEST_CREDIT' as any,
+          amount: dto.amount,
+          status: TransactionStatus.COMPLETED,
+          description,
+          balanceBefore,
+          balanceAfter,
+        },
+      });
+    });
+
+    await this.createAdminLog(adminId, 'ADD_TEST_CREDITS', dto.userId, 'WALLET', {
+      amount: dto.amount,
+      note: dto.note,
+    });
+
+    const updatedWallet = await this.prisma.wallet.findUnique({ where: { userId: dto.userId } });
+    return { userId: dto.userId, newBalance: Number(updatedWallet!.balance), transaction };
+  }
+
+  async getTestCreditsStats() {
+    const testTransactions = await this.prisma.transaction.findMany({
+      where: { type: 'TEST_CREDIT' as any, status: TransactionStatus.COMPLETED },
+      include: { wallet: { include: { user: { select: { id: true, username: true, email: true, avatar: true } } } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const totalDistributed = testTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+    const userMap = new Map<string, { user: any; totalReceived: number; count: number; lastAt: Date }>();
+    for (const tx of testTransactions) {
+      const user = tx.wallet?.user;
+      if (!user) continue;
+      const existing = userMap.get(user.id);
+      if (existing) {
+        existing.totalReceived += Number(tx.amount);
+        existing.count += 1;
+        if (new Date(tx.createdAt) > existing.lastAt) existing.lastAt = new Date(tx.createdAt);
+      } else {
+        userMap.set(user.id, { user, totalReceived: Number(tx.amount), count: 1, lastAt: new Date(tx.createdAt) });
+      }
+    }
+
+    return {
+      totalDistributed,
+      totalOperations: testTransactions.length,
+      usersWithTestCredits: Array.from(userMap.values()).sort((a, b) => b.totalReceived - a.totalReceived),
+    };
+  }
+
+  async distributeTestCredits(dto: DistributeTestCreditsDto, adminId: string) {
+    const users = await this.prisma.user.findMany({
+      where: { isBanned: false },
+      select: { id: true },
+    });
+
+    let credited = 0;
+    const description = `Crédit test global — ${dto.note ?? 'Distribution admin'}`;
+
+    for (const user of users) {
+      const wallet = await this.prisma.wallet.findUnique({ where: { userId: user.id } });
+      if (!wallet) continue;
+
+      const balanceBefore = Number(wallet.balance);
+      await this.prisma.$transaction([
+        this.prisma.wallet.update({
+          where: { userId: user.id },
+          data: { balance: { increment: dto.amount } },
+        }),
+        this.prisma.transaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'TEST_CREDIT' as any,
+            amount: dto.amount,
+            status: TransactionStatus.COMPLETED,
+            description,
+            balanceBefore,
+            balanceAfter: balanceBefore + dto.amount,
+          },
+        }),
+      ]);
+      credited += 1;
+    }
+
+    await this.createAdminLog(adminId, 'DISTRIBUTE_TEST_CREDITS', undefined, 'WALLET', {
+      amount: dto.amount,
+      usersCredited: credited,
+      note: dto.note,
+    });
+
+    return { usersCredited: credited, totalAmount: credited * dto.amount };
+  }
+
+  async getRecentUsersForTest(limit = 10) {
+    const users = await this.prisma.user.findMany({
+      where: { isBanned: false },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        avatar: true,
+        createdAt: true,
+        wallet: { select: { balance: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return users.map((u) => ({ ...u, balance: Number(u.wallet?.balance ?? 0) }));
   }
 }
