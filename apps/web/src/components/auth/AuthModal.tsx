@@ -285,7 +285,7 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }: AuthModalP
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.94 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-20 sm:pb-4"
           >
             <div
               className="relative w-full max-w-sm overflow-hidden rounded-3xl border dark:border-white/10 border-[#00165F]/15 dark:bg-[#071226] bg-white p-8 shadow-2xl dark:shadow-black/50 shadow-[#00165F]/20"

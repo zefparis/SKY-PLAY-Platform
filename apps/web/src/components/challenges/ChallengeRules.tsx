@@ -72,7 +72,7 @@ export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCanc
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-20 sm:pb-4 bg-black/70 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-2xl dark:bg-[#001040] bg-white border dark:border-white/10 border-gray-200 shadow-2xl overflow-hidden">
 
         {/* Header */}

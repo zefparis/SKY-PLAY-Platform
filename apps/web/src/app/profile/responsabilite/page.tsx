@@ -279,7 +279,7 @@ export default function ResponsabilitePage() {
 
       {/* Modal de confirmation */}
       {modal && selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-20 sm:pb-4 bg-black/70 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl dark:bg-[#001040] bg-white border dark:border-white/10 border-gray-200 shadow-2xl p-6 space-y-4">
 
             <div className="flex items-center gap-3">
