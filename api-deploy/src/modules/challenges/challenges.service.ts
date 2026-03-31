@@ -432,18 +432,33 @@ export class ChallengesService {
         this.emitNotification(result.userId, notifLost);
       }
 
-      await this.prisma.user.update({
+      const xpGain = ({ 1: 100, 2: 50, 3: 25 } as Record<number, number>)[result.declaredRank] ?? 10;
+      const updatedUser = await this.prisma.user.update({
         where: { id: result.userId },
         data: {
           gamesPlayed: { increment: 1 },
+          xp: { increment: xpGain },
           ...(result.declaredRank === 1 ? { gamesWon: { increment: 1 } } : {}),
         },
+        select: { xp: true, level: true },
       });
+      const newLevel = Math.floor(updatedUser.xp / 200) + 1;
+      if (newLevel !== updatedUser.level) {
+        await this.prisma.user.update({ where: { id: result.userId }, data: { level: newLevel } });
+      }
     }
 
     for (const userId of participantIds) {
       if (!sorted.find((r) => r.userId === userId)) {
-        await this.prisma.user.update({ where: { id: userId }, data: { gamesPlayed: { increment: 1 } } });
+        const u = await this.prisma.user.update({
+          where: { id: userId },
+          data: { gamesPlayed: { increment: 1 }, xp: { increment: 5 } },
+          select: { xp: true, level: true },
+        });
+        const lvl = Math.floor(u.xp / 200) + 1;
+        if (lvl !== u.level) {
+          await this.prisma.user.update({ where: { id: userId }, data: { level: lvl } });
+        }
       }
     }
 
