@@ -17,6 +17,7 @@ import VoiceChannelList from '@/components/voice/VoiceChannelList'
 import VoiceRoom from '@/components/voice/VoiceRoom'
 import VoiceIndicator from '@/components/voice/VoiceIndicator'
 import IncomingCallModal from '@/components/voice/IncomingCallModal'
+import PersistentVoicePanel from '@/components/voice/PersistentVoicePanel'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -470,12 +471,27 @@ export default function ChatPage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{count}
                   </span>
                 )}
-                {isActive && <span className="w-2 h-2 rounded-full bg-[#0097FC] animate-pulse shrink-0" />}
+                {isActive
+                  ? <motion.span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"
+                      animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.2, repeat: Infinity }} />
+                  : null}
               </button>
             )
           })
           }
         </div>
+
+        {/* ─ Persistent voice panel (bas sidebar, toujours visible si en vocal) ─ */}
+        {isInVoice && currentVoiceRoom && (
+          <PersistentVoicePanel
+            room={currentVoiceRoom}
+            users={voiceUsers}
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+            onLeave={leaveVoiceRoom}
+          />
+        )}
       </aside>
 
       {/* ══ MAIN CHAT AREA ═══════════════════════════════════════ */}
@@ -499,6 +515,15 @@ export default function ChatPage() {
               )}
               {activeConv.type === 'GLOBAL' && (
                 <span className="shrink-0 w-2 h-2 rounded-full bg-emerald-400" />
+              )}
+              {isInVoice && (
+                <motion.span
+                  className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                  animate={{ opacity: [1, 0.6, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  🎤 EN VOCAL
+                </motion.span>
               )}
             </div>
           </div>
@@ -904,12 +929,6 @@ export default function ChatPage() {
         onAccept={(call) => acceptCall(call)}
         onDecline={(call) => declineCall(call)}
       />
-
-      {/* Voice indicator */}
-      {isInVoice && currentVoiceRoom && (
-        <VoiceIndicator roomName={currentVoiceRoom.replace('voice_', '').replace('_', ' ')}
-          isMuted={isMuted} onToggleMute={toggleMute} onLeave={leaveVoiceRoom} />
-      )}
 
       {/* Voice error */}
       <AnimatePresence>
