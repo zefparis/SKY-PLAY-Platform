@@ -665,6 +665,69 @@ export class AdminService {
     return { usersCredited: credited, totalAmount: credited * dto.amount };
   }
 
+  // ─── KYC ADMIN ───────────────────────────────────────────────────────────────
+
+  async verifyKyc(userId: string, adminId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true, kycStatus: true, kycFirstName: true, kycLastName: true } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.kycStatus !== 'SUBMITTED') throw new BadRequestException('Le dossier KYC n\'est pas en attente de validation.');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { kycStatus: 'VERIFIED' as any, kycVerifiedAt: new Date() },
+    });
+
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: 'KYC_VERIFIED' as any,
+        title: '✅ Identité vérifiée — retraits débloqués',
+        body: 'Votre dossier KYC a été validé. Vous pouvez désormais effectuer des retraits.',
+        data: {},
+      },
+    });
+
+    await this.createAdminLog(adminId, 'KYC_VERIFY', userId, 'USER', { kycStatus: 'VERIFIED' });
+    return { success: true, kycStatus: 'VERIFIED' };
+  }
+
+  async rejectKyc(userId: string, reason: string, adminId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true, kycStatus: true } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { kycStatus: 'REJECTED' as any, kycRejectedAt: new Date(), kycRejectReason: reason },
+    });
+
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: 'KYC_REJECTED' as any,
+        title: '❌ Dossier KYC refusé',
+        body: `Votre dossier KYC a été refusé. Raison : ${reason}. Vous pouvez soumettre à nouveau.`,
+        data: { reason },
+      },
+    });
+
+    await this.createAdminLog(adminId, 'KYC_REJECT', userId, 'USER', { reason });
+    return { success: true, kycStatus: 'REJECTED' };
+  }
+
+  async getKycPending() {
+    return this.prisma.user.findMany({
+      where: { kycStatus: { in: ['SUBMITTED', 'REJECTED'] as any } },
+      select: {
+        id: true, username: true, email: true, avatar: true,
+        kycStatus: true, kycFirstName: true, kycLastName: true,
+        kycIdType: true, kycIdNumber: true,
+        kycIdPhotoUrl: true, kycSelfieUrl: true,
+        kycSubmittedAt: true, kycVerifiedAt: true, kycRejectedAt: true, kycRejectReason: true,
+      },
+      orderBy: { kycSubmittedAt: 'desc' },
+    });
+  }
+
   async getRecentUsersForTest(limit = 10) {
     const users = await this.prisma.user.findMany({
       where: { isBanned: false },

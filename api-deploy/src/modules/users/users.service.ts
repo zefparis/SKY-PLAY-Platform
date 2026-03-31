@@ -474,6 +474,70 @@ export class UsersService {
 
   private discordStatusCache = new Map<string, { status: string; timestamp: number }>();
 
+  // ─── KYC ─────────────────────────────────────────────────────────────────────
+
+  async submitKyc(userId: string, dto: {
+    firstName: string;
+    lastName: string;
+    idType: string;
+    idNumber: string;
+    idPhotoUrl?: string;
+    selfieUrl?: string;
+  }) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { kycStatus: true } });
+    if (!user) throw new Error('Utilisateur introuvable');
+    if (user.kycStatus === 'VERIFIED') throw new Error('Votre identité est déjà vérifiée.');
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        kycStatus: 'SUBMITTED' as any,
+        kycFirstName: dto.firstName,
+        kycLastName: dto.lastName,
+        kycIdType: dto.idType,
+        kycIdNumber: dto.idNumber,
+        kycIdPhotoUrl: dto.idPhotoUrl,
+        kycSelfieUrl: dto.selfieUrl,
+        kycSubmittedAt: new Date(),
+        kycRejectedAt: null,
+        kycRejectReason: null,
+      },
+      select: { id: true, kycStatus: true, kycSubmittedAt: true, kycFirstName: true, kycLastName: true, kycIdType: true },
+    });
+
+    // Notifier les admins
+    const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' } });
+    for (const admin of admins) {
+      await this.prisma.notification.create({
+        data: {
+          userId: admin.id,
+          type: 'KYC_SUBMITTED' as any,
+          title: '🪪 Nouveau dossier KYC soumis',
+          body: `L'utilisateur ${dto.firstName} ${dto.lastName} a soumis son dossier KYC — à vérifier.`,
+          data: { targetUserId: userId },
+        },
+      });
+    }
+
+    return updated;
+  }
+
+  async getKycStatus(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        kycStatus: true,
+        kycFirstName: true,
+        kycLastName: true,
+        kycIdType: true,
+        kycSubmittedAt: true,
+        kycVerifiedAt: true,
+        kycRejectedAt: true,
+        kycRejectReason: true,
+      },
+    });
+  }
+
   async getDiscordStatus(userId: string) {
     // Vérifier le cache (60s)
     const cached = this.discordStatusCache.get(userId);

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, CheckCircle, Ban, DollarSign, PlusCircle, MinusCircle, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, CheckCircle, Ban, DollarSign, PlusCircle, MinusCircle, X, ChevronLeft, ChevronRight, Shield, ShieldCheck, ShieldX } from 'lucide-react'
 import AdminBadge from '@/components/admin/AdminBadge'
 import { useAuthStore } from '@/lib/auth-store'
 
@@ -17,6 +17,9 @@ type User = {
   createdAt: string
   avatar?: string
   balance: number
+  kycStatus?: string
+  kycFirstName?: string
+  kycLastName?: string
 }
 
 export default function UsersPage() {
@@ -38,6 +41,8 @@ export default function UsersPage() {
   const [adjustDesc, setAdjustDesc] = useState('')
   const [adjustLoading, setAdjustLoading] = useState(false)
   const [actionMsg, setActionMsg] = useState('')
+  const [kycRejectUser, setKycRejectUser] = useState<User | null>(null)
+  const [kycRejectReason, setKycRejectReason] = useState('')
 
   const fetchUsers = async () => {
     if (!idToken) return
@@ -111,6 +116,34 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Failed to verify user:', error)
     }
+  }
+
+  const handleKycVerify = async (userId: string) => {
+    if (!idToken) return
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}/kyc/verify`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      })
+      setActionMsg('KYC validé — retraits débloqués pour cet utilisateur')
+      fetchUsers()
+    } catch { setActionMsg('Erreur KYC verify') }
+    setTimeout(() => setActionMsg(''), 3500)
+  }
+
+  const handleKycReject = async () => {
+    if (!kycRejectUser || !idToken || !kycRejectReason.trim()) return
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${kycRejectUser.id}/kyc/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ reason: kycRejectReason }),
+      })
+      setKycRejectUser(null); setKycRejectReason('')
+      setActionMsg('KYC refusé — utilisateur notifié')
+      fetchUsers()
+    } catch { setActionMsg('Erreur KYC reject') }
+    setTimeout(() => setActionMsg(''), 3500)
   }
 
   const handleAdjustWallet = async () => {
@@ -197,6 +230,7 @@ export default function UsersPage() {
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden md:table-cell">Email</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Statut</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden sm:table-cell">Solde</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden xl:table-cell">KYC</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase hidden lg:table-cell">Inscrit le</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold dark:text-white/60 text-[#00165F]/60 uppercase">Actions</th>
                 </tr>
@@ -230,6 +264,16 @@ export default function UsersPage() {
                       )}
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold dark:text-white text-[#00165F] hidden sm:table-cell">{user.balance} CFA</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 hidden xl:table-cell">
+                      {user.kycStatus === 'VERIFIED'
+                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-green-400"><ShieldCheck className="w-3 h-3" /> Vérifié</span>
+                        : user.kycStatus === 'SUBMITTED'
+                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-yellow-400"><Shield className="w-3 h-3" /> En attente</span>
+                        : user.kycStatus === 'REJECTED'
+                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-red-400"><ShieldX className="w-3 h-3" /> Refusé</span>
+                        : <span className="text-xs dark:text-white/30 text-[#00165F]/30">—</span>
+                      }
+                    </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60 hidden lg:table-cell">
                       {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                     </td>
@@ -250,6 +294,24 @@ export default function UsersPage() {
                           >
                             <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
+                        )}
+                        {user.kycStatus === 'SUBMITTED' && (
+                          <>
+                            <button
+                              onClick={() => handleKycVerify(user.id)}
+                              className="p-1.5 sm:p-2 rounded-lg bg-green-400/20 text-green-400 hover:bg-green-400/30 transition"
+                              title="Valider KYC"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => { setKycRejectUser(user); setKycRejectReason('') }}
+                              className="p-1.5 sm:p-2 rounded-lg bg-red-400/20 text-red-400 hover:bg-red-400/30 transition"
+                              title="Refuser KYC"
+                            >
+                              <ShieldX className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                         {user.isBanned ? (
                           <button
@@ -331,6 +393,37 @@ export default function UsersPage() {
                   Confirmer
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KYC Reject Modal */}
+      {kycRejectUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#00165F] rounded-2xl p-6 max-w-md w-full border dark:border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black dark:text-white text-[#00165F]">❌ Refuser KYC — {kycRejectUser.username}</h3>
+              <button onClick={() => setKycRejectUser(null)} className="dark:text-white/50 text-[#00165F]/50 hover:text-red-400"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-xs dark:text-white/60 text-[#00165F]/60 mb-4">
+              {kycRejectUser.kycFirstName} {kycRejectUser.kycLastName}
+            </p>
+            <label className="block text-sm font-semibold dark:text-white/60 text-[#00165F]/60 mb-2">Raison du refus *</label>
+            <textarea
+              value={kycRejectReason}
+              onChange={(e) => setKycRejectReason(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC] text-sm"
+              rows={3}
+              placeholder="ex: Photo illisible, document expiré..."
+            />
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setKycRejectUser(null)}
+                className="flex-1 py-2.5 rounded-xl dark:bg-white/10 bg-gray-100 dark:text-white text-[#00165F] font-semibold text-sm">Annuler</button>
+              <button onClick={handleKycReject} disabled={!kycRejectReason.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm disabled:opacity-50 hover:bg-red-600 transition">
+                Refuser le dossier
+              </button>
             </div>
           </div>
         </div>

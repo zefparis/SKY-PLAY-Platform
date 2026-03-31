@@ -151,4 +151,21 @@ export class AdminController {
   async getRecentUsersForTest() {
     return this.adminService.getRecentUsersForTest(10);
   }
+
+  // ─── KYC ──────────────────────────────────────────────────────────
+
+  @Get('users/kyc-pending')
+  async getKycPending() {
+    return this.adminService.getKycPending();
+  }
+
+  @Post('users/:id/kyc/verify')
+  async verifyKyc(@Param('id') id: string, @Request() req) {
+    return this.adminService.verifyKyc(id, req.user.id);
+  }
+
+  @Post('users/:id/kyc/reject')
+  async rejectKyc(@Param('id') id: string, @Body() body: { reason: string }, @Request() req) {
+    return this.adminService.rejectKyc(id, body.reason, req.user.id);
+  }
 }

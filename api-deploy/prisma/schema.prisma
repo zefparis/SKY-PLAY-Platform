@@ -47,6 +47,27 @@ model User {
   adminLogs           AdminLog[]
   conversationMembers  ConversationMember[]
   sentMessages         ConversationMessage[] @relation("SentMessages")
+  ruleAcceptances     ChallengeRuleAcceptance[]
+
+  // ─── KYC ───────────────────────────────────────────────────────────────────
+  kycStatus        KYCStatus @default(PENDING)
+  kycFirstName     String?
+  kycLastName      String?
+  kycIdNumber      String?
+  kycIdType        String?      // CNI, PASSEPORT, PERMIS
+  kycIdPhotoUrl    String?      // Cloudinary
+  kycSelfieUrl     String?      // Cloudinary
+  kycSubmittedAt   DateTime?
+  kycVerifiedAt    DateTime?
+  kycRejectedAt    DateTime?
+  kycRejectReason  String?
+
+  // ─── Limites de dépense ────────────────────────────────────────────────────
+  dailyDepositLimit    Int @default(50000)
+  weeklyDepositLimit   Int @default(200000)
+  dailySpendLimit      Int @default(20000)
+  limitsUpdatedAt      DateTime?
+  limitsPendingIncrease Json?  // { field, newValue, applyAt }
 
   @@index([status])
   @@index([level])
@@ -60,6 +81,13 @@ enum UserRole {
   MODERATOR
 }
 
+enum KYCStatus {
+  PENDING
+  SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
 enum UserStatus {
   ONLINE
   OFFLINE
@@ -68,14 +96,16 @@ enum UserStatus {
 }
 
 model Wallet {
-  id           String        @id @default(uuid())
-  userId       String        @unique
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  balance      Decimal       @default(0) @db.Decimal(10, 2)
-  currency     String        @default("XAF")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
+  id                  String        @id @default(uuid())
+  userId              String        @unique
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance             Decimal       @default(0) @db.Decimal(10, 2)
+  consumptionBalance  Int           @default(0)  // dépôts + crédits test
+  rewardBalance       Int           @default(0)  // primes gagnées (retirables)
+  currency            String        @default("XAF")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  transactions        Transaction[]
 
   @@map("wallets")
 }
@@ -140,9 +170,10 @@ model Challenge {
   creator     User                  @relation(fields: [creatorId], references: [id])
   participants ChallengeParticipant[]
   results     ChallengeResult[]
-  dispute     ChallengeDispute?
-  conversation Conversation?
-  createdAt   DateTime              @default(now())
+  dispute         ChallengeDispute?
+  conversation    Conversation?
+  ruleAcceptances ChallengeRuleAcceptance[]
+  createdAt       DateTime              @default(now())
   startedAt   DateTime?
   endedAt     DateTime?
   expiresAt   DateTime
@@ -316,6 +347,9 @@ enum NotificationType {
   CHALLENGE_LOST
   CHALLENGE_DISPUTED
   CHALLENGE_RESOLVED
+  KYC_SUBMITTED
+  KYC_VERIFIED
+  KYC_REJECTED
 }
 
 model Friendship {
@@ -426,4 +460,23 @@ enum MessageType {
   TEXT
   IMAGE
   SYSTEM
+}
+
+// ─── RULE ACCEPTANCE ─────────────────────────────────────────────────────────
+
+model ChallengeRuleAcceptance {
+  id           String    @id @default(cuid())
+  userId       String
+  challengeId  String
+  rulesVersion String
+  rulesHash    String
+  acceptedAt   DateTime  @default(now())
+  ipAddress    String?
+  userAgent    String?
+  user         User      @relation(fields: [userId], references: [id])
+  challenge    Challenge @relation(fields: [challengeId], references: [id])
+
+  @@unique([userId, challengeId])
+  @@index([challengeId])
+  @@map("challenge_rule_acceptances")
 }

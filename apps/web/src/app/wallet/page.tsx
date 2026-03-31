@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wallet, Plus, ArrowUpRight, ArrowDownLeft, Gamepad2,
   RefreshCw, TrendingUp, TrendingDown, Trophy, FlaskConical,
+  Shield, Lock, CreditCard, Settings2,
 } from 'lucide-react';
 import { formatSKY } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
@@ -135,6 +136,10 @@ export default function WalletPage() {
   }
 
   const balance = wallet?.balance ?? 0;
+  const consumptionBalance = wallet?.consumptionBalance ?? 0;
+  const rewardBalance = wallet?.rewardBalance ?? 0;
+  const kycStatus: string = wallet?.kycStatus ?? 'PENDING';
+  const limits = wallet?.limits ?? { dailyDepositLimit: 50000, weeklyDepositLimit: 200000, dailySpendLimit: 20000 };
   const stats = wallet?.stats ?? { totalDeposited: 0, totalWon: 0, totalMised: 0, gainsNets: 0 };
 
   return (
@@ -218,6 +223,81 @@ export default function WalletPage() {
             </div>
           ))}
         </div>
+
+        {/* Dual balance + KYC */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+          {/* Compte participation */}
+          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <CreditCard className="w-4 h-4 text-[#0097FC]" />
+              <p className="text-xs font-bold dark:text-white/70 text-[#00165F]/70">💳 Compte participation</p>
+            </div>
+            <p className="text-xl font-black text-[#0097FC] tabular-nums">{formatSKY(consumptionBalance)}</p>
+            <p className="text-xs dark:text-white/40 text-[#00165F]/40 mt-1">Sky Credits rechargés — non retirables</p>
+          </div>
+          {/* Compte récompenses */}
+          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-4 h-4 text-[#FD2E5F]" />
+              <p className="text-xs font-bold dark:text-white/70 text-[#00165F]/70">🏆 Compte récompenses</p>
+            </div>
+            <p className="text-xl font-black text-[#FD2E5F] tabular-nums">{formatSKY(rewardBalance)}</p>
+            <p className="text-xs dark:text-white/40 text-[#00165F]/40 mt-1">Primes de performance — retirables en CFA</p>
+          </div>
+        </div>
+
+        {/* KYC Banner */}
+        {kycStatus !== 'VERIFIED' && (
+          <a href="/profile/kyc" className="block mb-6 rounded-2xl border transition-colors
+            dark:bg-white/5 bg-white dark:border-white/10 border-gray-100
+            hover:border-[#0097FC]/40 hover:dark:bg-[#0097FC]/5 p-4">
+            <div className="flex items-center gap-3">
+              {kycStatus === 'SUBMITTED'
+                ? <><Shield className="w-5 h-5 text-yellow-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-yellow-400">⏳ Vérification d'identité en cours (24-48h)</p>
+                      <p className="text-xs dark:text-white/50 text-[#00165F]/50">Les retraits seront débloqués à la validation.</p>
+                    </div>
+                  </>
+                : <><Lock className="w-5 h-5 text-[#FD2E5F] shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-[#FD2E5F]">🔒 Vérification d'identité requise avant retrait</p>
+                      <p className="text-xs dark:text-white/50 text-[#00165F]/50">Cliquez pour compléter votre KYC et débloquer les retraits.</p>
+                    </div>
+                  </>
+              }
+              <ArrowUpRight className="w-4 h-4 dark:text-white/30 text-[#00165F]/30 ml-auto shrink-0" />
+            </div>
+          </a>
+        )}
+
+        {/* Limites de dépense */}
+        <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Settings2 className="w-4 h-4 dark:text-white/50 text-[#00165F]/50" />
+            <p className="text-sm font-bold dark:text-white text-[#00165F]">Limites de dépense responsable</p>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'Dépôt / jour', value: limits.dailyDepositLimit },
+              { label: 'Dépôt / semaine', value: limits.weeklyDepositLimit },
+              { label: 'Mise / jour (défis)', value: limits.dailySpendLimit },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-xs dark:text-white/50 text-[#00165F]/50">{label}</span>
+                <span className="text-xs font-bold dark:text-white text-[#00165F]">{formatSKY(value)}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 mt-2">
+            Réduction immédiate · Augmentation après 48h (anti-impulsivité) · <a href="/profile/kyc" className="underline">Modifier</a>
+          </p>
+        </div>
+
+        {/* Note légale sous-soldes */}
+        <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 text-center mb-4">
+          Seules les primes de performance (🏆 Compte récompenses) sont convertibles en CFA lors du retrait.
+        </p>
 
         {/* Historique */}
         <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 overflow-hidden">
@@ -323,7 +403,7 @@ export default function WalletPage() {
           <DepositModal onClose={() => setShowDeposit(false)} onSuccess={handleDepositSuccess} />
         )}
         {showWithdraw && (
-          <WithdrawModal balance={balance} onClose={() => setShowWithdraw(false)} onSuccess={handleWithdrawSuccess} />
+          <WithdrawModal balance={balance} rewardBalance={rewardBalance} kycStatus={kycStatus} onClose={() => setShowWithdraw(false)} onSuccess={handleWithdrawSuccess} />
         )}
       </AnimatePresence>
     </div>

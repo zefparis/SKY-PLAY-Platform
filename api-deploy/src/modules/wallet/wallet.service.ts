@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Server } from 'socket.io';
@@ -49,6 +49,7 @@ export class WalletService {
 
   async getWallet(userId: string) {
     const wallet = await this.getOrCreateWallet(userId);
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { kycStatus: true, dailyDepositLimit: true, weeklyDepositLimit: true, dailySpendLimit: true } });
 
     const [totalDeposited, totalWon, totalMised] = await Promise.all([
       this.prisma.transaction.aggregate({
@@ -78,6 +79,14 @@ export class WalletService {
     return {
       ...wallet,
       balance: Number(wallet.balance),
+      consumptionBalance: wallet.consumptionBalance,
+      rewardBalance: wallet.rewardBalance,
+      kycStatus: user?.kycStatus ?? 'PENDING',
+      limits: {
+        dailyDepositLimit: user?.dailyDepositLimit ?? 50000,
+        weeklyDepositLimit: user?.weeklyDepositLimit ?? 200000,
+        dailySpendLimit: user?.dailySpendLimit ?? 20000,
+      },
       stats: {
         totalDeposited: deposited,
         totalWon: won,
@@ -119,7 +128,35 @@ export class WalletService {
       throw new BadRequestException('Numéro de téléphone requis pour Mobile Money');
     }
 
+    // ─── Vérification limites dépôt ──────────────────────────────────────────
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { dailyDepositLimit: true, weeklyDepositLimit: true } });
+    const limits = user ?? { dailyDepositLimit: 50000, weeklyDepositLimit: 200000 };
+
     const wallet = await this.getOrCreateWallet(userId);
+    const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+    const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0, 0, 0, 0);
+
+    const [dailyTotal, weeklyTotal] = await Promise.all([
+      this.prisma.transaction.aggregate({
+        where: { walletId: wallet.id, type: 'DEPOSIT', status: { in: ['PENDING', 'COMPLETED'] }, createdAt: { gte: dayStart } },
+        _sum: { amount: true },
+      }),
+      this.prisma.transaction.aggregate({
+        where: { walletId: wallet.id, type: 'DEPOSIT', status: { in: ['PENDING', 'COMPLETED'] }, createdAt: { gte: weekStart } },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const dailyDeposited = Number(dailyTotal._sum.amount ?? 0);
+    const weeklyDeposited = Number(weeklyTotal._sum.amount ?? 0);
+
+    if (dailyDeposited + dto.amount > limits.dailyDepositLimit) {
+      throw new ForbiddenException(`Limite journalière de dépôt atteinte (${limits.dailyDepositLimit} SKY/jour). Déjà déposé aujourd'hui : ${Math.round(dailyDeposited)} SKY.`);
+    }
+    if (weeklyDeposited + dto.amount > limits.weeklyDepositLimit) {
+      throw new ForbiddenException(`Limite hebdomadaire de dépôt atteinte (${limits.weeklyDepositLimit} SKY/semaine).`);
+    }
+
     const txRef = `SKY-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 
     const transaction = await this.prisma.transaction.create({
@@ -174,6 +211,13 @@ export class WalletService {
     }
   }
 
+  async creditDeposit(walletId: string, amount: number) {
+    await this.prisma.wallet.update({
+      where: { id: walletId },
+      data: { balance: { increment: amount }, consumptionBalance: { increment: amount } },
+    });
+  }
+
   async verifyDeposit(userId: string, flwTxId: string, transactionId?: string) {
     let response: any;
     try {
@@ -209,7 +253,7 @@ export class WalletService {
     const balanceAfter = balanceBefore + expectedAmount;
 
     await this.prisma.$transaction([
-      this.prisma.wallet.update({ where: { id: transaction.walletId }, data: { balance: { increment: expectedAmount } } }),
+      this.prisma.wallet.update({ where: { id: transaction.walletId }, data: { balance: { increment: expectedAmount }, consumptionBalance: { increment: expectedAmount } } }),
       this.prisma.transaction.update({
         where: { id: transaction.id },
         data: { status: 'COMPLETED', flwTxId, flwRef: flwData.flw_ref, balanceBefore, balanceAfter } as any,
@@ -252,9 +296,18 @@ export class WalletService {
       throw new BadRequestException(`Montant minimum de retrait : ${MIN_WITHDRAWAL} XAF`);
     }
 
+    // ─── Vérification KYC ────────────────────────────────────────────────────
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { kycStatus: true } });
+    if (!user || user.kycStatus !== 'VERIFIED') {
+      const statusMsg = user?.kycStatus === 'SUBMITTED' ? '⏳ Votre dossier KYC est en cours d\'examen (24-48h).' : '🔒 Vérification d\'identité (KYC) requise avant tout retrait. Accédez à /profile/kyc.';
+      throw new ForbiddenException(statusMsg);
+    }
+
     const wallet = await this.getOrCreateWallet(userId);
-    if (Number(wallet.balance) < dto.amount) {
-      throw new BadRequestException('Solde insuffisant');
+
+    // ─── Retrait depuis rewardBalance uniquement ──────────────────────────────
+    if (wallet.rewardBalance < dto.amount) {
+      throw new ForbiddenException(`Seules les primes de performance sont retirables. Solde récompenses disponible : ${wallet.rewardBalance} SKY.`);
     }
 
     const txRef = `SKY-WD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
@@ -262,7 +315,7 @@ export class WalletService {
     const balanceAfter = balanceBefore - dto.amount;
 
     const [, transaction] = await this.prisma.$transaction([
-      this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: dto.amount } } }),
+      this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: dto.amount }, rewardBalance: { decrement: dto.amount } } }),
       this.prisma.transaction.create({
         data: {
           walletId: wallet.id,
@@ -309,8 +362,14 @@ export class WalletService {
     const balanceBefore = Number(wallet.balance);
     const balanceAfter = balanceBefore + amount;
 
+    // ─── Séparation des sous-soldes ─────────────────────────────────────────
+    const isReward = type === 'CHALLENGE_CREDIT' || type === 'CHALLENGE_WIN';
+    const subBalanceUpdate = isReward
+      ? { rewardBalance: { increment: amount } }
+      : { consumptionBalance: { increment: amount } };
+
     const result = await this.prisma.$transaction(async (tx) => {
-      await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: amount } } });
+      await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: amount }, ...subBalanceUpdate } });
       return tx.transaction.create({
         data: { walletId: wallet.id, type: type as any, amount, status: 'COMPLETED', description, balanceBefore, balanceAfter } as any,
       });
@@ -329,8 +388,15 @@ export class WalletService {
     const balanceBefore = Number(wallet.balance);
     const balanceAfter = balanceBefore - amount;
 
+    // ─── Débit d'abord consumptionBalance, puis rewardBalance ───────────────
+    const fromConsumption = Math.min(wallet.consumptionBalance, amount);
+    const fromReward = amount - fromConsumption;
+    const subBalanceUpdate: any = {};
+    if (fromConsumption > 0) subBalanceUpdate.consumptionBalance = { decrement: fromConsumption };
+    if (fromReward > 0) subBalanceUpdate.rewardBalance = { decrement: fromReward };
+
     const result = await this.prisma.$transaction(async (tx) => {
-      await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: amount } } });
+      await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: amount }, ...subBalanceUpdate } });
       return tx.transaction.create({
         data: { walletId: wallet.id, type: type as any, amount: -amount, status: 'COMPLETED', description, balanceBefore, balanceAfter } as any,
       });
@@ -338,5 +404,47 @@ export class WalletService {
 
     this.emitWalletUpdate(userId, balanceAfter, result);
     return result;
+  }
+
+  async updateLimits(userId: string, dto: {
+    dailyDepositLimit?: number;
+    weeklyDepositLimit?: number;
+    dailySpendLimit?: number;
+  }) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { dailyDepositLimit: true, weeklyDepositLimit: true, dailySpendLimit: true, limitsPendingIncrease: true } });
+    if (!user) throw new BadRequestException('Utilisateur introuvable');
+
+    const directUpdate: any = {};
+    const pending: any[] = (user.limitsPendingIncrease as any[] ?? []);
+    const applyAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+    const fieldMap: Record<string, number> = {
+      dailyDepositLimit: user.dailyDepositLimit,
+      weeklyDepositLimit: user.weeklyDepositLimit,
+      dailySpendLimit: user.dailySpendLimit,
+    };
+
+    for (const [field, newValue] of Object.entries(dto) as [string, number][]) {
+      if (newValue === undefined) continue;
+      const current = fieldMap[field];
+      if (newValue <= current) {
+        directUpdate[field] = newValue;
+      } else {
+        pending.push({ field, newValue, applyAt: applyAt.toISOString() });
+      }
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { ...directUpdate, limitsPendingIncrease: pending, limitsUpdatedAt: new Date() },
+    });
+
+    return {
+      applied: directUpdate,
+      pending: pending.filter((p: any) => new Date(p.applyAt) > new Date()),
+      message: Object.keys(directUpdate).length > 0
+        ? 'Limites mises à jour immédiatement.'
+        : 'Augmentation enregistrée. Elle sera effective dans 48h (anti-impulsivité).',
+    };
   }
 }

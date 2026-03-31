@@ -1,10 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Download, CheckSquare, Square, Trophy, Users, Clock, AlertTriangle } from 'lucide-react';
+import { FileText, Download, CheckSquare, Square, Trophy, Users, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { formatSKY } from '@/lib/currency';
+import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const RULES_VERSION = 'v1.0';
+
+function buildRulesHash(challenge: any): string {
+  const content = `${challenge.title}-${challenge.type}-${challenge.entryFee}-${challenge.maxPlayers}-${challenge.commission}`;
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0');
+}
 
 interface ChallengeRulesProps {
   challenge: {
@@ -33,8 +46,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCancel, actionLoading }: ChallengeRulesProps) {
+  const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
   const [accepted, setAccepted] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [submittingAcceptance, setSubmittingAcceptance] = useState(false);
+  const rulesHash = buildRulesHash(challenge);
 
   const orgFee = Math.round(challenge.commission * 100);
   const typeLabel = TYPE_LABELS[challenge.type] ?? challenge.type;
@@ -122,6 +138,15 @@ export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCanc
             </div>
           </div>
 
+            {/* Métadonnées règlement */}
+          <div className="flex items-center justify-between rounded-xl dark:bg-white/5 bg-gray-50 px-3 py-2">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3 h-3 text-[#0097FC]" />
+              <span className="text-[10px] dark:text-white/40 text-[#00165F]/40">Version : <strong>{RULES_VERSION}</strong></span>
+            </div>
+            <span className="text-[10px] dark:text-white/30 text-[#00165F]/30 font-mono">#{rulesHash}</span>
+          </div>
+
           {/* Note légale discrète */}
           <p className="text-[10px] dark:text-white/30 text-[#00165F]/30 text-center leading-relaxed">
             (1 SKY = 1 CFA — conversion lors du retrait · Sky Credits non convertibles en dehors de la plateforme)
@@ -160,11 +185,23 @@ export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCanc
             Annuler
           </button>
           <button
-            onClick={onAccept}
-            disabled={!accepted || actionLoading}
+            onClick={async () => {
+              if (!accepted || !idToken) return;
+              setSubmittingAcceptance(true);
+              try {
+                await fetch(`${API}/challenges/${challenge.id}/accept-rules`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+                  body: JSON.stringify({ rulesVersion: RULES_VERSION, rulesHash }),
+                });
+              } catch {}
+              finally { setSubmittingAcceptance(false); }
+              onAccept();
+            }}
+            disabled={!accepted || actionLoading || submittingAcceptance}
             className="flex-1 py-2.5 rounded-xl bg-[#0097FC] text-white text-sm font-black hover:bg-[#0097FC]/90 transition-all hover:scale-[1.02] disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed"
           >
-            {actionLoading
+            {actionLoading || submittingAcceptance
               ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Inscription...</span>
               : "S'inscrire à la compétition"}
           </button>

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { X, Loader2, AlertTriangle } from 'lucide-react';
+import { X, Loader2, AlertTriangle, Lock, Shield, ExternalLink } from 'lucide-react';
 import { formatCFA, formatSKY } from '@/lib/currency';
 import { useAuthStore } from '@/lib/auth-store';
 
@@ -10,11 +11,14 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 interface WithdrawModalProps {
   balance: number;
+  rewardBalance?: number;
+  kycStatus?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawModalProps) {
+export default function WithdrawModal({ balance, rewardBalance = 0, kycStatus = 'PENDING', onClose, onSuccess }: WithdrawModalProps) {
+  const router = useRouter();
   const idToken = useAuthStore((s) => s.tokens?.idToken ?? '');
   const [amount, setAmount] = useState('');
   const [network, setNetwork] = useState<'MTN' | 'ORANGE'>('MTN');
@@ -25,7 +29,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
   const [confirmed, setConfirmed] = useState(false);
 
   const amountNum = parseInt(amount, 10) || 0;
-  const isValid = amountNum >= 1000 && amountNum <= balance && phone.length === 9 && name.trim().length >= 2;
+  const isValid = kycStatus === 'VERIFIED' && amountNum >= 1000 && amountNum <= rewardBalance && phone.length === 9 && name.trim().length >= 2;
 
   const handleSubmit = async () => {
     if (!isValid) return;
@@ -59,7 +63,7 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
         <div className="flex items-center justify-between p-4 sm:p-5 border-b dark:border-white/10 border-gray-100 shrink-0">
           <div>
             <h2 className="text-lg font-black dark:text-white text-[#00165F]">Retirer des fonds</h2>
-            <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">🪙 Solde disponible : {formatSKY(balance)}</p>
+            <p className="text-xs dark:text-white/70 text-[#00165F]/50 mt-0.5">🏆 Récompenses disponibles : {formatSKY(rewardBalance)}</p>
           </div>
           <button onClick={onClose} className="p-1 dark:text-white/70 text-[#00165F]/50 hover:text-[#FD2E5F] transition-colors">
             <X className="w-5 h-5" />
@@ -68,6 +72,52 @@ export default function WithdrawModal({ balance, onClose, onSuccess }: WithdrawM
 
         {/* Body */}
         <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
+
+          {/* Bannière KYC */}
+          {kycStatus !== 'VERIFIED' && (
+            <div className={`rounded-xl p-4 border ${
+              kycStatus === 'SUBMITTED'
+                ? 'bg-yellow-400/5 border-yellow-400/30'
+                : 'bg-[#FD2E5F]/5 border-[#FD2E5F]/30'
+            }`}>
+              <div className="flex items-start gap-3">
+                {kycStatus === 'SUBMITTED'
+                  ? <Shield className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
+                  : <Lock className="w-5 h-5 text-[#FD2E5F] shrink-0 mt-0.5" />
+                }
+                <div className="flex-1">
+                  <p className={`text-sm font-bold mb-1 ${
+                    kycStatus === 'SUBMITTED' ? 'text-yellow-400' : 'text-[#FD2E5F]'
+                  }`}>
+                    {kycStatus === 'SUBMITTED' ? '⏳ Vérification en cours (24-48h)' : '🔒 Vérification d\'identité requise'}
+                  </p>
+                  <p className="text-xs dark:text-white/60 text-[#00165F]/60">
+                    {kycStatus === 'SUBMITTED'
+                      ? 'Votre dossier KYC est en cours d\'examen. Les retraits seront débloqués à la validation.'
+                      : 'Vous devez vérifier votre identité (KYC) avant d\'effectuer un retrait.'}
+                  </p>
+                  {kycStatus !== 'SUBMITTED' && (
+                    <button
+                      onClick={() => { onClose(); router.push('/profile/kyc'); }}
+                      className="mt-2 flex items-center gap-1.5 text-xs font-bold text-[#0097FC] hover:underline"
+                    >
+                      Compléter le KYC <ExternalLink className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Note récompenses */}
+          {kycStatus === 'VERIFIED' && (
+            <div className="rounded-xl bg-[#0097FC]/5 border border-[#0097FC]/20 p-3">
+              <p className="text-xs dark:text-white/60 text-[#00165F]/60">
+                🏆 Seul votre <strong>Compte récompenses</strong> est retirable ({formatSKY(rewardBalance)} disponibles).
+              </p>
+            </div>
+          )}
+
           {/* Montant */}
           <div>
             <label className="text-xs font-semibold dark:text-white/70 text-[#00165F]/60 mb-1.5 block">Montant à retirer en SKY (min. 1 000)</label>

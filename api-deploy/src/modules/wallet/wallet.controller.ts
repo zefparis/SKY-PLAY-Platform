@@ -49,6 +49,12 @@ export class WalletController {
     return this.walletService.initiateWithdrawal(req.user.id, dto);
   }
 
+  @UseGuards(JwtDualGuard)
+  @Post('limits')
+  updateLimits(@Request() req, @Body() dto: { dailyDepositLimit?: number; weeklyDepositLimit?: number; dailySpendLimit?: number }) {
+    return this.walletService.updateLimits(req.user.id, dto);
+  }
+
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   flutterwaveWebhook(

@@ -144,6 +144,27 @@ export class ChallengesService {
     return challenge;
   }
 
+  // ─── ACCEPT RULES ──────────────────────────────────────────────────────────
+
+  async acceptRules(challengeId: string, userId: string, dto: { rulesVersion: string; rulesHash: string }, ipAddress?: string, userAgent?: string) {
+    const challenge = await this.findOne(challengeId);
+    if (!challenge) throw new NotFoundException('Défi introuvable');
+
+    await this.prisma.challengeRuleAcceptance.upsert({
+      where: { userId_challengeId: { userId, challengeId } },
+      create: { userId, challengeId, rulesVersion: dto.rulesVersion, rulesHash: dto.rulesHash, ipAddress, userAgent },
+      update: { rulesVersion: dto.rulesVersion, rulesHash: dto.rulesHash, ipAddress, userAgent, acceptedAt: new Date() },
+    });
+
+    return { accepted: true, timestamp: new Date().toISOString(), challengeId };
+  }
+
+  async getRulesAcceptance(challengeId: string, userId: string) {
+    return this.prisma.challengeRuleAcceptance.findUnique({
+      where: { userId_challengeId: { userId, challengeId } },
+    });
+  }
+
   // ─── JOIN ────────────────────────────────────────────────────────────────────
 
   async join(challengeId: string, userId: string) {
@@ -158,6 +179,30 @@ export class ChallengesService {
 
     if (challenge.participants.length >= challenge.maxPlayers) {
       throw new BadRequestException('Ce défi est complet');
+    }
+
+    // ─── Vérification acceptation du règlement ──────────────────────────────
+    const ruleAcceptance = await this.prisma.challengeRuleAcceptance.findUnique({
+      where: { userId_challengeId: { userId, challengeId } },
+    });
+    if (!ruleAcceptance) {
+      throw new ForbiddenException('Vous devez accepter le règlement de la compétition avant de vous inscrire.');
+    }
+
+    // ─── Vérification limite de dépense journalière ───────────────────────────
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { dailySpendLimit: true } });
+    const dailyLimit = user?.dailySpendLimit ?? 20000;
+    const wallet = await this.prisma.wallet.findFirst({ where: { userId } });
+    if (wallet) {
+      const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+      const spentToday = await this.prisma.transaction.aggregate({
+        where: { walletId: wallet.id, type: { in: ['CHALLENGE_ENTRY', 'CHALLENGE_DEBIT'] as any }, createdAt: { gte: dayStart } },
+        _sum: { amount: true },
+      });
+      const totalSpent = Math.abs(Number(spentToday._sum.amount ?? 0));
+      if (totalSpent + challenge.entryFee > dailyLimit) {
+        throw new ForbiddenException(`Limite de mise journalière atteinte (${dailyLimit} SKY/jour). Déjà misé aujourd'hui : ${Math.round(totalSpent)} SKY.`);
+      }
     }
 
     await this.walletService.debit(

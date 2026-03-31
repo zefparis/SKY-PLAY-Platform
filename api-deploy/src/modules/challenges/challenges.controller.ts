@@ -11,7 +11,10 @@ import {
   Res,
   ForbiddenException,
   NotFoundException,
+  Headers,
+  Ip,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { Response } from 'express';
 import * as PDFDocument from 'pdfkit';
 import { ChallengesService } from './challenges.service';
@@ -127,10 +130,19 @@ export class ChallengesController {
       .text(challenge.title, { align: 'center' });
 
     doc.moveDown(0.4);
+    const rulesVersion = 'v1.0';
+    const rulesContent = `${challenge.title}-${challenge.type}-${challenge.entryFee}-${challenge.maxPlayers}-${challenge.commission}-${dateStr}`;
+    const rulesHash = crypto.createHash('sha256').update(rulesContent).digest('hex');
+    const hashShort = rulesHash.slice(0, 12);
+
     doc
       .fillColor('#888888')
       .fontSize(9)
-      .text(`Généré le ${dateStr}`, { align: 'center' });
+      .text(`Version ${rulesVersion} — Généré le ${dateStr}`, { align: 'center' });
+    doc
+      .fillColor('#aaaaaa')
+      .fontSize(8)
+      .text(`Hash : ${hashShort} — Ce document est horodaté et opposable`, { align: 'center' });
     doc.moveDown(1);
 
     // ─── Info table ───────────────────────────────────────────────────────────
@@ -204,9 +216,10 @@ export class ChallengesController {
       .fontSize(9)
       .font('Helvetica')
       .text(
-        'SKY PLAY ENTERTAINMENT — Compétition fondée sur l\'habileté — Cameroun\n' +
-        'Ce règlement est publié avant l\'ouverture de la compétition et fait foi entre les parties.\n' +
-        'support@skyplay.cm',
+        `SKY PLAY ENTERTAINMENT — Compétition fondée sur l'habileté — Cameroun\n` +
+        `Ce règlement est publié avant l'ouverture de la compétition et fait foi entre les parties.\n` +
+        `Version ${rulesVersion} — Hash SHA256 : ${rulesHash}\n` +
+        `Ce document fait foi en cas de litige. support@skyplay.cm`,
         { align: 'center' },
       );
 
@@ -217,6 +230,24 @@ export class ChallengesController {
   @Post()
   create(@Body() dto: CreateChallengeDto, @Request() req) {
     return this.challengesService.create(req.user.id, dto.title, dto.game, dto.type);
+  }
+
+  @UseGuards(JwtDualGuard)
+  @Post(':id/accept-rules')
+  acceptRules(
+    @Param('id') id: string,
+    @Body() dto: { rulesVersion: string; rulesHash: string },
+    @Request() req,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ) {
+    return this.challengesService.acceptRules(id, req.user.id, dto, ip, userAgent);
+  }
+
+  @UseGuards(JwtDualGuard)
+  @Get(':id/rules-acceptance')
+  getRulesAcceptance(@Param('id') id: string, @Request() req) {
+    return this.challengesService.getRulesAcceptance(id, req.user.id);
   }
 
   @UseGuards(JwtDualGuard)

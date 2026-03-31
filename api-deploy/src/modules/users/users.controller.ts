@@ -273,4 +273,31 @@ export class UsersController {
   async getDiscordStatus(@Param('id') userId: string) {
     return this.usersService.getDiscordStatus(userId);
   }
+
+  // ─── KYC ───────────────────────────────────────────────────────
+
+  @SkipThrottle()
+  @UseGuards(JwtDualGuard)
+  @Post('kyc/submit')
+  async submitKyc(@Req() req: Request, @Body() body: {
+    firstName: string;
+    lastName: string;
+    idType: string;
+    idNumber: string;
+    idPhotoUrl?: string;
+    selfieUrl?: string;
+  }) {
+    const userPayload = req.user as any;
+    if (!userPayload?.id) throw new HttpException('Non authentifié', HttpStatus.UNAUTHORIZED);
+    return this.usersService.submitKyc(userPayload.id, body);
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtDualGuard)
+  @Get('kyc/status')
+  async getKycStatus(@Req() req: Request) {
+    const userPayload = req.user as any;
+    if (!userPayload?.id) throw new HttpException('Non authentifié', HttpStatus.UNAUTHORIZED);
+    return this.usersService.getKycStatus(userPayload.id);
+  }
 }
