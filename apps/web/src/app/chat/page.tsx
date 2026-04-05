@@ -489,8 +489,8 @@ export default function ChatPage() {
         {/* ── HEADER ─────────────────────────────────────────── */}
         <div className="shrink-0 px-3 sm:px-4 py-2.5 bg-[#00165F]/40 backdrop-blur-md border-b border-white/8 flex items-center gap-3">
           {/* Hamburger (mobile) */}
-          <button onClick={() => setSidebarOpen(v => !v)} className="p-2 rounded-xl bg-white/8 text-white/60 md:hidden">
-            <Search className="w-4 h-4" />
+          <button onClick={() => setSidebarOpen(v => !v)} className="px-3 py-1.5 rounded-xl bg-white/8 text-white/60 hover:text-white text-xs font-semibold tracking-wide md:hidden">
+            Menu
           </button>
 
           <div className="flex-1 min-w-0">
