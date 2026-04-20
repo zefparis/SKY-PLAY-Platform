@@ -50,7 +50,7 @@ const Navbar = () => {
   const navLinks = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
     { href: '/challenges', label: t('nav.challenges'), icon: Trophy },
-    { href: '/how-it-works', label: '💡 Comment ça marche', icon: Lightbulb },
+    { href: '/how-it-works', label: t('nav.howItWorks'), icon: Lightbulb },
     { href: '/leaderboard', label: t('nav.leaderboard'), icon: Trophy },
     { href: '/chat', label: t('nav.chat'), icon: MessageCircle },
     { href: '/wallet', label: t('nav.wallet'), icon: Wallet },
