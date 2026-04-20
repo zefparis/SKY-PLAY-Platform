@@ -3,9 +3,12 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
+import { ChampionshipService } from './championship.service';
 import { CreateTournamentDto, JoinTournamentDto, SubmitMatchResultDto } from './dto/tournament.dto';
 
 const POOL_SIZE = 4;
@@ -28,10 +31,12 @@ export class TournamentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
+    @Inject(forwardRef(() => ChampionshipService)) private readonly championshipService: ChampionshipService,
   ) {}
 
   setServer(server: any) {
     this.server = server;
+    this.championshipService.setServer(server);
   }
 
   private emitToUser(userId: string, event: string, data: any) {
@@ -153,7 +158,11 @@ export class TournamentsService {
     this.emitToTournament(tournamentId, 'tournament_update', { tournamentId, event: 'participant_joined', count });
 
     if (count >= tournament.maxPlayers) {
-      setTimeout(() => this.generatePools(tournamentId), 2000);
+      if (tournament.type === 'CHAMPIONSHIP') {
+        setTimeout(() => this.championshipService.generateChampionshipCalendar(tournamentId), 2000);
+      } else {
+        setTimeout(() => this.generatePools(tournamentId), 2000);
+      }
     }
 
     return { joined: true, tournamentId };
@@ -300,7 +309,9 @@ export class TournamentsService {
 
     this.emitToTournament(tournamentId, 'tournament_update', { event: 'match_completed', matchId: id, score1, score2, winnerId });
 
-    if (phase === 'POOL') {
+    if (phase === 'CHAMPIONSHIP_ROUND') {
+      await this.championshipService.handleMatchApplied(tournamentId);
+    } else if (phase === 'POOL') {
       await this.checkPoolsComplete(tournamentId);
     } else {
       await this.advanceKnockout(id);

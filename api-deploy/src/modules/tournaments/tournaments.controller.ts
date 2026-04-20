@@ -9,12 +9,16 @@ import {
   Request,
 } from '@nestjs/common';
 import { TournamentsService } from './tournaments.service';
+import { ChampionshipService } from './championship.service';
 import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { CreateTournamentDto, JoinTournamentDto, SubmitMatchResultDto } from './dto/tournament.dto';
 
 @Controller('tournaments')
 export class TournamentsController {
-  constructor(private readonly tournamentsService: TournamentsService) {}
+  constructor(
+    private readonly tournamentsService: TournamentsService,
+    private readonly championshipService: ChampionshipService,
+  ) {}
 
   @UseGuards(JwtDualGuard)
   @Post()
@@ -37,6 +41,16 @@ export class TournamentsController {
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
     });
+  }
+
+  @Get(':id/calendar')
+  getCalendar(@Param('id') id: string) {
+    return this.championshipService.getCalendar(id);
+  }
+
+  @Get(':id/championship-standings')
+  getChampionshipStandings(@Param('id') id: string) {
+    return this.championshipService.computeChampionshipStandings(id);
   }
 
   @Get(':id')

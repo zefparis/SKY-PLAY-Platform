@@ -589,6 +589,7 @@ model Tournament {
   maxPlayers    Int
   commission    Float
   potTotal      Int                    @default(0)
+  standingsJson Json?
   creatorId     String
   creator       User                   @relation(fields: [creatorId], references: [id])
   participants  TournamentParticipant[]
