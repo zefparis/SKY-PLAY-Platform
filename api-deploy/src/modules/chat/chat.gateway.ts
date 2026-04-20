@@ -17,6 +17,7 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ChallengesService } from '../challenges/challenges.service';
 import { ChallengeInviteService } from '../challenges/challenge-invite.service';
+import { TournamentsService } from '../tournaments/tournaments.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChatService } from './chat.service';
 
@@ -86,6 +87,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onModuleInit() {
     this.challengesService.setServer(this.server);
     this.challengeInviteService.setServer(this.server);
+    this.tournamentsService.setServer(this.server);
     this.walletService.setServer(this.server);
     this.chatService.setServer(this.server);
     this.usersService.setServer(this.server);
@@ -144,6 +146,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private prisma: PrismaService,
     private challengesService: ChallengesService,
     private challengeInviteService: ChallengeInviteService,
+    private tournamentsService: TournamentsService,
     private walletService: WalletService,
     private chatService: ChatService,
   ) {
@@ -751,6 +754,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.removeUserFromVoiceRoom(socketId, room);
       }
     });
+  }
+
+  // ===== TOURNAMENT HANDLERS =====
+
+  @SubscribeMessage('join_tournament_room')
+  handleJoinTournamentRoom(
+    @MessageBody() data: { tournamentId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.connectedUsers.get(client.id);
+    if (!user) return;
+    client.join(`tournament_${data.tournamentId}`);
+    this.logger.log(`User ${user.username} joined tournament room ${data.tournamentId}`);
+  }
+
+  @SubscribeMessage('leave_tournament_room')
+  handleLeaveTournamentRoom(
+    @MessageBody() data: { tournamentId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.leave(`tournament_${data.tournamentId}`);
   }
 
   // ===== CALL HANDLERS =====

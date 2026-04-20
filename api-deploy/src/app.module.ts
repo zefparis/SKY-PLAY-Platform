@@ -19,6 +19,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { TournamentsModule } from './modules/tournaments/tournaments.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UploadModule } from './modules/upload/upload.module';
     ScheduleModule.forRoot(),
     SchedulerModule,
     UploadModule,
+    TournamentsModule,
   ],
   providers: [
     // Active la limitation de débit globalement (les routes peuvent surcharger via @Throttle/@SkipThrottle)

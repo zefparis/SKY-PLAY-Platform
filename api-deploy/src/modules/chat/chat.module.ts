@@ -6,12 +6,14 @@ import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { UsersModule } from '../users/users.module';
 import { ChallengesModule } from '../challenges/challenges.module';
+import { TournamentsModule } from '../tournaments/tournaments.module';
 import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
   imports: [
     UsersModule,
     forwardRef(() => ChallengesModule),
+    TournamentsModule,
     WalletModule,
     MulterModule.register({ storage: memoryStorage() }),
   ],
