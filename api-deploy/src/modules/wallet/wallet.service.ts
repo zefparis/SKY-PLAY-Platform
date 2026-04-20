@@ -304,9 +304,9 @@ export class WalletService {
     }
 
     // ─── Vérification device flaggé (multi-compte) ───────────────────────────
-    const flaggedDevice = await (this.prisma as any).deviceFingerprint.findFirst({
+    const flaggedDevice = await (this.prisma as any).deviceFingerprint?.findFirst({
       where: { userId, isFlagged: true },
-    });
+    }) ?? null;
     if (flaggedDevice) {
       throw new ForbiddenException(
         'Votre compte est en cours de vérification de sécurité. Contactez support@skyplay.cm',

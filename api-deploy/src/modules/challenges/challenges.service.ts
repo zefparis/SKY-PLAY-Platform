@@ -295,6 +295,13 @@ export class ChallengesService {
     const alreadySubmitted = challenge.results.some((r) => r.userId === userId);
     if (alreadySubmitted) throw new BadRequestException('Tu as déjà soumis un résultat');
 
+    if (screenshotUrl) {
+      const isValidS3 = /^https:\/\/.+\.amazonaws\.com\/.+/.test(screenshotUrl);
+      if (!isValidS3) {
+        throw new BadRequestException('Screenshot doit être uploadé via /upload/screenshot');
+      }
+    }
+
     await this.prisma.challengeResult.create({
       data: { challengeId, userId, declaredRank: rank, screenshotUrl },
     });
