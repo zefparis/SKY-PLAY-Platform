@@ -16,6 +16,7 @@ import { CognitoJwtPayload } from '../../common/types/cognito-jwt-payload';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ChallengesService } from '../challenges/challenges.service';
+import { ChallengeInviteService } from '../challenges/challenge-invite.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChatService } from './chat.service';
 
@@ -84,11 +85,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   onModuleInit() {
     this.challengesService.setServer(this.server);
+    this.challengeInviteService.setServer(this.server);
     this.walletService.setServer(this.server);
     this.chatService.setServer(this.server);
     this.usersService.setServer(this.server);
     // Nettoyage automatique des messages expirés toutes les minutes
     setInterval(() => this.cleanupExpiredRoomMessages(), 60 * 1000);
+  }
+
+  emitChallengeInvite(toUserId: string, data: any) {
+    this.server.to(`user_${toUserId}`).emit('challenge_invite', data);
+  }
+
+  emitInviteDeclined(fromUserId: string, data: any) {
+    this.server.to(`user_${fromUserId}`).emit('invite_declined', data);
+  }
+
+  emitInviteExpired(userIdA: string, userIdB: string, data: any) {
+    this.server.to(`user_${userIdA}`).emit('invite_expired', data);
+    this.server.to(`user_${userIdB}`).emit('invite_expired', data);
   }
 
   private cleanupExpiredRoomMessages() {
@@ -128,6 +143,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private usersService: UsersService,
     private prisma: PrismaService,
     private challengesService: ChallengesService,
+    private challengeInviteService: ChallengeInviteService,
     private walletService: WalletService,
     private chatService: ChatService,
   ) {

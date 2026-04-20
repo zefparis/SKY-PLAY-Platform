@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsInt, IsNumber } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsInt, IsNumber, IsBoolean } from 'class-validator';
 import { ChallengeType } from '@prisma/client';
 
 export class CreateChallengeDto {
@@ -56,4 +56,14 @@ export class FindAllChallengesDto {
   @IsOptional()
   @IsNumber()
   limit?: number;
+}
+
+export class CreateInviteDto {
+  @IsString()
+  toUserId: string;
+}
+
+export class RespondInviteDto {
+  @IsBoolean()
+  accept: boolean;
 }

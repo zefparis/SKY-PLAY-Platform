@@ -18,17 +18,23 @@ import * as crypto from 'crypto';
 import { Response } from 'express';
 import PDFDocument = require('pdfkit');
 import { ChallengesService } from './challenges.service';
+import { ChallengeInviteService } from './challenge-invite.service';
 import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import {
   CreateChallengeDto,
   SubmitResultDto,
   ForceDisputeDto,
   ResolveDisputeDto,
+  CreateInviteDto,
+  RespondInviteDto,
 } from './dto/challenge.dto';
 
 @Controller('challenges')
 export class ChallengesController {
-  constructor(private readonly challengesService: ChallengesService) {}
+  constructor(
+    private readonly challengesService: ChallengesService,
+    private readonly inviteService: ChallengeInviteService,
+  ) {}
 
   @Get()
   findAll(
@@ -51,6 +57,32 @@ export class ChallengesController {
   @Get('my')
   getMyChallenges(@Request() req) {
     return this.challengesService.getMyChallenges(req.user.id);
+  }
+
+  @UseGuards(JwtDualGuard)
+  @Get('invites/pending')
+  getPendingInvites(@Request() req) {
+    return this.inviteService.getPendingInvites(req.user.id);
+  }
+
+  @UseGuards(JwtDualGuard)
+  @Post(':id/invite')
+  createInvite(
+    @Param('id') id: string,
+    @Body() dto: CreateInviteDto,
+    @Request() req,
+  ) {
+    return this.inviteService.createInvite(req.user.id, id, dto.toUserId);
+  }
+
+  @UseGuards(JwtDualGuard)
+  @Post('invites/:inviteId/respond')
+  respondToInvite(
+    @Param('inviteId') inviteId: string,
+    @Body() dto: RespondInviteDto,
+    @Request() req,
+  ) {
+    return this.inviteService.respondToInvite(req.user.id, inviteId, dto.accept);
   }
 
   @Get(':id')
