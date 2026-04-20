@@ -250,6 +250,10 @@ export class UsersService {
     discordTag?: string;
     twitchUsername?: string;
     avatar?: string;
+    country?: string;
+    city?: string;
+    phone?: string;
+    nationality?: string;
   }) {
     // Vérifier que l'utilisateur existe
     const user = await this.findById(userId);
@@ -278,6 +282,10 @@ export class UsersService {
         ...(updateData.discordTag !== undefined && { discordTag: updateData.discordTag }),
         ...(updateData.twitchUsername !== undefined && { twitchUsername: updateData.twitchUsername }),
         ...(updateData.avatar !== undefined && { avatar: updateData.avatar }),
+        ...(updateData.country !== undefined && { country: updateData.country }),
+        ...(updateData.city !== undefined && { city: updateData.city }),
+        ...(updateData.phone !== undefined && { phone: updateData.phone }),
+        ...(updateData.nationality !== undefined && { nationality: updateData.nationality }),
       },
       include: {
         wallet: true,

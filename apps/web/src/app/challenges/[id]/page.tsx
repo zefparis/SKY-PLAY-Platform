@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload } from 'lucide-react';
 import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import ChallengeRules from '@/components/challenges/ChallengeRules';
+import AdSlot from '@/components/ads/AdSlot';
 import { useI18n } from '@/components/i18n/I18nProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -141,6 +142,11 @@ export default function ChallengePage() {
         >
           <ArrowLeft className="w-4 h-4" /> {t('challenge.detail.back')}
         </button>
+
+        {/* AdSlot VIDEO_PRE — avant le début du match */}
+        {challenge.status === 'IN_PROGRESS' && (
+          <AdSlot type="VIDEO_PRE" game={challenge.game} className="mb-4" />
+        )}
 
         {/* Section 1 — Header */}
         <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">

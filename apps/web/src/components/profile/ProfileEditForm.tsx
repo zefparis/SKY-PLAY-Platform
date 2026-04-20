@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import { useAuthStore } from '@/lib/auth-store'
 import { motion } from 'framer-motion'
 import { useI18n } from '@/components/i18n/I18nProvider'
+import CountrySelect from './CountrySelect'
 
 interface ProfileEditFormProps {
   initialData: {
@@ -16,6 +17,10 @@ interface ProfileEditFormProps {
     bio?: string
     discordTag?: string
     twitchUsername?: string
+    country?: string
+    city?: string
+    phone?: string
+    nationality?: string
   }
   onSave?: (data: any) => Promise<void>
 }
@@ -167,6 +172,75 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
               </svg>
               <span className="font-bold text-white">{t('profile.discord.connect')}</span>
             </button>
+          )}
+        </div>
+
+        {/* Pays */}
+        <div className="group">
+          <label className="block text-xs font-bold uppercase tracking-wider dark:text-white/40 text-[#00165F]/40 mb-2">Pays</label>
+          {isEditing ? (
+            <CountrySelect
+              value={formData.country || ''}
+              onChange={(v) => setFormData({ ...formData, country: v })}
+            />
+          ) : (
+            <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
+              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).country || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Nationalité */}
+        <div className="group">
+          <label className="block text-xs font-bold uppercase tracking-wider dark:text-white/40 text-[#00165F]/40 mb-2">Nationalité</label>
+          {isEditing ? (
+            <input
+              type="text"
+              value={(formData as any).nationality || ''}
+              onChange={(e) => setFormData({ ...formData, nationality: e.target.value } as any)}
+              placeholder="Ex: Camerounais(e)"
+              className="w-full px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 rounded-xl dark:text-white text-[#00165F] focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none transition-all placeholder:dark:text-white/30 placeholder:text-[#00165F]/30"
+            />
+          ) : (
+            <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
+              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).nationality || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Ville */}
+        <div className="group">
+          <label className="block text-xs font-bold uppercase tracking-wider dark:text-white/40 text-[#00165F]/40 mb-2">Ville</label>
+          {isEditing ? (
+            <input
+              type="text"
+              value={(formData as any).city || ''}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value } as any)}
+              placeholder="Ex: Yaoundé, Douala…"
+              className="w-full px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 rounded-xl dark:text-white text-[#00165F] focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none transition-all placeholder:dark:text-white/30 placeholder:text-[#00165F]/30"
+            />
+          ) : (
+            <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
+              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).city || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Téléphone */}
+        <div className="group">
+          <label className="block text-xs font-bold uppercase tracking-wider dark:text-white/40 text-[#00165F]/40 mb-2">Téléphone</label>
+          {isEditing ? (
+            <input
+              type="tel"
+              value={(formData as any).phone || ''}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value } as any)}
+              placeholder="+237 6XX XXX XXX"
+              className="w-full px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 rounded-xl dark:text-white text-[#00165F] focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none transition-all placeholder:dark:text-white/30 placeholder:text-[#00165F]/30"
+            />
+          ) : (
+            <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
+              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).phone || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+            </div>
           )}
         </div>
 

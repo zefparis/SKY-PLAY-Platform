@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import Navbar from '@/components/layout/Navbar'
+import AdBanner from '@/components/ads/AdBanner'
 import { I18nProvider } from '@/components/i18n/I18nProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import SessionRestorer from '@/components/providers/SessionRestorer'
@@ -51,7 +52,10 @@ export default function RootLayout({
           <I18nProvider>
             <SessionRestorer />
             <Navbar />
-            <div className="[&:has([data-page=landing])]:p-0 pt-20 pb-16 md:pb-0">{children}</div>
+            <div className="pt-20 pb-1 px-4">
+              <AdBanner />
+            </div>
+            <div className="[&:has([data-page=landing])]:p-0 pb-16 md:pb-0">{children}</div>
           </I18nProvider>
         </ThemeProvider>
       </body>

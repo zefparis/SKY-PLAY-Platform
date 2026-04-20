@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength, Matches } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -34,4 +34,24 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+?[0-9\s\-().]{7,20}$/, { message: 'Numéro de téléphone invalide (format international requis)' })
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  nationality?: string;
 }
