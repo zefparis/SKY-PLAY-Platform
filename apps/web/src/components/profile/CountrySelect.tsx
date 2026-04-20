@@ -1,5 +1,8 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
+import { ChevronDown, Check } from 'lucide-react'
+
 interface CountryOption {
   code: string
   name: string
@@ -76,25 +79,85 @@ interface Props {
   className?: string
 }
 
+const ALL = [...AFRICAN_COUNTRIES, ...WORLD_COUNTRIES]
+
 export default function CountrySelect({ value, onChange, disabled, className = '' }: Props) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      className={`w-full px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 rounded-xl dark:text-white text-[#00165F] focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none transition-all ${className}`}
+  const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const selectedLabel = value ? (ALL.find((c) => c.name === value)?.name ?? value) : '— Sélectionner un pays —'
+
+  const handleSelect = (name: string) => { onChange(name); setIsOpen(false) }
+
+  const OptionBtn = ({ c }: { c: CountryOption }) => (
+    <button
+      type="button"
+      onClick={() => handleSelect(c.name)}
+      className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors
+        dark:hover:bg-white/10 hover:bg-[#00165F]/5
+        ${value === c.name ? 'dark:text-[#0097FC] text-[#0097FC] font-semibold' : 'dark:text-white text-[#00165F]'}`}
     >
-      <option value="">— Sélectionner un pays —</option>
-      <optgroup label="🌍 Afrique">
-        {AFRICAN_COUNTRIES.map((c) => (
-          <option key={c.code} value={c.name}>{c.name}</option>
-        ))}
-      </optgroup>
-      <optgroup label="🌐 Monde">
-        {WORLD_COUNTRIES.map((c) => (
-          <option key={c.code} value={c.name}>{c.name}</option>
-        ))}
-      </optgroup>
-    </select>
+      {c.name}
+      {value === c.name && <Check className="w-3.5 h-3.5 shrink-0" />}
+    </button>
+  )
+
+  const GroupLabel = ({ emoji, label }: { emoji: string; label: string }) => (
+    <div className="px-4 pt-2 pb-1 text-[10px] font-black uppercase tracking-wider dark:text-[#0097FC]/70 text-[#0097FC]/70 border-t dark:border-white/5 border-[#00165F]/5">
+      {emoji} {label}
+    </div>
+  )
+
+  return (
+    <div ref={ref} className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full flex items-center justify-between px-4 py-3
+          dark:bg-white/5 bg-[#00165F]/5
+          border dark:border-white/10 border-[#00165F]/10
+          rounded-xl dark:text-white text-[#00165F]
+          focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none
+          transition-all
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[#0097FC]/50'}`}
+      >
+        <span className={value ? '' : 'dark:text-white/30 text-[#00165F]/30 text-sm'}>
+          {selectedLabel}
+        </span>
+        <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1
+          dark:bg-[#00165F] bg-white
+          border dark:border-white/10 border-[#00165F]/10
+          rounded-xl shadow-2xl overflow-hidden">
+          <div className="max-h-60 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => handleSelect('')}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+                dark:hover:bg-white/10 hover:bg-[#00165F]/5
+                ${!value ? 'dark:text-[#0097FC] text-[#0097FC] font-semibold' : 'dark:text-white/40 text-[#00165F]/40'}`}
+            >
+              — Sélectionner un pays —
+            </button>
+            <GroupLabel emoji="🌍" label="Afrique" />
+            {AFRICAN_COUNTRIES.map((c) => <OptionBtn key={c.code} c={c} />)}
+            <GroupLabel emoji="🌐" label="Monde" />
+            {WORLD_COUNTRIES.map((c) => <OptionBtn key={c.code} c={c} />)}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

@@ -491,7 +491,8 @@ export default function UsersPage() {
               <div>
                 <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">Durée</label>
                 <select value={excludeDuration} onChange={e => setExcludeDuration(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none">
+                  className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none appearance-none cursor-pointer [&>option]:bg-[#00165F] [&>option]:text-white"
+                  style={{ colorScheme: 'dark' }}>
                   <option value="24H">24 heures (pause)</option>
                   <option value="72H">72 heures (pause)</option>
                   <option value="1_WEEK">1 semaine</option>

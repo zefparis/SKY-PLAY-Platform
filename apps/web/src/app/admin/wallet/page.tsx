@@ -190,11 +190,13 @@ export default function AdminWalletPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1) }}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC]">
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC] appearance-none cursor-pointer [&>option]:bg-[#00165F] [&>option]:text-white"
+          style={{ colorScheme: 'dark' }}>
           {TYPE_OPTS.map(t => <option key={t} value={t}>{t || 'Tous types'}</option>)}
         </select>
         <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC]">
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold dark:bg-white/10 bg-white border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] focus:outline-none focus:border-[#0097FC] appearance-none cursor-pointer [&>option]:bg-[#00165F] [&>option]:text-white"
+          style={{ colorScheme: 'dark' }}>
           {STATUS_OPTS.map(s => <option key={s} value={s}>{s || 'Tous statuts'}</option>)}
         </select>
       </div>

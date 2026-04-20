@@ -112,7 +112,8 @@ export default function ChallengesPage() {
             <select
               value={gameFilter}
               onChange={e => setGameFilter(e.target.value)}
-              className="px-2.5 sm:px-3 py-1 rounded-lg text-xs dark:bg-white/10 bg-white dark:text-white text-[#00165F] border dark:border-white/10 border-[#00165F]/10 max-w-[110px] sm:max-w-none"
+              className="px-2.5 sm:px-3 py-1 rounded-lg text-xs dark:bg-white/10 bg-white dark:text-white text-[#00165F] border dark:border-white/10 border-[#00165F]/10 max-w-[110px] sm:max-w-none appearance-none cursor-pointer [&>option]:bg-[#00165F] [&>option]:text-white"
+              style={{ colorScheme: 'dark' }}
             >
               {GAMES.map((g, i) => <option key={g} value={i === 0 ? '' : g}>{g}</option>)}
             </select>

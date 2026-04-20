@@ -241,7 +241,8 @@ export default function KYCPage() {
                     <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-1.5 block">{t('kyc.step1.idType')}</label>
                     <select
                       value={idType} onChange={e => setIdType(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none focus:border-[#0097FC]"
+                      className="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/10 border-gray-200 dark:text-white text-[#00165F] text-sm focus:outline-none focus:border-[#0097FC] appearance-none cursor-pointer [&>option]:bg-[#00165F] [&>option]:text-white"
+                      style={{ colorScheme: 'dark' }}
                     >
                       <option value="CNI">{t('kyc.step1.idType.cni')}</option>
                       <option value="PASSEPORT">{t('kyc.step1.idType.passport')}</option>
