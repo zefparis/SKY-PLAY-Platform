@@ -18,6 +18,10 @@ model User {
   lastName            String?
   avatar              String?         @db.Text
   bio                 String?
+  country             String?
+  city                String?
+  phone               String?
+  nationality         String?
   discordTag          String?
   twitchUsername      String?
   role                UserRole        @default(PLAYER)
@@ -76,6 +80,15 @@ model User {
   exclusionRequestedAt DateTime?
   exclusionHistory     ExclusionHistory[]
   deviceFingerprints   DeviceFingerprint[]
+
+  // ─── Tournaments / Leagues / Invites ─────────────────────────────────────
+  tournamentsCreated        Tournament[]
+  tournamentParticipations  TournamentParticipant[]
+  matchesAsPlayer1          TournamentMatch[]  @relation("MatchPlayer1")
+  matchesAsPlayer2          TournamentMatch[]  @relation("MatchPlayer2")
+  leagueEntries             LeagueEntry[]
+  sentInvites               ChallengeInvite[]  @relation("InviteFrom")
+  receivedInvites           ChallengeInvite[]  @relation("InviteTo")
 
   @@index([status])
   @@index([exclusionStatus])
@@ -189,6 +202,7 @@ model Challenge {
   dispute         ChallengeDispute?
   conversation    Conversation?
   ruleAcceptances ChallengeRuleAcceptance[]
+  invites         ChallengeInvite[]
   createdAt       DateTime              @default(now())
   startedAt   DateTime?
   endedAt     DateTime?
@@ -560,4 +574,238 @@ model ChallengeRuleAcceptance {
   @@unique([userId, challengeId])
   @@index([challengeId])
   @@map("challenge_rule_acceptances")
+}
+
+// ─── TOURNAMENTS ─────────────────────────────────────────────────────────────
+
+model Tournament {
+  id            String                 @id @default(cuid())
+  title         String
+  game          String
+  type          TournamentType
+  status        TournamentStatus       @default(DRAFT)
+  format        TournamentFormat
+  entryFee      Int
+  maxPlayers    Int
+  commission    Float
+  potTotal      Int                    @default(0)
+  creatorId     String
+  creator       User                   @relation(fields: [creatorId], references: [id])
+  participants  TournamentParticipant[]
+  pools         Pool[]
+  matches       TournamentMatch[]
+  league        League?                @relation(fields: [leagueId], references: [id])
+  leagueId      String?
+  startsAt      DateTime?
+  endsAt        DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@map("tournaments")
+}
+
+enum TournamentType {
+  SIMPLE
+  PREMIUM_CLUBS
+  PREMIUM_NATIONS
+  CHAMPIONSHIP
+}
+
+enum TournamentStatus {
+  DRAFT
+  OPEN
+  POOL_PHASE
+  KNOCKOUT_PHASE
+  COMPLETED
+  CANCELLED
+}
+
+enum TournamentFormat {
+  POOLS_THEN_KNOCKOUT
+  DOUBLE_ROUND_ROBIN
+  SINGLE_ELIMINATION
+}
+
+model TournamentParticipant {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  poolId       String?
+  pool         Pool?      @relation(fields: [poolId], references: [id])
+  teamName     String?
+  nation       String?
+  points       Int        @default(0)
+  goalsFor     Int        @default(0)
+  goalsAgainst Int        @default(0)
+  wins         Int        @default(0)
+  draws        Int        @default(0)
+  losses       Int        @default(0)
+  yellowCards  Int        @default(0)
+  redCards     Int        @default(0)
+  seed         Int?
+  eliminated   Boolean    @default(false)
+  finalRank    Int?
+  winnings     Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  @@unique([tournamentId, userId])
+  @@map("tournament_participants")
+}
+
+model Pool {
+  id           String                  @id @default(cuid())
+  tournamentId String
+  tournament   Tournament              @relation(fields: [tournamentId], references: [id])
+  name         String
+  participants TournamentParticipant[]
+  matches      TournamentMatch[]
+  createdAt    DateTime                @default(now())
+
+  @@map("pools")
+}
+
+model TournamentMatch {
+  id           String       @id @default(cuid())
+  tournamentId String
+  tournament   Tournament   @relation(fields: [tournamentId], references: [id])
+  poolId       String?
+  pool         Pool?        @relation(fields: [poolId], references: [id])
+  phase        MatchPhase
+  round        Int
+  player1Id    String
+  player2Id    String
+  player1      User         @relation("MatchPlayer1", fields: [player1Id], references: [id])
+  player2      User         @relation("MatchPlayer2", fields: [player2Id], references: [id])
+  winnerId     String?
+  score1       Int?
+  score2       Int?
+  yellowCards1 Int?
+  yellowCards2 Int?
+  redCards1    Int?
+  redCards2    Int?
+  screenshot1  String?
+  screenshot2  String?
+  status       TMatchStatus @default(PENDING)
+  scheduledAt  DateTime?
+  playedAt     DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@map("tournament_matches")
+}
+
+enum MatchPhase {
+  POOL
+  ROUND_OF_16
+  QUARTER_FINAL
+  SEMI_FINAL
+  THIRD_PLACE
+  FINAL
+  CHAMPIONSHIP_ROUND
+}
+
+enum TMatchStatus {
+  PENDING
+  INVITED
+  IN_PROGRESS
+  AWAITING_RESULTS
+  DISPUTED
+  COMPLETED
+  WALKOVER
+}
+
+// ─── LEAGUES ─────────────────────────────────────────────────────────────────
+
+model League {
+  id          String        @id @default(cuid())
+  tier        LeagueTier
+  season      Int
+  game        String
+  startsAt    DateTime
+  endsAt      DateTime
+  entries     LeagueEntry[]
+  tournaments Tournament[]
+  createdAt   DateTime      @default(now())
+
+  @@map("leagues")
+}
+
+enum LeagueTier {
+  BRONZE
+  SILVER
+  GOLD
+  DIAMOND
+  LEGEND
+  GLORY
+}
+
+model LeagueEntry {
+  id        String  @id @default(cuid())
+  leagueId  String
+  league    League  @relation(fields: [leagueId], references: [id])
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  points    Int     @default(0)
+  rank      Int?
+  promoted  Boolean @default(false)
+  relegated Boolean @default(false)
+
+  @@unique([leagueId, userId])
+  @@map("league_entries")
+}
+
+// ─── CHALLENGE INVITES ────────────────────────────────────────────────────────
+
+model ChallengeInvite {
+  id          String       @id @default(cuid())
+  challengeId String
+  challenge   Challenge    @relation(fields: [challengeId], references: [id])
+  fromUserId  String
+  fromUser    User         @relation("InviteFrom", fields: [fromUserId], references: [id])
+  toUserId    String
+  toUser      User         @relation("InviteTo", fields: [toUserId], references: [id])
+  status      InviteStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime     @default(now())
+
+  @@map("challenge_invites")
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+// ─── ADVERTISEMENTS ──────────────────────────────────────────────────────────
+
+model Advertisement {
+  id          String   @id @default(cuid())
+  title       String
+  type        AdType
+  mediaUrl    String
+  targetUrl   String?
+  advertiser  String
+  game        String?
+  country     String?
+  startsAt    DateTime
+  endsAt      DateTime
+  isActive    Boolean  @default(true)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@map("advertisements")
+}
+
+enum AdType {
+  VIDEO_PRE
+  VIDEO_POST
+  BANNER
+  OVERLAY
+  POPUP
+  NATIVE
+  SPONSORED_EVENT
 }
