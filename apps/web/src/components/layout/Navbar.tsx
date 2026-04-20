@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight, Pause, Shield } from 'lucide-react'
+import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight, Pause, Shield, Lightbulb } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -50,6 +50,7 @@ const Navbar = () => {
   const navLinks = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
     { href: '/challenges', label: t('nav.challenges'), icon: Trophy },
+    { href: '/how-it-works', label: '💡 Comment ça marche', icon: Lightbulb },
     { href: '/leaderboard', label: t('nav.leaderboard'), icon: Trophy },
     { href: '/chat', label: t('nav.chat'), icon: MessageCircle },
     { href: '/wallet', label: t('nav.wallet'), icon: Wallet },
@@ -265,6 +266,7 @@ const Navbar = () => {
                 {/* Nav links */}
                 <div className="px-3 py-2 space-y-0.5">
                   {[
+                    { href: '/how-it-works', label: 'Comment ça marche', icon: Lightbulb },
                     { href: '/leaderboard', label: 'Classement', icon: Trophy },
                     { href: '/profile', label: 'Mon profil', icon: User },
                     { href: '/profile/responsabilite', label: 'Jeu responsable', icon: Shield },
