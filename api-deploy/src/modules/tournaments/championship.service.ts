@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
+import { LeaguesService } from '../leagues/leagues.service';
 
 /**
  * Round-robin calendar generation using the circular rotation (polygon) algorithm.
@@ -37,6 +38,7 @@ export class ChampionshipService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
+    private readonly leagueService: LeaguesService,
   ) {}
 
   setServer(server: any) {
@@ -220,6 +222,12 @@ export class ChampionshipService {
     await distribute(standings[0], 1);
     await distribute(standings[1], 2);
     await distribute(standings[2], 3);
+
+    // League points pour le championnat
+    const lpMap: Record<number, number> = { 1: 200, 2: 100, 3: 50 };
+    for (const [i, pts] of [[0, lpMap[1]], [1, lpMap[2]], [2, lpMap[3]]] as [number, number][]) {
+      if (standings[i]) this.leagueService.awardLeaguePoints(standings[i].userId, tournament.game, pts).catch(() => {});
+    }
 
     // XP pour tous les participants
     for (let i = 0; i < standings.length; i++) {

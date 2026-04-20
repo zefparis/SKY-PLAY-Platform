@@ -7,6 +7,7 @@ import { ChatController } from './chat.controller';
 import { UsersModule } from '../users/users.module';
 import { ChallengesModule } from '../challenges/challenges.module';
 import { TournamentsModule } from '../tournaments/tournaments.module';
+import { LeaguesModule } from '../leagues/leagues.module';
 import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
@@ -14,6 +15,7 @@ import { WalletModule } from '../wallet/wallet.module';
     UsersModule,
     forwardRef(() => ChallengesModule),
     TournamentsModule,
+    LeaguesModule,
     WalletModule,
     MulterModule.register({ storage: memoryStorage() }),
   ],

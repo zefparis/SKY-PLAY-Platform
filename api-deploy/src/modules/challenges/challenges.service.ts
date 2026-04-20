@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChatService } from '../chat/chat.service';
+import { LeaguesService } from '../leagues/leagues.service';
 import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION, MANUAL_REVIEW_THRESHOLD, AUTO_APPROVE_DELAY_MS } from './challenges.constants';
 
 type ChallengeTypeKey = keyof typeof CHALLENGE_TYPES;
@@ -33,6 +34,7 @@ export class ChallengesService {
     private prisma: PrismaService,
     private walletService: WalletService,
     @Inject(forwardRef(() => ChatService)) private chatService: ChatService,
+    private leagueService: LeaguesService,
   ) {}
 
   setServer(server: any) {
@@ -453,6 +455,8 @@ export class ChallengesService {
       if (newLevel !== updatedUser.level) {
         await this.prisma.user.update({ where: { id: result.userId }, data: { level: newLevel } });
       }
+      const leaguePoints = ({ 1: 100, 2: 50, 3: 25 } as Record<number, number>)[result.declaredRank] ?? 10;
+      this.leagueService.awardLeaguePoints(result.userId, challenge.game, leaguePoints).catch(() => {});
     }
 
     for (const userId of participantIds) {

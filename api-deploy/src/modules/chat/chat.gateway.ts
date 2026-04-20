@@ -18,6 +18,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ChallengesService } from '../challenges/challenges.service';
 import { ChallengeInviteService } from '../challenges/challenge-invite.service';
 import { TournamentsService } from '../tournaments/tournaments.service';
+import { LeaguesService } from '../leagues/leagues.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChatService } from './chat.service';
 
@@ -88,6 +89,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.challengesService.setServer(this.server);
     this.challengeInviteService.setServer(this.server);
     this.tournamentsService.setServer(this.server);
+    this.leaguesService.setServer(this.server);
     this.walletService.setServer(this.server);
     this.chatService.setServer(this.server);
     this.usersService.setServer(this.server);
@@ -147,6 +149,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private challengesService: ChallengesService,
     private challengeInviteService: ChallengeInviteService,
     private tournamentsService: TournamentsService,
+    private leaguesService: LeaguesService,
     private walletService: WalletService,
     private chatService: ChatService,
   ) {

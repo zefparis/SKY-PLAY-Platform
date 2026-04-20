@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChampionshipService } from './championship.service';
+import { LeaguesService } from '../leagues/leagues.service';
 import { CreateTournamentDto, JoinTournamentDto, SubmitMatchResultDto } from './dto/tournament.dto';
 
 const POOL_SIZE = 4;
@@ -32,6 +33,7 @@ export class TournamentsService {
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
     @Inject(forwardRef(() => ChampionshipService)) private readonly championshipService: ChampionshipService,
+    private readonly leagueService: LeaguesService,
   ) {}
 
   setServer(server: any) {
@@ -486,6 +488,12 @@ export class TournamentsService {
     await distribute(winnerId, 1);
     await distribute(secondId, 2);
     await distribute(thirdId, 3);
+
+    // League points for top 3
+    const leaguePointsMap: Record<number, number> = { 1: 150, 2: 75, 3: 40 };
+    for (const [rank, userId] of [[1, winnerId], [2, secondId], [3, thirdId]] as [number, string | null][]) {
+      if (userId) this.leagueService.awardLeaguePoints(userId, tournament.game, leaguePointsMap[rank]).catch(() => {});
+    }
 
     // XP & stats for all participants
     for (const p of tournament.participants as any[]) {
