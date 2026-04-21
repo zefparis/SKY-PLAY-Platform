@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Edit2, Save, X, Check } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -29,6 +29,10 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState(initialData)
+
+  useEffect(() => {
+    setFormData(initialData)
+  }, [initialData])
   const user = useAuthStore((s) => s.user)
   const loginWithDiscord = useAuthStore((s) => s.loginWithDiscord)
   
@@ -185,7 +189,7 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
             />
           ) : (
             <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
-              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).country || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+              <p className="dark:text-white text-[#00165F] font-semibold">{formData.country || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
             </div>
           )}
         </div>
@@ -196,14 +200,14 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
           {isEditing ? (
             <input
               type="text"
-              value={(formData as any).nationality || ''}
-              onChange={(e) => setFormData({ ...formData, nationality: e.target.value } as any)}
+              value={formData.nationality || ''}
+              onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
               placeholder="Ex: Camerounais(e)"
               className="w-full px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 rounded-xl dark:text-white text-[#00165F] focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none transition-all placeholder:dark:text-white/30 placeholder:text-[#00165F]/30"
             />
           ) : (
             <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
-              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).nationality || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+              <p className="dark:text-white text-[#00165F] font-semibold">{formData.nationality || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
             </div>
           )}
         </div>
@@ -214,14 +218,14 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
           {isEditing ? (
             <input
               type="text"
-              value={(formData as any).city || ''}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value } as any)}
+              value={formData.city || ''}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               placeholder="Ex: Yaoundé, Douala…"
               className="w-full px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 rounded-xl dark:text-white text-[#00165F] focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none transition-all placeholder:dark:text-white/30 placeholder:text-[#00165F]/30"
             />
           ) : (
             <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
-              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).city || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+              <p className="dark:text-white text-[#00165F] font-semibold">{formData.city || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
             </div>
           )}
         </div>
@@ -232,14 +236,14 @@ export default function ProfileEditForm({ initialData, onSave }: ProfileEditForm
           {isEditing ? (
             <input
               type="tel"
-              value={(formData as any).phone || ''}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value } as any)}
+              value={formData.phone || ''}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+237 6XX XXX XXX"
               className="w-full px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/10 rounded-xl dark:text-white text-[#00165F] focus:border-[#0097FC] focus:ring-2 focus:ring-[#0097FC]/20 focus:outline-none transition-all placeholder:dark:text-white/30 placeholder:text-[#00165F]/30"
             />
           ) : (
             <div className="px-4 py-3 dark:bg-white/5 bg-[#00165F]/5 rounded-xl border dark:border-white/10 border-[#00165F]/10">
-              <p className="dark:text-white text-[#00165F] font-semibold">{(formData as any).phone || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
+              <p className="dark:text-white text-[#00165F] font-semibold">{formData.phone || <span className="dark:text-white/40 text-[#00165F]/40">Non renseigné</span>}</p>
             </div>
           )}
         </div>

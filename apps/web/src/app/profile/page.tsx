@@ -269,6 +269,10 @@ export default function ProfilePage() {
                   bio: user?.bio || '',
                   discordTag: user?.discordTag || '',
                   twitchUsername: user?.twitchUsername || '',
+                  country: user?.country || '',
+                  city: user?.city || '',
+                  phone: user?.phone || '',
+                  nationality: user?.nationality || '',
                 }}
                 onSave={handleProfileSave}
               />

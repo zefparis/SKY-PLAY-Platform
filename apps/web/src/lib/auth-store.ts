@@ -28,6 +28,10 @@ export type AuthUser = {
   discordId?: string | null
   discordTag?: string | null
   twitchUsername?: string | null
+  country?: string | null
+  city?: string | null
+  phone?: string | null
+  nationality?: string | null
 }
 
 type TokenExchangeResponse = {
