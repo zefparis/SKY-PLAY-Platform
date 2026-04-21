@@ -6,6 +6,7 @@ import { Trophy, Calendar, Target, Shield, UserPlus, UserCheck, Ban, MessageCirc
 import { useAuthStore } from '@/lib/auth-store'
 import { useFriendships } from '@/hooks/useFriendships'
 import Link from 'next/link'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 type Achievement = {
   id: string
@@ -34,6 +35,7 @@ type UserProfile = {
 }
 
 export default function ProfilePage() {
+  const { t } = useI18n()
   const params = useParams()
   const router = useRouter()
   const tokens = useAuthStore((state) => state.tokens)
@@ -138,7 +140,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
-        <div className="text-white">Chargement...</div>
+        <div className="text-white">{t('pub.loading')}</div>
       </div>
     )
   }
@@ -171,7 +173,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-white">{profile.username}</h1>
                 <div className="px-3 py-1 rounded-full bg-sky-400/20 text-sky-400 text-sm font-semibold">
-                  Niveau {profile.level}
+                  {t('pub.level')} {profile.level}
                 </div>
               </div>
 
@@ -182,11 +184,11 @@ export default function ProfilePage() {
               <div className="flex items-center gap-4 text-sm text-white/60">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Membre depuis {new Date(profile.createdAt).toLocaleDateString('fr-FR')}</span>
+                  <span>{t('pub.memberSince')} {new Date(profile.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
-                  <span>Fair-play: {profile.fairPlayScore.toFixed(0)}%</span>
+                  <span>{t('pub.fairPlay')} {profile.fairPlayScore.toFixed(0)}%</span>
                 </div>
               </div>
             </div>
@@ -201,7 +203,7 @@ export default function ProfilePage() {
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0097FC] text-white font-semibold hover:bg-[#0097FC]/90 transition disabled:opacity-50"
                   >
                     <UserPlus className="h-4 w-4" />
-                    ➕ Ajouter
+                    {t('pub.addFriend')}
                   </button>
                 )}
 
@@ -212,7 +214,7 @@ export default function ProfilePage() {
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white/50 font-semibold cursor-not-allowed"
                   >
                     <Clock className="h-4 w-4" />
-                    ⏳ Demande envoyée
+                    {t('pub.pendingSent')}
                   </button>
                 )}
 
@@ -225,14 +227,14 @@ export default function ProfilePage() {
                       className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition disabled:opacity-50"
                     >
                       <CheckCheck className="h-4 w-4" />
-                      ✅ Accepter
+                      {t('pub.accept')}
                     </button>
                     <button
                       onClick={handleDeclineFriend}
                       disabled={actionLoading}
                       className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 font-semibold hover:bg-red-500/30 transition disabled:opacity-50"
                     >
-                      Refuser
+                      {t('pub.decline')}
                     </button>
                   </>
                 )}
@@ -242,20 +244,20 @@ export default function ProfilePage() {
                   <>
                     <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">
                       <UserCheck className="h-4 w-4" />
-                      ✅ Ami
+                      {t('pub.friend')}
                     </div>
                     <Link
                       href={`/chat?dm=${profile.id}`}
                       className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0097FC] text-white font-semibold hover:bg-[#0097FC]/90 transition"
                     >
                       <MessageCircle className="h-4 w-4" />
-                      💬 Message
+                      {t('pub.message')}
                     </Link>
                     <button
                       onClick={handleRemoveFriend}
                       disabled={actionLoading}
                       className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition disabled:opacity-50"
-                      title="Retirer des amis"
+                      title={t('pub.removeFriend')}
                     >
                       <Ban className="h-4 w-4" />
                     </button>
@@ -269,7 +271,7 @@ export default function ProfilePage() {
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 font-semibold cursor-not-allowed"
                   >
                     <Ban className="h-4 w-4" />
-                    🚫 Bloqué
+                    {t('pub.blocked')}
                   </button>
                 )}
               </div>
@@ -281,13 +283,13 @@ export default function ProfilePage() {
           <div className="rounded-xl bg-[#00165F] border border-white/10 p-6 text-center">
             <Target className="h-8 w-8 text-sky-400 mx-auto mb-2" />
             <p className="text-3xl font-bold text-white mb-1">{profile.gamesPlayed}</p>
-            <p className="text-sm text-white/60">Parties jouées</p>
+            <p className="text-sm text-white/60">{t('pub.gamesPlayed')}</p>
           </div>
 
           <div className="rounded-xl bg-[#00165F] border border-white/10 p-6 text-center">
             <Trophy className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
             <p className="text-3xl font-bold text-white mb-1">{profile.gamesWon}</p>
-            <p className="text-sm text-white/60">Victoires</p>
+            <p className="text-sm text-white/60">{t('pub.wins')}</p>
           </div>
 
           <div className="rounded-xl bg-[#00165F] border border-white/10 p-6 text-center">
@@ -295,18 +297,18 @@ export default function ProfilePage() {
               %
             </div>
             <p className="text-3xl font-bold text-white mb-1">{winrate}%</p>
-            <p className="text-sm text-white/60">Taux de victoire</p>
+            <p className="text-sm text-white/60">{t('pub.winrate')}</p>
           </div>
         </div>
 
         <div className="rounded-2xl bg-[#00165F] border border-white/10 p-6">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-sky-400" />
-            Succès débloqués ({profile.achievements.length})
+            {t('pub.achievements')} ({profile.achievements.length})
           </h2>
 
           {profile.achievements.length === 0 ? (
-            <p className="text-white/50 text-center py-8">Aucun succès débloqué pour le moment</p>
+            <p className="text-white/50 text-center py-8">{t('pub.noAchievements')}</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {profile.achievements.map((achievement) => (

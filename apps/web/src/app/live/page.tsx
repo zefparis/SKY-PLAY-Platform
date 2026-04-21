@@ -5,17 +5,9 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Users, Trophy, Clock, Eye, ArrowRight } from 'lucide-react'
 import { formatSKY } from '@/lib/currency'
+import { useI18n } from '@/components/i18n/I18nProvider'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
-
-const TYPE_LABELS: Record<string, string> = {
-  DUEL: 'Duel 1v1',
-  SMALL_CHALLENGE: 'Petit défi',
-  STANDARD: 'Standard',
-  MEDIUM_TOURNAMENT: 'Tournoi moyen',
-  BIG_TOURNAMENT: 'Grand tournoi',
-  PREMIUM_TOURNAMENT: 'Tournoi premium',
-}
 
 function formatElapsed(startedAt: string | null | undefined): string {
   if (!startedAt) return '—'
@@ -27,6 +19,7 @@ function formatElapsed(startedAt: string | null | undefined): string {
 }
 
 export default function LivePage() {
+  const { t } = useI18n()
   const [challenges, setChallenges] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [, setTick] = useState(0)
@@ -51,6 +44,15 @@ export default function LivePage() {
     return () => { clearInterval(refresh); clearInterval(tick) }
   }, [])
 
+  const getTypeLabel = (type: string) => ({
+    DUEL: t('live.type.duel'),
+    SMALL_CHALLENGE: t('live.type.small'),
+    STANDARD: t('live.type.standard'),
+    MEDIUM_TOURNAMENT: t('live.type.medium'),
+    BIG_TOURNAMENT: t('live.type.big'),
+    PREMIUM_TOURNAMENT: t('live.type.premium'),
+  } as Record<string, string>)[type] ?? type
+
   return (
     <div className="min-h-screen dark:bg-[#00165F]/5 bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
@@ -63,11 +65,11 @@ export default function LivePage() {
               <span className="relative inline-flex rounded-full h-3 w-3 bg-[#FD2E5F]" />
             </span>
             <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F]">
-              LIVE — Matchs en cours
+              {t('live.title')}
             </h1>
           </div>
           <p className="text-sm dark:text-white/40 text-[#00165F]/40">
-            Suivi en temps réel des compétitions actives · Actualisation toutes les 30 secondes
+            {t('live.subtitle')}
           </p>
         </div>
 
@@ -80,14 +82,14 @@ export default function LivePage() {
           <div className="rounded-2xl border border-dashed dark:border-white/10 border-[#00165F]/15 p-16 text-center">
             <p className="text-4xl mb-4">🎮</p>
             <p className="font-bold dark:text-white/60 text-[#00165F]/60 text-lg">
-              Aucun match en cours
+              {t('live.noMatch')}
             </p>
-            <p className="text-sm dark:text-white/30 text-[#00165F]/30 mt-1">Revenez bientôt !</p>
+            <p className="text-sm dark:text-white/30 text-[#00165F]/30 mt-1">{t('live.noMatch.sub')}</p>
             <Link
               href="/challenges"
               className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl bg-[#0097FC]/10 text-[#0097FC] text-sm font-semibold hover:bg-[#0097FC]/20 transition"
             >
-              Voir les défis ouverts <ArrowRight className="w-4 h-4" />
+              {t('live.seeOpen')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
@@ -112,7 +114,7 @@ export default function LivePage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-white truncate">{c.title}</p>
                   <p className="text-xs text-white/40 mt-0.5">
-                    {c.game} · {TYPE_LABELS[c.type] ?? c.type}
+                    {c.game} · {getTypeLabel(c.type)}
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-white/50">
                     <span className="flex items-center gap-1">
@@ -135,7 +137,7 @@ export default function LivePage() {
                   href={`/challenges/${c.id}`}
                   className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FD2E5F]/10 text-[#FD2E5F] text-xs font-bold hover:bg-[#FD2E5F]/20 transition whitespace-nowrap"
                 >
-                  <Eye className="w-3.5 h-3.5" /> Regarder
+                  <Eye className="w-3.5 h-3.5" /> {t('live.watch')}
                 </Link>
               </motion.div>
             ))}

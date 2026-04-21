@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useI18n } from '@/components/i18n/I18nProvider'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle, Eye, EyeOff, Loader2, MailCheck } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
@@ -26,13 +27,6 @@ const vt = {
   transition: { duration: 0.18, ease: 'easeOut' },
 }
 
-const VIEW_TITLES: Record<ViewMode, string> = {
-  login: 'Connexion',
-  signup: 'Créer un compte',
-  confirm: 'Confirmer le compte',
-  forgot: 'Mot de passe oublié',
-  reset: 'Nouveau mot de passe',
-}
 
 function GoogleIcon() {
   return (
@@ -51,13 +45,14 @@ function getPasswordStrength(p: string) {
   if (/[A-Z]/.test(p)) s++
   if (/[0-9]/.test(p)) s++
   if (/[^A-Za-z0-9]/.test(p)) s++
-  if (s <= 1) return { label: 'Faible', level: 1, color: 'bg-red-400' }
-  if (s === 2) return { label: 'Moyen', level: 2, color: 'bg-amber-400' }
-  if (s === 3) return { label: 'Bon', level: 3, color: 'bg-lime-400' }
-  return { label: 'Fort', level: 4, color: 'bg-emerald-400' }
+  if (s <= 1) return { labelKey: 'auth.strength.weak', level: 1, color: 'bg-red-400' }
+  if (s === 2) return { labelKey: 'auth.strength.fair', level: 2, color: 'bg-amber-400' }
+  if (s === 3) return { labelKey: 'auth.strength.good', level: 3, color: 'bg-lime-400' }
+  return { labelKey: 'auth.strength.strong', level: 4, color: 'bg-emerald-400' }
 }
 
 export default function LoginClient() {
+  const { t } = useI18n()
   const router = useRouter()
   const params = useSearchParams()
   const nextUrl = params.get('next') || '/dashboard'
@@ -86,6 +81,14 @@ export default function LoginClient() {
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
   const clearError = useAuthStore((s) => s.clearError)
   const setConfirmEmail = useAuthStore((s) => s.setConfirmEmail)
+
+  const VIEW_TITLES: Record<ViewMode, string> = {
+    login: t('auth.login'),
+    signup: t('auth.signup'),
+    confirm: t('auth.confirm'),
+    forgot: t('auth.forgot'),
+    reset: t('auth.reset'),
+  }
 
   const code = otp.join('')
   const pwdStrength = useMemo(() => getPasswordStrength(password), [password])
@@ -150,7 +153,7 @@ export default function LoginClient() {
 
   const SEPARATOR = (
     <div className="flex items-center gap-3 text-xs uppercase tracking-[0.24em] dark:text-white/35 text-[#00165F]/35">
-      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" /><span>ou</span><div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
+      <div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" /><span>{t('auth.or')}</span><div className="h-px flex-1 dark:bg-white/10 bg-[#00165F]/10" />
     </div>
   )
 
@@ -173,7 +176,7 @@ export default function LoginClient() {
             {view === 'login' ? (
               <motion.form key="login" className="space-y-4" onSubmit={async e => { e.preventDefault(); await login(email, password) }} {...vt}>
                 <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE}>
-                  <GoogleIcon /><span>Continuer avec Google</span>
+                  <GoogleIcon /><span>{t('auth.continueGoogle')}</span>
                 </button>
                 {SEPARATOR}
                 {successMsg ? (
@@ -182,16 +185,16 @@ export default function LoginClient() {
                   </div>
                 ) : null}
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                  <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT} placeholder="vous@exemple.com" />
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.email')}</label>
+                  <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT} placeholder={t('auth.emailPlaceholder')} />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
-                    <button type="button" onClick={() => switchView('forgot')} className="text-xs text-[#0097FC] dark:text-sky-300 hover:underline">Mot de passe oublié ?</button>
+                    <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.password')}</label>
+                    <button type="button" onClick={() => switchView('forgot')} className="text-xs text-[#0097FC] dark:text-sky-300 hover:underline">{t('auth.forgotPassword')}</button>
                   </div>
                   <div className="relative">
-                    <input value={password} onChange={e => setPassword(e.target.value)} type={showPwd ? 'text' : 'password'} autoComplete="current-password" className={`${INPUT} pr-12`} placeholder="Votre mot de passe" />
+                    <input value={password} onChange={e => setPassword(e.target.value)} type={showPwd ? 'text' : 'password'} autoComplete="current-password" className={`${INPUT} pr-12`} placeholder={t('auth.passwordPlaceholder')} />
                     <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 hover:text-[#00165F] dark:hover:text-white">
                       {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -199,10 +202,10 @@ export default function LoginClient() {
                 </div>
                 <ErrorBox />
                 <button type="submit" disabled={email.trim().length < 4 || password.length < 6 || isLoading} className={PRIMARY}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Se connecter'}
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.signInBtn')}
                 </button>
                 <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                  Pas de compte ?{' '}<button type="button" onClick={() => switchView('signup')} className={LINK}>S&apos;inscrire</button>
+                  {t('auth.noAccount')}{' '}<button type="button" onClick={() => switchView('signup')} className={LINK}>{t('auth.register')}</button>
                 </p>
               </motion.form>
             ) : null}
@@ -217,24 +220,24 @@ export default function LoginClient() {
                 setOtp(Array(6).fill(''))
               }} {...vt}>
                 <button type="button" onClick={loginWithGoogle} disabled={isLoading} className={GOOGLE}>
-                  <GoogleIcon /><span>Continuer avec Google</span>
+                  <GoogleIcon /><span>{t('auth.continueGoogle')}</span>
                 </button>
                 {SEPARATOR}
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                  <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT} placeholder="vous@exemple.com" />
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.email')}</label>
+                  <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT} placeholder={t('auth.emailPlaceholder')} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Mot de passe</label>
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.password')}</label>
                   <div className="relative">
-                    <input value={password} onChange={e => setPassword(e.target.value)} type={showPwd ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT} pr-12`} placeholder="Créez un mot de passe" />
+                    <input value={password} onChange={e => setPassword(e.target.value)} type={showPwd ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT} pr-12`} placeholder={t('auth.createPassword')} />
                     <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 hover:text-[#00165F] dark:hover:text-white">
                       {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {password.length > 0 ? (
                     <div className="rounded-2xl border dark:border-white/10 border-[#00165F]/20 dark:bg-white/5 bg-slate-50 px-4 py-3 space-y-1">
-                      <div className="flex justify-between text-xs dark:text-white/60 text-[#00165F]/60"><span>Force</span><span>{pwdStrength.label}</span></div>
+                      <div className="flex justify-between text-xs dark:text-white/60 text-[#00165F]/60"><span>{t('auth.strength.label')}</span><span>{t(pwdStrength.labelKey)}</span></div>
                       <div className="grid grid-cols-4 gap-2">
                         {Array.from({ length: 4 }, (_, i) => <div key={i} className={`h-1.5 rounded-full ${i < pwdStrength.level ? pwdStrength.color : 'dark:bg-white/10 bg-[#00165F]/10'}`} />)}
                       </div>
@@ -242,21 +245,21 @@ export default function LoginClient() {
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Confirmer le mot de passe</label>
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.confirmPassword')}</label>
                   <div className="relative">
-                    <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type={showConfirmPwd ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT} pr-12`} placeholder="Répétez votre mot de passe" />
+                    <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type={showConfirmPwd ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT} pr-12`} placeholder={t('auth.confirmPasswordPlaceholder')} />
                     <button type="button" onClick={() => setShowConfirmPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 hover:text-[#00165F] dark:hover:text-white">
                       {showConfirmPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {confirmPassword.length > 0 && !pwdMatch ? <p className="text-xs text-[#FD2E5F] dark:text-red-200">Les mots de passe ne correspondent pas</p> : null}
+                  {confirmPassword.length > 0 && !pwdMatch ? <p className="text-xs text-[#FD2E5F] dark:text-red-200">{t('auth.passwordMismatch')}</p> : null}
                 </div>
                 <ErrorBox />
                 <button type="submit" disabled={email.trim().length < 4 || password.length < 8 || !pwdMatch || isLoading} className={PRIMARY}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Créer mon compte'}
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.createAccountBtn')}
                 </button>
                 <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                  Déjà un compte ?{' '}<button type="button" onClick={() => switchView('login')} className={LINK}>Se connecter</button>
+                  {t('auth.alreadyAccount')}{' '}<button type="button" onClick={() => switchView('login')} className={LINK}>{t('auth.signInBtn')}</button>
                 </p>
               </motion.form>
             ) : null}
@@ -269,19 +272,19 @@ export default function LoginClient() {
               }} {...vt}>
                 <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-center">
                   <MailCheck className="mx-auto mb-2 h-6 w-6 text-[#0097FC] dark:text-sky-300" />
-                  <p className="text-sm font-medium dark:text-white text-[#00165F]">Code envoyé à</p>
+                  <p className="text-sm font-medium dark:text-white text-[#00165F]">{t('auth.codeSentTo')}</p>
                   <p className="text-sm font-semibold dark:text-white text-[#00165F]">{confirmEmail ?? email}</p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code (6 chiffres)</label>
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.confirmationCode')}</label>
                   <OtpRow />
                 </div>
                 <ErrorBox />
                 <button type="submit" disabled={(confirmEmail ?? email).trim().length < 4 || code.length < 6 || isLoading} className={PRIMARY}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmer'}
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.confirmBtn')}
                 </button>
                 <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                  <button type="button" onClick={() => { setConfirmEmail(null); switchView('signup') }} className={LINK}>← Retour</button>
+                  <button type="button" onClick={() => { setConfirmEmail(null); switchView('signup') }} className={LINK}>{t('auth.back')}</button>
                 </p>
               </motion.form>
             ) : null}
@@ -294,17 +297,17 @@ export default function LoginClient() {
                 setView('reset')
                 setOtp(Array(6).fill(''))
               }} {...vt}>
-                <p className="text-sm dark:text-white/60 text-[#00165F]/60">Saisis ton email pour recevoir un code de réinitialisation.</p>
+                <p className="text-sm dark:text-white/60 text-[#00165F]/60">{t('auth.forgotDesc')}</p>
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Email</label>
-                  <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT} placeholder="vous@exemple.com" />
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.email')}</label>
+                  <input value={email} onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" className={INPUT} placeholder={t('auth.emailPlaceholder')} />
                 </div>
                 <ErrorBox />
                 <button type="submit" disabled={email.trim().length < 4 || isLoading} className={PRIMARY}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Envoyer le code'}
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.sendCode')}
                 </button>
                 <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                  <button type="button" onClick={() => switchView('login')} className={LINK}>← Retour à la connexion</button>
+                  <button type="button" onClick={() => switchView('login')} className={LINK}>{t('auth.backToLogin')}</button>
                 </p>
               </motion.form>
             ) : null}
@@ -314,21 +317,21 @@ export default function LoginClient() {
               <motion.form key="reset" className="space-y-4" onSubmit={async e => {
                 e.preventDefault()
                 await resetPassword(email, code, newPassword)
-                setSuccessMsg('Mot de passe réinitialisé ! Connecte-toi.')
+                setSuccessMsg(t('auth.resetSuccess'))
                 switchView('login')
               }} {...vt}>
                 <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-4 text-center">
                   <MailCheck className="mx-auto mb-2 h-5 w-5 text-[#0097FC] dark:text-sky-300" />
-                  <p className="text-sm dark:text-white/70 text-[#00165F]/70">Code envoyé à <span className="font-semibold dark:text-white text-[#00165F]">{email}</span></p>
+                  <p className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.codeSentTo')} <span className="font-semibold dark:text-white text-[#00165F]">{email}</span></p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Code reçu par email</label>
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.codeReceivedByEmail')}</label>
                   <OtpRow />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">Nouveau mot de passe</label>
+                  <label className="text-sm dark:text-white/70 text-[#00165F]/70">{t('auth.newPassword')}</label>
                   <div className="relative">
-                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type={showNewPwd ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT} pr-12`} placeholder="Nouveau mot de passe" />
+                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type={showNewPwd ? 'text' : 'password'} autoComplete="new-password" className={`${INPUT} pr-12`} placeholder={t('auth.newPasswordPlaceholder')} />
                     <button type="button" onClick={() => setShowNewPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-white/50 text-[#00165F]/50 hover:text-[#00165F] dark:hover:text-white">
                       {showNewPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -341,10 +344,10 @@ export default function LoginClient() {
                 </div>
                 <ErrorBox />
                 <button type="submit" disabled={code.length < 6 || newPassword.length < 8 || isLoading} className={PRIMARY}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Réinitialiser le mot de passe'}
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.resetBtn')}
                 </button>
                 <p className="text-center text-sm dark:text-white/55 text-[#00165F]/60">
-                  <button type="button" onClick={() => switchView('forgot')} className={LINK}>← Retour</button>
+                  <button type="button" onClick={() => switchView('forgot')} className={LINK}>{t('auth.back')}</button>
                 </p>
               </motion.form>
             ) : null}

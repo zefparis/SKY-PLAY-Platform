@@ -595,6 +595,46 @@ export const translations: Record<SupportedLang, Translations> = {
     'hiw.dist.1st': '🥇 1st', 'hiw.dist.2nd': '🥈 2nd', 'hiw.dist.3rd': '🥉 3rd', 'hiw.dist.plat': '🏦 Platform',
     'hiw.mt.duel': '1 vs 1', 'hiw.mt.small': 'Small challenge', 'hiw.mt.std': 'Std challenge',
     'hiw.mt.medium': 'Medium tournament', 'hiw.mt.big': 'Big tournament', 'hiw.mt.premium': 'Premium tournament',
+
+    // Live page
+    'live.title': 'LIVE — Ongoing Matches',
+    'live.subtitle': 'Real-time tracking of active competitions · Refreshes every 30 seconds',
+    'live.noMatch': 'No matches in progress',
+    'live.noMatch.sub': 'Check back soon!',
+    'live.seeOpen': 'See open challenges',
+    'live.watch': 'Watch',
+    'live.type.duel': 'Duel 1v1',
+    'live.type.small': 'Small challenge',
+    'live.type.standard': 'Standard',
+    'live.type.medium': 'Medium tournament',
+    'live.type.big': 'Large tournament',
+    'live.type.premium': 'Premium tournament',
+
+    // Public profile
+    'pub.loading': 'Loading...',
+    'pub.level': 'Level',
+    'pub.memberSince': 'Member since',
+    'pub.fairPlay': 'Fair-play:',
+    'pub.addFriend': 'Add friend',
+    'pub.pendingSent': 'Request sent',
+    'pub.accept': 'Accept',
+    'pub.decline': 'Decline',
+    'pub.friend': 'Friends',
+    'pub.message': 'Message',
+    'pub.blocked': 'Blocked',
+    'pub.removeFriend': 'Remove friend',
+    'pub.gamesPlayed': 'Games played',
+    'pub.wins': 'Wins',
+    'pub.winrate': 'Win rate',
+    'pub.achievements': 'Achievements unlocked',
+    'pub.noAchievements': 'No achievements unlocked yet',
+
+    // Signup
+    'signup.googleOnly': 'Registration is now done exclusively with Google.',
+    'signup.redirecting': 'Redirecting...',
+
+    // Auth extras
+    'auth.strength.label': 'Strength',
   },
 
 
@@ -1186,5 +1226,45 @@ export const translations: Record<SupportedLang, Translations> = {
     'hiw.dist.1st': '🥇 1er', 'hiw.dist.2nd': '🥈 2ème', 'hiw.dist.3rd': '🥉 3ème', 'hiw.dist.plat': '🏦 Plateforme',
     'hiw.mt.duel': '1 vs 1', 'hiw.mt.small': 'Petit challenge', 'hiw.mt.std': 'Challenge std',
     'hiw.mt.medium': 'Tournoi moyen', 'hiw.mt.big': 'Gros tournoi', 'hiw.mt.premium': 'Tournoi premium',
+
+    // Live page
+    'live.title': 'LIVE — Matchs en cours',
+    'live.subtitle': 'Suivi en temps réel des compétitions actives · Actualisation toutes les 30 secondes',
+    'live.noMatch': 'Aucun match en cours',
+    'live.noMatch.sub': 'Revenez bientôt !',
+    'live.seeOpen': 'Voir les défis ouverts',
+    'live.watch': 'Regarder',
+    'live.type.duel': 'Duel 1v1',
+    'live.type.small': 'Petit défi',
+    'live.type.standard': 'Standard',
+    'live.type.medium': 'Tournoi moyen',
+    'live.type.big': 'Grand tournoi',
+    'live.type.premium': 'Tournoi premium',
+
+    // Public profile
+    'pub.loading': 'Chargement...',
+    'pub.level': 'Niveau',
+    'pub.memberSince': 'Membre depuis',
+    'pub.fairPlay': 'Fair-play :',
+    'pub.addFriend': 'Ajouter',
+    'pub.pendingSent': 'Demande envoyée',
+    'pub.accept': 'Accepter',
+    'pub.decline': 'Refuser',
+    'pub.friend': 'Ami',
+    'pub.message': 'Message',
+    'pub.blocked': 'Bloqué',
+    'pub.removeFriend': 'Retirer des amis',
+    'pub.gamesPlayed': 'Parties jouées',
+    'pub.wins': 'Victoires',
+    'pub.winrate': 'Taux de victoire',
+    'pub.achievements': 'Succès débloqués',
+    'pub.noAchievements': 'Aucun succès débloqué pour le moment',
+
+    // Signup
+    'signup.googleOnly': "L'inscription se fait désormais uniquement avec Google.",
+    'signup.redirecting': 'Redirection en cours...',
+
+    // Auth extras
+    'auth.strength.label': 'Force',
   },
 }
