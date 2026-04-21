@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight, Pause, Shield, Lightbulb, Eye } from 'lucide-react'
-import { useState, useEffect, Fragment } from 'react'
+import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, LayoutDashboard, ChevronRight, ChevronDown, Pause, Shield, Lightbulb, Eye, Settings, Swords } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
@@ -19,7 +19,19 @@ import WalletBalance from '@/components/wallet/WalletBalance'
 const Navbar = () => {
   const pathname = usePathname()
   const [superMenuOpen, setSuperMenuOpen] = useState(false)
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const megaMenuRef = useRef<HTMLDivElement>(null)
+  const closeMega = useCallback(() => setMegaMenuOpen(false), [])
+
+  useEffect(() => {
+    if (!megaMenuOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeMega() }
+    const onClick = (e: MouseEvent) => { if (megaMenuRef.current && !megaMenuRef.current.contains(e.target as Node)) closeMega() }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onClick)
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onClick) }
+  }, [megaMenuOpen, closeMega])
   const [exclusionStatus, setExclusionStatus] = useState<string>('ACTIVE')
   const [exclusionUntil, setExclusionUntil] = useState<string | null>(null)
   const { t } = useI18n()
@@ -64,12 +76,28 @@ const Navbar = () => {
   if (pathname === '/') return null
 
   const navLinks = [
-    { href: '/dashboard', label: t('nav.dashboard'), icon: Gamepad2 },
-    { href: '/challenges', label: t('nav.challenges'), icon: Trophy },
-    { href: '/how-it-works', label: t('nav.howItWorks'), icon: Lightbulb },
+    { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { href: '/challenges', label: t('nav.challenges'), icon: Swords },
     { href: '/leaderboard', label: t('nav.leaderboard'), icon: Trophy },
     { href: '/chat', label: t('nav.chat'), icon: MessageCircle },
-    { href: '/wallet', label: t('nav.wallet'), icon: Wallet },
+    { href: '/wallet', label: 'Sky Credits', icon: Wallet },
+  ]
+
+  const megaLeft = [
+    { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+    { href: '/challenges', label: 'Défis', icon: Swords },
+    { href: '/live', label: 'Live', icon: Eye },
+    { href: '/leaderboard', label: 'Classement', icon: Trophy },
+    { href: '/chat', label: 'Chat', icon: MessageCircle },
+    { href: '/wallet', label: 'Sky Credits', icon: Wallet },
+  ]
+
+  const megaRight = [
+    { href: '/how-it-works', label: 'Comment ça marche', icon: Lightbulb },
+    { href: '/profile', label: 'Mon profil', icon: User },
+    { href: '/challenges', label: 'Tournois', icon: Trophy },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
+    { href: '/profile/responsabilite', label: 'Paramètres', icon: Settings },
   ]
 
   const bottomTabs = [
@@ -101,38 +129,136 @@ const Navbar = () => {
             </Link>
 
             {/* Desktop nav links */}
-            <div className="hidden md:flex items-center space-x-8">
-              {navLinks.map((link) => {
+            <div className="hidden md:flex items-center space-x-1">
+              {/* Dashboard + Challenges */}
+              {navLinks.slice(0, 2).map((link) => {
                 const Icon = link.icon
                 const isActive = pathname === link.href
                 return (
-                  <Fragment key={link.href}>
-                    <Link href={link.href}
-                      className={cn(
-                        'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
-                        isActive
-                          ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
-                          : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
-                      )}>
-                      <Icon className="w-5 h-5" />
-                      <span>{link.label}</span>
-                    </Link>
-                    {link.href === '/challenges' && (
-                      <Link href="/live"
-                        className={cn(
-                          'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
-                          pathname === '/live'
-                            ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
-                            : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
-                        )}>
-                        <span className="relative flex h-2 w-2">
-                          {hasLive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FD2E5F] opacity-75" />}
-                          <span className={`relative inline-flex rounded-full h-2 w-2 ${hasLive ? 'bg-[#FD2E5F]' : 'dark:bg-white/20 bg-[#00165F]/20'}`} />
-                        </span>
-                        <span>Live</span>
-                      </Link>
-                    )}
-                  </Fragment>
+                  <Link key={link.href} href={link.href}
+                    className={cn(
+                      'flex items-center space-x-2 px-3 py-2 rounded-md border border-transparent transition duration-200 text-sm',
+                      isActive
+                        ? 'text-secondary bg-secondary/10 border-secondary/20'
+                        : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                    )}>
+                    <Icon className="w-4 h-4" />
+                    <span>{link.label}</span>
+                  </Link>
+                )
+              })}
+
+              {/* Live */}
+              <Link href="/live"
+                className={cn(
+                  'flex items-center space-x-2 px-3 py-2 rounded-md border border-transparent transition duration-200 text-sm',
+                  pathname === '/live'
+                    ? 'text-secondary bg-secondary/10 border-secondary/20'
+                    : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                )}>
+                <span className="relative flex h-2 w-2">
+                  {hasLive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FD2E5F] opacity-75" />}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${hasLive ? 'bg-[#FD2E5F]' : 'dark:bg-white/20 bg-[#00165F]/20'}`} />
+                </span>
+                <span>Live</span>
+              </Link>
+
+              {/* Plus mega menu */}
+              <div ref={megaMenuRef} className="relative">
+                <button
+                  onClick={() => setMegaMenuOpen(v => !v)}
+                  onMouseEnter={() => setMegaMenuOpen(true)}
+                  className={cn(
+                    'flex items-center space-x-1 px-3 py-2 rounded-md border border-transparent transition duration-200 text-sm',
+                    megaMenuOpen
+                      ? 'text-secondary bg-secondary/10 border-secondary/20'
+                      : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                  )}>
+                  <span>Plus</span>
+                  <motion.span animate={{ rotate: megaMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </motion.span>
+                </button>
+
+                <AnimatePresence>
+                  {megaMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      onMouseLeave={closeMega}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-[#0d0f1a] border border-[#2a2d3e] rounded-xl shadow-2xl z-50 overflow-hidden"
+                    >
+                      <div className="p-4 grid grid-cols-2 gap-1">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-2 pb-2">Navigation</p>
+                          {megaLeft.map(item => {
+                            const Icon = item.icon
+                            const isActive = pathname === item.href
+                            return (
+                              <Link key={item.href + item.label} href={item.href}
+                                onClick={closeMega}
+                                className={cn(
+                                  'flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition duration-150 group',
+                                  isActive
+                                    ? 'text-[#0097FC] bg-[#0097FC]/10'
+                                    : 'text-white/70 hover:text-[#0097FC] hover:bg-white/5'
+                                )}>
+                                {item.href === '/live' ? (
+                                  <span className="relative flex h-4 w-4 items-center justify-center">
+                                    <Icon className="w-4 h-4" />
+                                    {hasLive && <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FD2E5F] opacity-75" /><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#FD2E5F]" /></span>}
+                                  </span>
+                                ) : (
+                                  <Icon className="w-4 h-4" />
+                                )}
+                                <span>{item.label}</span>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                        <div className="border-l border-[#2a2d3e] pl-3">
+                          <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-2 pb-2">Découvrir</p>
+                          {megaRight.map(item => {
+                            const Icon = item.icon
+                            const isActive = pathname === item.href
+                            return (
+                              <Link key={item.href + item.label} href={item.href}
+                                onClick={closeMega}
+                                className={cn(
+                                  'flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition duration-150',
+                                  isActive
+                                    ? 'text-[#0097FC] bg-[#0097FC]/10'
+                                    : 'text-white/70 hover:text-[#0097FC] hover:bg-white/5'
+                                )}>
+                                <Icon className="w-4 h-4" />
+                                <span>{item.label}</span>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Remaining priority links */}
+              {navLinks.slice(2).map((link) => {
+                const Icon = link.icon
+                const isActive = pathname === link.href
+                return (
+                  <Link key={link.href} href={link.href}
+                    className={cn(
+                      'flex items-center space-x-2 px-3 py-2 rounded-md border border-transparent transition duration-200 text-sm',
+                      isActive
+                        ? 'text-secondary bg-secondary/10 border-secondary/20'
+                        : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                    )}>
+                    <Icon className="w-4 h-4" />
+                    <span>{link.label}</span>
+                  </Link>
                 )
               })}
             </div>
