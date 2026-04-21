@@ -22,6 +22,7 @@ import { UploadModule } from './modules/upload/upload.module';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
 import { LeaguesModule } from './modules/leagues/leagues.module';
 import { AdsModule } from './modules/ads/ads.module';
+import { LinkedAccountsModule } from './modules/linked-accounts/linked-accounts.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { AdsModule } from './modules/ads/ads.module';
     TournamentsModule,
     LeaguesModule,
     AdsModule,
+    LinkedAccountsModule,
   ],
   providers: [
     // Active la limitation de débit globalement (les routes peuvent surcharger via @Throttle/@SkipThrottle)

@@ -89,6 +89,7 @@ model User {
   leagueEntries             LeagueEntry[]
   sentInvites               ChallengeInvite[]  @relation("InviteFrom")
   receivedInvites           ChallengeInvite[]  @relation("InviteTo")
+  linkedAccounts            LinkedAccount[]
 
   @@index([status])
   @@index([exclusionStatus])
@@ -244,9 +245,11 @@ model ChallengeResult {
   userId        String
   challenge     Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  declaredRank  Int
-  screenshotUrl String?
-  submittedAt   DateTime  @default(now())
+  declaredRank    Int
+  screenshotUrl   String?
+  dataSource      ResultSource @default(SCREENSHOT)
+  externalMatchId String?
+  submittedAt     DateTime     @default(now())
 
   @@unique([challengeId, userId])
   @@index([challengeId])
@@ -291,6 +294,43 @@ enum DisputeStatus {
   PENDING
   REVIEWING
   RESOLVED
+}
+
+enum ResultSource {
+  SCREENSHOT
+  STEAM_API
+  EPIC_API
+}
+
+// ─── BYOG — LINKED GAMING ACCOUNTS ──────────────────────────────────────────
+
+enum GameProvider {
+  STEAM
+  EPIC
+  DISCORD
+  TWITCH
+}
+
+model LinkedAccount {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     GameProvider
+  externalId   String
+  username     String?
+  avatarUrl    String?
+  profileUrl   String?
+  accessToken  String?      // AES-256-GCM encrypted
+  refreshToken String?      // AES-256-GCM encrypted
+  expiresAt    DateTime?
+  isVerified   Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([provider, externalId])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("linked_accounts")
 }
 
 enum WinningsStatus {
