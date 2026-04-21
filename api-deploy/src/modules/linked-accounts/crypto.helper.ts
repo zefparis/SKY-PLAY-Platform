@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
@@ -8,15 +8,32 @@ const TAG_LENGTH = 16;  // 128-bit auth tag
 
 @Injectable()
 export class CryptoHelper {
-  private readonly key: Buffer;
+  private readonly key: Buffer | null;
+  private readonly logger = new Logger(CryptoHelper.name);
 
   constructor(private readonly config: ConfigService) {
     const raw = this.config.get<string>('ENCRYPTION_KEY') ?? '';
     if (raw.length < 32) {
-      throw new Error('ENCRYPTION_KEY must be at least 32 characters long');
+      this.key = null;
+      this.logger.warn(
+        'ENCRYPTION_KEY is missing or shorter than 32 chars — ' +
+        'linked-account token encryption is disabled. ' +
+        'Set ENCRYPTION_KEY in Railway Variables to enable BYOG.',
+      );
+    } else {
+      // Take exactly 32 bytes (256-bit key)
+      this.key = Buffer.from(raw.slice(0, 32), 'utf8');
     }
-    // Take exactly 32 bytes (256-bit key)
-    this.key = Buffer.from(raw.slice(0, 32), 'utf8');
+  }
+
+  private assertKey(): Buffer {
+    if (!this.key) {
+      throw new Error(
+        'ENCRYPTION_KEY is not configured. ' +
+        'Set a 32-character ENCRYPTION_KEY environment variable in Railway.',
+      );
+    }
+    return this.key;
   }
 
   /**
@@ -24,8 +41,9 @@ export class CryptoHelper {
    * Returns a hex string: iv(24):tag(32):ciphertext
    */
   encrypt(text: string): string {
+    const key = this.assertKey();
     const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv(ALGORITHM, this.key, iv, {
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv, {
       authTagLength: TAG_LENGTH,
     }) as crypto.CipherGCM;
 
@@ -48,7 +66,8 @@ export class CryptoHelper {
     const tag = Buffer.from(tagHex, 'hex');
     const data = Buffer.from(dataHex, 'hex');
 
-    const decipher = crypto.createDecipheriv(ALGORITHM, this.key, iv, {
+    const key = this.assertKey();
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, {
       authTagLength: TAG_LENGTH,
     }) as crypto.DecipherGCM;
     decipher.setAuthTag(tag);
