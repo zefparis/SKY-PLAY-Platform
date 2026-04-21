@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { io } from 'socket.io-client';
+import SpectatorView, { type SpectatorEvent } from '@/components/challenges/SpectatorView';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload } from 'lucide-react';
@@ -47,6 +49,12 @@ export default function ChallengePage() {
   const [disputeReason, setDisputeReason] = useState('');
   const [showRules, setShowRules] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [submissionStatus, setSubmissionStatus] = useState<{ submittedCount: number; totalPlayers: number } | null>(null);
+  const [spectatorEvents, setSpectatorEvents] = useState<SpectatorEvent[]>([]);
+
+  const addEvent = useCallback((icon: string, text: string) => {
+    setSpectatorEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, icon, text, at: new Date() }]);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -71,6 +79,25 @@ export default function ChallengePage() {
       }
     } catch {}
   }, [load]);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token || !id) return;
+    const s = io(`${API}/chat`, { auth: { token }, transports: ['websocket', 'polling'] });
+    s.on('connect', () => { s.emit('join_challenge_room', { challengeId: id }); });
+    s.on('challenge_started',   () => { addEvent('🎮', 'Match démarré'); load(); });
+    s.on('challenge_update',    () => { load(); });
+    s.on('challenge_completed', () => { addEvent('🏆', 'Résultat validé'); load(); });
+    s.on('challenge_disputed',  () => { addEvent('⚠️', 'Litige ouvert'); load(); });
+    s.on('result_submitted', (data: { submittedCount: number; totalPlayers: number }) => {
+      setSubmissionStatus({ submittedCount: data.submittedCount, totalPlayers: data.totalPlayers });
+      addEvent('✅', `Un joueur a soumis son résultat (${data.submittedCount}/${data.totalPlayers})`);
+    });
+    return () => {
+      s.emit('leave_challenge_room', { challengeId: id });
+      s.disconnect();
+    };
+  }, [id, addEvent, load]);
 
   const doAction = async (endpoint: string, body: object) => {
     setActionLoading(true);
@@ -168,6 +195,16 @@ export default function ChallengePage() {
             </span>
           </div>
         </div>
+
+        {/* Section Spectateur */}
+        {!isParticipant && challenge.status === 'IN_PROGRESS' && (
+          <SpectatorView
+            challenge={challenge}
+            submissionStatus={submissionStatus}
+            events={spectatorEvents}
+            prizes={prizes}
+          />
+        )}
 
         {/* Banner Gains en attente / Remboursement */}
         {isParticipant && challenge.status === 'CANCELLED' && myParticipant?.hasPaid && (

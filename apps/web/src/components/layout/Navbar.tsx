@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight, Pause, Shield, Lightbulb } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, Users, LayoutDashboard, ChevronRight, Pause, Shield, Lightbulb, Eye } from 'lucide-react'
+import { useState, useEffect, Fragment } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/Button'
@@ -44,6 +44,22 @@ const Navbar = () => {
       })
       .catch(() => {})
   }, [tokens?.idToken])
+
+  const [hasLive, setHasLive] = useState(false)
+  useEffect(() => {
+    const checkLive = async () => {
+      try {
+        const res = await fetch(`${API}/challenges?status=IN_PROGRESS&limit=1`)
+        if (res.ok) {
+          const data = await res.json()
+          setHasLive((data.challenges?.length ?? 0) > 0)
+        }
+      } catch {}
+    }
+    checkLive()
+    const interval = setInterval(checkLive, 30_000)
+    return () => clearInterval(interval)
+  }, [])
 
   if (pathname === '/') return null
 
@@ -90,16 +106,33 @@ const Navbar = () => {
                 const Icon = link.icon
                 const isActive = pathname === link.href
                 return (
-                  <Link key={link.href} href={link.href}
-                    className={cn(
-                      'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
-                      isActive
-                        ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
-                        : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
-                    )}>
-                    <Icon className="w-5 h-5" />
-                    <span>{link.label}</span>
-                  </Link>
+                  <Fragment key={link.href}>
+                    <Link href={link.href}
+                      className={cn(
+                        'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
+                        isActive
+                          ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
+                          : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                      )}>
+                      <Icon className="w-5 h-5" />
+                      <span>{link.label}</span>
+                    </Link>
+                    {link.href === '/challenges' && (
+                      <Link href="/live"
+                        className={cn(
+                          'flex items-center space-x-2 px-4 py-2 rounded-md border border-transparent transition duration-200',
+                          pathname === '/live'
+                            ? 'text-secondary bg-secondary/10 border-secondary/20 shadow-glow-blue'
+                            : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                        )}>
+                        <span className="relative flex h-2 w-2">
+                          {hasLive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FD2E5F] opacity-75" />}
+                          <span className={`relative inline-flex rounded-full h-2 w-2 ${hasLive ? 'bg-[#FD2E5F]' : 'dark:bg-white/20 bg-[#00165F]/20'}`} />
+                        </span>
+                        <span>Live</span>
+                      </Link>
+                    )}
+                  </Fragment>
                 )
               })}
             </div>
@@ -284,6 +317,20 @@ const Navbar = () => {
                       </Link>
                     )
                   })}
+                  <Link href="/live" onClick={() => setSuperMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl dark:hover:bg-white/8 hover:bg-[#00165F]/5 transition group">
+                    <div className="w-9 h-9 rounded-xl dark:bg-white/8 bg-[#00165F]/6 flex items-center justify-center relative">
+                      <Eye className="w-4 h-4 dark:text-white/60 text-[#00165F]/60 group-hover:text-[#0097FC]" />
+                      {hasLive && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FD2E5F] opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FD2E5F]" />
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold dark:text-white/80 text-[#00165F]/80">Live</span>
+                    <ChevronRight className="w-4 h-4 dark:text-white/20 text-[#00165F]/20 ml-auto" />
+                  </Link>
                 </div>
 
                 <div className="h-px dark:bg-white/8 bg-[#00165F]/8 mx-5 my-1" />
