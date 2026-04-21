@@ -15,12 +15,32 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  // Extra origins from env (comma-separated), e.g. for Railway staging or custom domains
+  const extraOrigins = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  const staticOrigins = [
+    'https://sky-play-platform.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    ...extraOrigins,
+  ];
+
   app.enableCors({
-    origin: [
-      'https://sky-play-platform.vercel.app',
-      'http://localhost:3000',
-      'http://localhost:3001',
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (server-to-server, curl, Postman)
+      if (!origin) return callback(null, true);
+      // Allow all Vercel preview deployments for this project
+      if (/^https:\/\/sky-play-platform(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
+      if (staticOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error(`CORS: origin '${origin}' not allowed`));
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
