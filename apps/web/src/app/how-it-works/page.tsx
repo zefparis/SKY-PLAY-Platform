@@ -5,7 +5,7 @@ import {
   Trophy, Zap, Star, Shield, TrendingUp, Sparkles,
   Users, CheckCircle, Clock, Camera, BarChart3,
   Calendar, Medal, Crown, Target, Tv, Megaphone,
-  Lock, Gamepad2, Radio, ChevronRight,
+  Lock, Gamepad2, ChevronRight,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useI18n } from '@/components/i18n/I18nProvider'
@@ -59,9 +59,7 @@ const MODULE_META = [
 ]
 
 const V2_META = [
-  { icon: Gamepad2, titleKey: 'hiw.v2.1.title', descKey: 'hiw.v2.1.desc' },
   { icon: Shield,   titleKey: 'hiw.v2.2.title', descKey: 'hiw.v2.2.desc' },
-  { icon: Radio,    titleKey: 'hiw.v2.3.title', descKey: 'hiw.v2.3.desc' },
 ]
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -304,12 +302,12 @@ export default function HowItWorksPage() {
             <SectionTitle sub={t('hiw.s3.sub')}>{t('hiw.s3.title')}</SectionTitle>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="flex justify-center">
             {V2_META.map((item, i) => {
               const Icon = item.icon
               return (
                 <motion.div key={i} {...fadeUp(0.07 * (i + 1))}
-                  className="relative dark:bg-[#0d1124]/60 bg-white/60 rounded-2xl border dark:border-white/8 border-[#00165F]/8 p-6 opacity-70"
+                  className="relative dark:bg-[#0d1124]/60 bg-white/60 rounded-2xl border dark:border-white/8 border-[#00165F]/8 p-6 opacity-70 w-full max-w-sm"
                 >
                   <div className="absolute top-3 right-3">
                     <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/50 text-[9px] font-black uppercase tracking-wider">
