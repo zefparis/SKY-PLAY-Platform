@@ -1,4 +1,7 @@
-﻿const WebSocket = require('ws');
+﻿// DEPRECATED — ce service est remplacé par ChatGateway dans api-deploy
+// Ne pas utiliser — conservé pour référence uniquement
+
+const WebSocket = require('ws');
 const express = require('express');
 const cors = require('cors');
 

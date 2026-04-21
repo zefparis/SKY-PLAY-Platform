@@ -985,6 +985,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const user = this.connectedUsers.get(client.id);
     if (!user) return;
+    const userRooms = [...client.rooms].filter(r => r.startsWith('challenge_'));
+    if (userRooms.length >= 50) return;
     client.join(`challenge_${data.challengeId}`);
   }
 

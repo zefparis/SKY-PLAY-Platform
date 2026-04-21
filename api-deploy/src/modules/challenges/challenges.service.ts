@@ -314,6 +314,13 @@ export class ChallengesService {
     });
 
     const updatedChallenge = await this.findOne(challengeId);
+
+    this.notifyChallenge(challengeId, 'result_submitted', {
+      challengeId,
+      submittedCount: updatedChallenge.results.length,
+      totalPlayers: challenge.maxPlayers,
+      submittedBy: userId,
+    });
     if (updatedChallenge.results.length >= updatedChallenge.participants.length) {
       await this.checkConsensus(challengeId);
     }
