@@ -4,7 +4,7 @@ const SECTIONS = [
   {
     title: 'Données collectées',
     content:
-      'Nous collectons les informations suivantes lors de votre inscription et de votre utilisation de la plateforme : adresse e-mail, nom d'utilisateur (username), pays, ville, numéro de téléphone.',
+      "Nous collectons les informations suivantes lors de votre inscription et de votre utilisation de la plateforme : adresse e-mail, nom d'utilisateur (username), pays, ville, numéro de téléphone.",
   },
   {
     title: 'Usage des données',
@@ -19,17 +19,17 @@ const SECTIONS = [
   {
     title: 'Partage avec des tiers',
     content:
-      'Aucune donnée personnelle n'est vendue, louée ou cédée à des tiers à des fins commerciales. Les données ne peuvent être transmises qu'à des prestataires techniques strictement nécessaires au fonctionnement du service, sous accord de confidentialité.',
+      "Aucune donnée personnelle n'est vendue, louée ou cédée à des tiers à des fins commerciales. Les données ne peuvent être transmises qu'à des prestataires techniques strictement nécessaires au fonctionnement du service, sous accord de confidentialité.",
   },
   {
     title: 'Cookies',
     content:
-      'Nous utilisons uniquement des cookies techniques indispensables à l'authentification et au maintien de votre session. Aucun cookie publicitaire ou de traçage tiers n'est utilisé.',
+      "Nous utilisons uniquement des cookies techniques indispensables à l'authentification et au maintien de votre session. Aucun cookie publicitaire ou de traçage tiers n'est utilisé.",
   },
   {
     title: 'Droit de suppression et accès',
     content:
-      'Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Pour exercer ces droits, contactez-nous à l'adresse ci-dessous. Nous traiterons votre demande dans un délai de 30 jours.',
+      "Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Pour exercer ces droits, contactez-nous à l'adresse ci-dessous. Nous traiterons votre demande dans un délai de 30 jours.",
   },
   {
     title: 'Contact',
