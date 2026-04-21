@@ -8,16 +8,16 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
 function SteamLogo() {
   return (
-    <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.35 3.51 9.88 8.35 11.44l3.03-6.25a3.5 3.5 0 1 1 4.27-4.27l6.25-3.03C20.88 3.51 16.35 0 12 0z" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
+      <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.029 4.524 4.524s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.718L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0z" />
     </svg>
   )
 }
 
 function EpicLogo() {
   return (
-    <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
-      <path d="M3 2h18v14h-7v2h3v2H7v-2h3v-2H3V2zm2 2v10h14V4H5zm2 2h10v2H7V6zm0 4h6v2H7v-2z" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
+      <path d="M3 2v20h18V2H3zm9 3l5 3-5 3V5zm-4 4h2v6H8V9zm8 6l-5-3 5-3v6z" />
     </svg>
   )
 }
