@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import RequireAuth from '@/features/auth/RequireAuth'
 import Container from '@/components/ui/Container'
 import { useAuthStore } from '@/lib/auth-store'
 import ProfilePhotoUpload from '@/components/profile/ProfilePhotoUpload'
 import ProfileEditForm from '@/components/profile/ProfileEditForm'
+import LinkedAccountsCard from '@/components/profile/LinkedAccountsCard'
 import ProfileWallet from '@/components/profile/ProfileWallet'
 import ProfileRanking from '@/components/profile/ProfileRanking'
 import StatsGrid from '@/components/profile/StatsGrid'
@@ -40,11 +42,13 @@ function getRankName(level: number): string {
 
 export default function ProfilePage() {
   const { t } = useI18n()
+  const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const tokens = useAuthStore((s) => s.tokens)
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
   const [showDeposit, setShowDeposit] = useState(false)
   const [showWithdraw, setShowWithdraw] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [profileData, setProfileData] = useState<any>(null)
   const [walletData, setWalletData] = useState<any>(null)
   const [challengeData, setChallengeData] = useState<any>(null)
@@ -78,6 +82,31 @@ export default function ProfilePage() {
   }, [user, token, username])
 
   useEffect(() => { loadData() }, [loadData])
+
+  // ── Query-param toast (OAuth callbacks) ───────────────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const steam = params.get('steam')
+    const epic  = params.get('epic')
+    if (steam === 'linked') {
+      setToast({ message: 'Compte Steam lié !', type: 'success' })
+      router.replace('/profile')
+    } else if (steam === 'error') {
+      setToast({ message: 'Erreur Steam, réessaie', type: 'error' })
+      router.replace('/profile')
+    } else if (epic === 'linked') {
+      setToast({ message: 'Compte Epic Games lié !', type: 'success' })
+      router.replace('/profile')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   // ── Derived data ──────────────────────────────────────────────────────────
   const gamesPlayed = profileData?.gamesPlayed ?? 0
@@ -172,6 +201,19 @@ export default function ProfilePage() {
 
   return (
     <RequireAuth>
+      {/* Toast notification */}
+      {toast && (
+        <div
+          className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold transition-all ${
+            toast.type === 'success'
+              ? 'bg-emerald-500/90 text-white'
+              : 'bg-red-500/90 text-white'
+          }`}
+        >
+          <span>{toast.type === 'success' ? '✅' : '❌'}</span>
+          {toast.message}
+        </div>
+      )}
       <div className="min-h-screen">
         <main className="pb-12">
           <Container>
@@ -230,6 +272,9 @@ export default function ProfilePage() {
                 }}
                 onSave={handleProfileSave}
               />
+
+              {/* Linked gaming accounts */}
+              <LinkedAccountsCard />
 
               {/* Stats grid */}
               <StatsGrid stats={stats} />
