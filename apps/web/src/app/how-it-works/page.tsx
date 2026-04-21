@@ -59,7 +59,7 @@ const MODULE_META = [
 ]
 
 const V2_META = [
-  { icon: Shield,   titleKey: 'hiw.v2.2.title', descKey: 'hiw.v2.2.desc' },
+  { icon: Gamepad2, titleKey: 'hiw.v2.1.title', descKey: 'hiw.v2.1.desc' },
 ]
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
