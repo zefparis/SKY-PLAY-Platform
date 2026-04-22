@@ -80,12 +80,13 @@ export class ChampionshipService {
     const allRounds = [...allerRounds, ...retourRounds];
     const totalRounds = allerRounds.length; // journées aller
 
-    // ─── Création des matchs en base ──────────────────────────────────────────
+    // ─── Création des matchs en base ──────────────────────────────────────────────
     const createdMatchIds: string[] = [];
     for (let r = 0; r < allRounds.length; r++) {
       const journee = r + 1;
       const leg = r < totalRounds ? 'ALLER' : 'RETOUR';
       for (const [p1Id, p2Id] of allRounds[r]) {
+        const deadlineAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
         const match = await (this.prisma as any).tournamentMatch.create({
           data: {
             tournamentId,
@@ -95,6 +96,7 @@ export class ChampionshipService {
             player2Id: p2Id,
             status: 'PENDING',
             leg,
+            deadlineAt,
           },
         });
         createdMatchIds.push(match.id);
@@ -268,6 +270,7 @@ export class ChampionshipService {
   // ─── GET CALENDAR ─────────────────────────────────────────────────────────────
 
   async getCalendar(tournamentId: string) {
+    const now = new Date();
     const matches = await (this.prisma as any).tournamentMatch.findMany({
       where: { tournamentId, phase: 'CHAMPIONSHIP_ROUND' },
       include: {
@@ -280,7 +283,21 @@ export class ChampionshipService {
     const grouped: Record<number, any[]> = {};
     for (const m of matches) {
       if (!grouped[m.round]) grouped[m.round] = [];
-      grouped[m.round].push(m);
+      grouped[m.round].push({
+        id: m.id,
+        phase: m.phase,
+        round: m.round,
+        player1: m.player1,
+        player2: m.player2,
+        status: m.status,
+        scheduledAt: m.scheduledAt,
+        deadlineAt: m.deadlineAt,
+        walkedOver: m.walkedOver,
+        matchLink: `/tournaments/${tournamentId}/match/${m.id}`,
+        timeRemaining: m.deadlineAt
+          ? Math.max(0, Math.floor((new Date(m.deadlineAt).getTime() - now.getTime()) / 1000))
+          : null,
+      });
     }
     return grouped;
   }

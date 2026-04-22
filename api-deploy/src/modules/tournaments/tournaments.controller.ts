@@ -45,7 +45,7 @@ export class TournamentsController {
 
   @Get(':id/calendar')
   getCalendar(@Param('id') id: string) {
-    return this.championshipService.getCalendar(id);
+    return this.tournamentsService.getFullCalendar(id);
   }
 
   @Get(':id/championship-standings')

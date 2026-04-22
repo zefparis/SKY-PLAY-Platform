@@ -18,7 +18,7 @@ const CHALLENGE_TYPES = [
   { key: 'PREMIUM_TOURNAMENT', label: 'Premium', maxPlayers: 100, entryFee: 5000, commission: 0.10, color: 'from-yellow-600 to-yellow-400', icon: '👑' },
 ];
 
-const GAMES = ['FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobile Legends', 'Autre'];
+const GAMES = ['FIFA', 'eFootball', 'Call of Duty', 'Mortal Kombat', 'Street Fighter', 'Tekken', 'EA Sports FC'];
 
 interface CreateChallengeModalProps {
   onClose: () => void;

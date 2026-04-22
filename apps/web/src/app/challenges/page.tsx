@@ -9,8 +9,8 @@ import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-const GAMES_EN = ['All', 'FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobile Legends', 'Other'];
-const GAMES_FR = ['Tous', 'FIFA', 'COD', 'Fortnite', 'PUBG', 'Free Fire', 'Mobile Legends', 'Autre'];
+const GAMES_EN = ['All', 'FIFA', 'eFootball', 'Call of Duty', 'Mortal Kombat', 'Street Fighter', 'Tekken', 'EA Sports FC'];
+const GAMES_FR = ['Tous', 'FIFA', 'eFootball', 'Call of Duty', 'Mortal Kombat', 'Street Fighter', 'Tekken', 'EA Sports FC'];
 
 export default function ChallengesPage() {
   const { t, lang } = useI18n();

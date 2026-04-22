@@ -4,17 +4,21 @@ import {
   ForbiddenException,
   NotFoundException,
   Inject,
+  Logger,
   forwardRef,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChampionshipService } from './championship.service';
 import { LeaguesService } from '../leagues/leagues.service';
 import { CreateTournamentDto, JoinTournamentDto, SubmitMatchResultDto } from './dto/tournament.dto';
+import { ALLOWED_GAMES } from '../challenges/challenges.constants';
 
 const POOL_SIZE = 4;
 const DEFAULT_COMMISSION = 0.10;
 const PHASE_ORDER = ['ROUND_OF_16', 'QUARTER_FINAL', 'SEMI_FINAL'] as const;
+const MATCH_DEADLINE_DAYS = 3;
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -27,6 +31,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 @Injectable()
 export class TournamentsService {
+  private readonly logger = new Logger(TournamentsService.name);
   private server: any = null;
 
   constructor(
@@ -101,6 +106,9 @@ export class TournamentsService {
 
   async createTournament(dto: CreateTournamentDto, creatorId: string) {
     const { title, game, type, format, entryFee, maxPlayers, commission } = dto;
+    if (!(ALLOWED_GAMES as readonly string[]).includes(game)) {
+      throw new BadRequestException('Ce jeu n\'est pas supporté pour les tournois');
+    }
     const isSimple = type === 'SIMPLE';
 
     if (isSimple && ![8, 16, 32].includes(maxPlayers)) {
@@ -209,12 +217,17 @@ export class TournamentsService {
 
   // ─── GENERATE POOL MATCHES (round-robin aller simple) ────────────────────
 
+  private matchDeadline(): Date {
+    return new Date(Date.now() + MATCH_DEADLINE_DAYS * 24 * 60 * 60 * 1000);
+  }
+
   private async generatePoolMatches(poolId: string, tournamentId: string, userIds: string[]) {
     const n = userIds.length;
     let round = 1;
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
-        await (this.prisma as any).tournamentMatch.create({
+        const deadlineAt = this.matchDeadline();
+        const m = await (this.prisma as any).tournamentMatch.create({
           data: {
             tournamentId,
             poolId,
@@ -223,8 +236,11 @@ export class TournamentsService {
             player1Id: userIds[i],
             player2Id: userIds[j],
             status: 'PENDING',
+            deadlineAt,
           },
         });
+        this.emitToUser(userIds[i], 'match_ready', { matchId: m.id, tournamentId, phase: 'POOL', round, deadlineAt });
+        this.emitToUser(userIds[j], 'match_ready', { matchId: m.id, tournamentId, phase: 'POOL', round, deadlineAt });
         round++;
       }
     }
@@ -368,11 +384,12 @@ export class TournamentsService {
 
     const seeded = shuffle(qualifiedIds);
     for (let i = 0; i < seeded.length; i += 2) {
+      const deadlineAt = this.matchDeadline();
       const m = await (this.prisma as any).tournamentMatch.create({
-        data: { tournamentId, phase: firstPhase, round: 1, player1Id: seeded[i], player2Id: seeded[i + 1], status: 'PENDING' },
+        data: { tournamentId, phase: firstPhase, round: 1, player1Id: seeded[i], player2Id: seeded[i + 1], status: 'PENDING', deadlineAt },
       });
-      this.emitToUser(seeded[i],     'match_ready', { matchId: m.id, tournamentId, phase: firstPhase });
-      this.emitToUser(seeded[i + 1], 'match_ready', { matchId: m.id, tournamentId, phase: firstPhase });
+      this.emitToUser(seeded[i],     'match_ready', { matchId: m.id, tournamentId, phase: firstPhase, deadlineAt });
+      this.emitToUser(seeded[i + 1], 'match_ready', { matchId: m.id, tournamentId, phase: firstPhase, deadlineAt });
     }
 
     await (this.prisma as any).tournament.update({ where: { id: tournamentId }, data: { status: 'KNOCKOUT_PHASE' } });
@@ -414,18 +431,20 @@ export class TournamentsService {
       );
 
       if (loserIds.length === 2) {
+        const deadlineAt = this.matchDeadline();
         const third = await (this.prisma as any).tournamentMatch.create({
-          data: { tournamentId, phase: 'THIRD_PLACE', round: 1, player1Id: loserIds[0], player2Id: loserIds[1], status: 'PENDING' },
+          data: { tournamentId, phase: 'THIRD_PLACE', round: 1, player1Id: loserIds[0], player2Id: loserIds[1], status: 'PENDING', deadlineAt },
         });
-        this.emitToUser(loserIds[0], 'match_ready', { matchId: third.id, tournamentId, phase: 'THIRD_PLACE' });
-        this.emitToUser(loserIds[1], 'match_ready', { matchId: third.id, tournamentId, phase: 'THIRD_PLACE' });
+        this.emitToUser(loserIds[0], 'match_ready', { matchId: third.id, tournamentId, phase: 'THIRD_PLACE', deadlineAt });
+        this.emitToUser(loserIds[1], 'match_ready', { matchId: third.id, tournamentId, phase: 'THIRD_PLACE', deadlineAt });
       }
       if (winnerIds.length === 2) {
+        const deadlineAt = this.matchDeadline();
         const final = await (this.prisma as any).tournamentMatch.create({
-          data: { tournamentId, phase: 'FINAL', round: 1, player1Id: winnerIds[0], player2Id: winnerIds[1], status: 'PENDING' },
+          data: { tournamentId, phase: 'FINAL', round: 1, player1Id: winnerIds[0], player2Id: winnerIds[1], status: 'PENDING', deadlineAt },
         });
-        this.emitToUser(winnerIds[0], 'match_ready', { matchId: final.id, tournamentId, phase: 'FINAL' });
-        this.emitToUser(winnerIds[1], 'match_ready', { matchId: final.id, tournamentId, phase: 'FINAL' });
+        this.emitToUser(winnerIds[0], 'match_ready', { matchId: final.id, tournamentId, phase: 'FINAL', deadlineAt });
+        this.emitToUser(winnerIds[1], 'match_ready', { matchId: final.id, tournamentId, phase: 'FINAL', deadlineAt });
       }
       return;
     }
@@ -441,11 +460,12 @@ export class TournamentsService {
     const winners = completed.map((m: any) => m.winnerId).filter(Boolean);
 
     for (let i = 0; i < winners.length; i += 2) {
+      const deadlineAt = this.matchDeadline();
       const next = await (this.prisma as any).tournamentMatch.create({
-        data: { tournamentId, phase: nextPhase, round: 1, player1Id: winners[i], player2Id: winners[i + 1], status: 'PENDING' },
+        data: { tournamentId, phase: nextPhase, round: 1, player1Id: winners[i], player2Id: winners[i + 1], status: 'PENDING', deadlineAt },
       });
-      this.emitToUser(winners[i],     'match_ready', { matchId: next.id, tournamentId, phase: nextPhase });
-      this.emitToUser(winners[i + 1], 'match_ready', { matchId: next.id, tournamentId, phase: nextPhase });
+      this.emitToUser(winners[i],     'match_ready', { matchId: next.id, tournamentId, phase: nextPhase, deadlineAt });
+      this.emitToUser(winners[i + 1], 'match_ready', { matchId: next.id, tournamentId, phase: nextPhase, deadlineAt });
     }
 
     this.emitToTournament(tournamentId, 'tournament_update', { tournamentId, event: 'phase_advanced', phase: nextPhase });
@@ -519,6 +539,114 @@ export class TournamentsService {
     this.emitToTournament(tournamentId, 'tournament_completed', { tournamentId, winners });
 
     return winners;
+  }
+
+  // ─── CRON: CHECK MATCH DEADLINES ────────────────────────────────────────
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async checkMatchDeadlines() {
+    const now = new Date();
+    const expired = await (this.prisma as any).tournamentMatch.findMany({
+      where: {
+        status: { in: ['PENDING', 'IN_PROGRESS'] },
+        deadlineAt: { lt: now },
+        walkedOver: false,
+      },
+    });
+
+    for (const match of expired) {
+      try {
+        const p1Submitted = match.score1 !== null;
+        const p2Submitted = match.score2 !== null;
+
+        let walkoverWinnerId: string;
+        if (p1Submitted && !p2Submitted) {
+          walkoverWinnerId = match.player1Id;
+        } else if (p2Submitted && !p1Submitted) {
+          walkoverWinnerId = match.player2Id;
+        } else if (!p1Submitted && !p2Submitted) {
+          walkoverWinnerId = Math.random() < 0.5 ? match.player1Id : match.player2Id;
+        } else {
+          continue;
+        }
+
+        const walkoverLoserId = walkoverWinnerId === match.player1Id ? match.player2Id : match.player1Id;
+
+        await (this.prisma as any).tournamentMatch.update({
+          where: { id: match.id },
+          data: {
+            walkedOver: true,
+            walkoverUserId: walkoverWinnerId,
+            winnerId: walkoverWinnerId,
+            status: 'COMPLETED',
+            playedAt: now,
+            score1: match.player1Id === walkoverWinnerId ? 1 : 0,
+            score2: match.player2Id === walkoverWinnerId ? 1 : 0,
+          },
+        });
+
+        await this.applyMatchResult({
+          ...match,
+          winnerId: walkoverWinnerId,
+          score1: match.player1Id === walkoverWinnerId ? 1 : 0,
+          score2: match.player2Id === walkoverWinnerId ? 1 : 0,
+        });
+
+        this.emitToUser(walkoverWinnerId, 'match_walkover', {
+          matchId: match.id,
+          winnerId: walkoverWinnerId,
+          reason: 'deadline_exceeded',
+        });
+        this.emitToUser(walkoverLoserId, 'match_walkover', {
+          matchId: match.id,
+          winnerId: walkoverWinnerId,
+          reason: 'deadline_exceeded',
+          message: 'Tu as perdu par forfait — délai de 3 jours dépassé',
+        });
+
+        this.logger.log(`[WALKOVER] match ${match.id} — winner: ${walkoverWinnerId}`);
+      } catch (err) {
+        this.logger.error(`[WALKOVER] match ${match.id} failed`, err);
+      }
+    }
+  }
+
+  // ─── FULL CALENDAR ──────────────────────────────────────────────────────
+
+  async getFullCalendar(tournamentId: string) {
+    const now = new Date();
+    const matches = await (this.prisma as any).tournamentMatch.findMany({
+      where: { tournamentId },
+      include: {
+        player1: { select: { id: true, username: true, avatar: true } },
+        player2: { select: { id: true, username: true, avatar: true } },
+      },
+      orderBy: [{ phase: 'asc' }, { round: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    const enriched = matches.map((m: any) => ({
+      id: m.id,
+      phase: m.phase,
+      round: m.round,
+      player1: m.player1,
+      player2: m.player2,
+      status: m.status,
+      scheduledAt: m.scheduledAt,
+      deadlineAt: m.deadlineAt,
+      walkedOver: m.walkedOver,
+      matchLink: `/tournaments/${tournamentId}/match/${m.id}`,
+      timeRemaining: m.deadlineAt
+        ? Math.max(0, Math.floor((new Date(m.deadlineAt).getTime() - now.getTime()) / 1000))
+        : null,
+    }));
+
+    const grouped: Record<string, any[]> = {};
+    for (const m of enriched) {
+      const key = `${m.phase}_R${m.round}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(m);
+    }
+    return grouped;
   }
 
   // ─── BRACKET ─────────────────────────────────────────────────────────────

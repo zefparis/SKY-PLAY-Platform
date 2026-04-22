@@ -728,10 +728,13 @@ model TournamentMatch {
   redCards2    Int?
   screenshot1  String?
   screenshot2  String?
-  status       TMatchStatus @default(PENDING)
-  scheduledAt  DateTime?
-  playedAt     DateTime?
-  createdAt    DateTime     @default(now())
+  status         TMatchStatus @default(PENDING)
+  scheduledAt    DateTime?
+  playedAt       DateTime?
+  deadlineAt     DateTime?
+  walkedOver     Boolean      @default(false)
+  walkoverUserId String?
+  createdAt      DateTime     @default(now())
 
   @@map("tournament_matches")
 }

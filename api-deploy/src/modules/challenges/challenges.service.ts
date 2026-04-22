@@ -10,7 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChatService } from '../chat/chat.service';
 import { LeaguesService } from '../leagues/leagues.service';
-import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION, MANUAL_REVIEW_THRESHOLD, AUTO_APPROVE_DELAY_MS } from './challenges.constants';
+import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION, MANUAL_REVIEW_THRESHOLD, AUTO_APPROVE_DELAY_MS, ALLOWED_GAMES } from './challenges.constants';
 
 type ChallengeTypeKey = keyof typeof CHALLENGE_TYPES;
 
@@ -58,6 +58,9 @@ export class ChallengesService {
   async create(userId: string, title: string, game: string, type: string) {
     const config = CHALLENGE_TYPES[type as ChallengeTypeKey];
     if (!config) throw new BadRequestException('Type de défi invalide');
+    if (!(ALLOWED_GAMES as readonly string[]).includes(game)) {
+      throw new BadRequestException('Ce jeu n\'est pas supporté pour les tournois');
+    }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 

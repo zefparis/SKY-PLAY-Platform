@@ -1,3 +1,21 @@
+export const ALLOWED_GAMES = [
+  'FIFA',
+  'eFootball',
+  'Call of Duty',
+  'Mortal Kombat',
+  'Street Fighter',
+  'Tekken',
+  'EA Sports FC',
+] as const;
+
+export type AllowedGame = typeof ALLOWED_GAMES[number];
+
+export const FORBIDDEN_GAME_TYPES = [
+  'battle_royale',
+  'adventure',
+  'mmorpg',
+] as const;
+
 export const CHALLENGE_TYPES = {
   DUEL: { maxPlayers: 2, entryFee: 2000, commission: 0.25 },
   SMALL_CHALLENGE: { maxPlayers: 5, entryFee: 2000, commission: 0.20 },
