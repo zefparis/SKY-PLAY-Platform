@@ -333,6 +333,18 @@ export default function ChallengePage() {
           </div>
         </div>
 
+        {/* Calendar button — tournament IN_PROGRESS with 2+ participants */}
+        {challenge.status === 'IN_PROGRESS' && (challenge.participants?.length ?? 0) >= 2 && (
+          <div className="mb-4">
+            <a
+              href={`/challenges/${id}/calendar`}
+              className="w-full flex items-center justify-center gap-2 bg-[#1a1d2e] border border-cyan-500 text-cyan-400 rounded-xl py-3 font-semibold hover:bg-cyan-500 hover:text-black transition"
+            >
+              📅 Voir le calendrier
+            </a>
+          </div>
+        )}
+
         {/* Section 4 — Actions */}
         {error && (
           <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-sm mb-4">
