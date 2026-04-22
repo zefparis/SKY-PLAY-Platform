@@ -14,7 +14,6 @@ function getTokenTtlSeconds(idToken: string): number {
 
 export default function SessionRestorer() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
-  const tokens = useAuthStore((s) => s.tokens);
 
   // Initial restore on mount
   useEffect(() => {
