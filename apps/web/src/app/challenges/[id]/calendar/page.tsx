@@ -176,6 +176,17 @@ export default function ChallengeCalendarPage() {
   )
 }
 
+function getAuthToken(): string {
+  try {
+    const stored = localStorage.getItem('skyplay-auth')
+    if (!stored) return ''
+    const parsed = JSON.parse(stored)
+    return parsed?.tokens?.idToken || parsed?.tokens?.accessToken || ''
+  } catch {
+    return ''
+  }
+}
+
 function MatchCard({
   match,
   user,
@@ -191,127 +202,155 @@ function MatchCard({
     ? Math.max(0, Math.floor((new Date(match.deadlineAt).getTime() - now) / 1000))
     : null
   const isExpired = timeRemaining === 0
-  const isUrgent = timeRemaining && timeRemaining < 86400
-  const isInProgress = match.status === 'IN_PROGRESS'
+  const isUrgent = timeRemaining !== null && timeRemaining < 86400
+  const isActive = match.status === 'PENDING' || match.status === 'IN_PROGRESS'
   const hasStream = !!match.streamUrl
   const userIsPlayer = isParticipant(match, user?.id)
 
   const [streamInput, setStreamInput] = useState('')
   const [streamSubmitting, setStreamSubmitting] = useState(false)
+  const [streamError, setStreamError] = useState('')
+  const [editing, setEditing] = useState(false)
 
-  const handleStartStream = async () => {
-    if (!streamInput.trim()) return
+  const handleSubmitStream = async () => {
+    const url = streamInput.trim()
+    if (!url) return
     setStreamSubmitting(true)
+    setStreamError('')
     try {
-      const tokens = localStorage.getItem('skyplay-auth')
-      const parsed = tokens ? JSON.parse(tokens) : null
-      const token = parsed?.tokens?.idToken || parsed?.tokens?.accessToken || ''
-      const res = await fetch(`${API}/tournaments/matches/${match.id}/stream`, {
+      const token = getAuthToken()
+      const res = await fetch(`${API}/challenges/matches/${match.id}/stream`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ streamUrl: streamInput.trim() }),
+        body: JSON.stringify({ streamUrl: url }),
       })
       if (!res.ok) {
-        const err = await res.json()
+        const err = await res.json().catch(() => ({}))
         throw new Error(err.message || 'Erreur')
       }
       setStreamInput('')
+      setEditing(false)
       onStreamStarted()
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erreur')
+      setStreamError(err instanceof Error ? err.message : 'Erreur')
     } finally {
       setStreamSubmitting(false)
     }
   }
 
+  const showStreamInput = isActive && userIsPlayer && (!hasStream || editing)
+
   return (
-    <div className="bg-white/10 backdrop-blur rounded-xl p-6 border border-white/20 hover:border-white/40 transition-all">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20 hover:border-white/40 transition-all flex flex-col gap-3">
+
+      {/* Header row: status + LIVE badge */}
+      <div className="flex items-center justify-between">
         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(match.status, match.walkedOver)}`}>
           {match.walkedOver ? 'FORFAIT' : match.status}
         </span>
-        {hasStream && (
-          <span className="flex items-center gap-1 text-red-400 text-xs font-bold animate-pulse">
-            <Radio className="w-3 h-3" /> LIVE
-          </span>
-        )}
-        {match.walkedOver && (
-          <span className="text-yellow-400 text-xs font-bold">Victoire par forfait</span>
-        )}
+        <div className="flex items-center gap-2">
+          {hasStream && !editing && (
+            <span className="flex items-center gap-1 text-red-400 text-xs font-bold animate-pulse">
+              <Radio className="w-3 h-3" /> 🔴 LIVE
+            </span>
+          )}
+          {match.walkedOver && (
+            <span className="text-yellow-400 text-xs font-bold">Victoire par forfait</span>
+          )}
+        </div>
       </div>
 
-      {/* Stream player */}
-      {hasStream && match.streamType && (
-        <div className="mb-4">
-          <StreamPlayer streamUrl={match.streamUrl!} streamType={match.streamType} />
-        </div>
-      )}
-
-      {/* Start stream input (player only, no stream yet, IN_PROGRESS) */}
-      {isInProgress && !hasStream && userIsPlayer && (
-        <div className="mb-4 space-y-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={streamInput}
-              onChange={(e) => setStreamInput(e.target.value)}
-              placeholder="Colle ton lien YouTube Live, Twitch ou Facebook Live"
-              className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#0097FC]"
-            />
-            <button
-              onClick={handleStartStream}
-              disabled={streamSubmitting || !streamInput.trim()}
-              className="px-3 py-2 bg-[#0097FC] hover:bg-[#0097FC]/80 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
-            >
-              {streamSubmitting ? '...' : 'Démarrer'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+      {/* Players row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
           <img
             src={match.player1.avatar || '/default-avatar.png'}
             alt={match.player1.username}
-            className="w-8 h-8 rounded-full"
+            className="w-8 h-8 rounded-full shrink-0"
+            onError={(e) => { (e.target as HTMLImageElement).src = '/default-avatar.png' }}
           />
-          <span className="text-white font-medium">{match.player1.username}</span>
+          <span className="text-white font-semibold text-sm truncate">{match.player1.username}</span>
         </div>
-        <span className="text-white/50 text-sm">vs</span>
-        <div className="flex items-center gap-2">
-          <span className="text-white font-medium">{match.player2.username}</span>
+        <span className="text-white/40 text-xs font-bold mx-2 shrink-0">VS</span>
+        <div className="flex items-center gap-2 min-w-0 flex-row-reverse">
           <img
             src={match.player2.avatar || '/default-avatar.png'}
             alt={match.player2.username}
-            className="w-8 h-8 rounded-full"
+            className="w-8 h-8 rounded-full shrink-0"
+            onError={(e) => { (e.target as HTMLImageElement).src = '/default-avatar.png' }}
           />
+          <span className="text-white font-semibold text-sm truncate text-right">{match.player2.username}</span>
         </div>
       </div>
 
+      {/* Countdown */}
       {match.deadlineAt && (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="w-4 h-4 text-white/70" />
-            <span className="text-xs text-white/70">Temps restant</span>
-          </div>
-          <div
-            className={`font-mono text-sm font-bold ${
+        <div className="flex items-center gap-2">
+          <Clock className="w-3.5 h-3.5 text-white/50 shrink-0" />
+          <span
+            className={`font-mono text-xs font-bold ${
               isExpired ? 'text-red-400' : isUrgent ? 'text-orange-400' : 'text-green-400'
             }`}
           >
             {formatTime(timeRemaining)}
-          </div>
+          </span>
         </div>
       )}
 
-      <div className="flex items-center justify-end">
+      {/* Stream player (when streamUrl set and not editing) */}
+      {hasStream && match.streamType && !editing && (
+        <div>
+          <StreamPlayer streamUrl={match.streamUrl!} streamType={match.streamType} />
+        </div>
+      )}
+
+      {/* Stream input — visible to players on PENDING or IN_PROGRESS matches */}
+      {showStreamInput && (
+        <div className="space-y-1.5">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={streamInput}
+              onChange={(e) => { setStreamInput(e.target.value); setStreamError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmitStream()}
+              placeholder="🎥 Colle ton lien YouTube Live / Twitch"
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white text-xs placeholder:text-white/40 focus:outline-none focus:border-[#0097FC] min-w-0"
+            />
+            <button
+              onClick={handleSubmitStream}
+              disabled={streamSubmitting || !streamInput.trim()}
+              className="px-3 py-2 bg-[#0097FC] hover:bg-[#0097FC]/80 disabled:opacity-40 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              {streamSubmitting ? '…' : '📡 Démarrer'}
+            </button>
+          </div>
+          {streamError && <p className="text-xs text-red-400">{streamError}</p>}
+          {editing && (
+            <button onClick={() => { setEditing(false); setStreamInput('') }} className="text-xs text-white/40 hover:text-white/70 transition-colors">
+              Annuler
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Modifier button — visible to players when stream set and not editing */}
+      {hasStream && userIsPlayer && isActive && !editing && (
+        <button
+          onClick={() => { setEditing(true); setStreamInput(match.streamUrl ?? '') }}
+          className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors text-left"
+        >
+          ✏️ Modifier l'URL du stream
+        </button>
+      )}
+
+      {/* Jouer button */}
+      <div className="flex items-center justify-end pt-1">
         <a
           href={match.matchLink}
-          className="inline-flex items-center gap-1 px-3 py-1 bg-[#0097FC] hover:bg-[#0097FC]/80 text-white text-xs font-semibold rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0097FC] hover:bg-[#0097FC]/80 text-white text-xs font-semibold rounded-lg transition-colors"
         >
           <Play className="w-3 h-3" />
           Jouer

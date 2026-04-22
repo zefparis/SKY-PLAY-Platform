@@ -887,6 +887,51 @@ export class ChallengesService {
     return dispute;
   }
 
+  // ─── SET MATCH STREAM ────────────────────────────────────────────────────────
+
+  async setMatchStream(matchId: string, userId: string, streamUrl: string) {
+    const match = await (this.prisma as any).tournamentMatch.findUnique({
+      where: { id: matchId },
+      include: {
+        player1: { select: { id: true, username: true } },
+        player2: { select: { id: true, username: true } },
+      },
+    });
+    if (!match) throw new NotFoundException('Match introuvable');
+    if (match.player1.id !== userId && match.player2.id !== userId) {
+      throw new ForbiddenException('Vous n\'êtes pas participant à ce match');
+    }
+
+    let streamType: string;
+    if (streamUrl.includes('youtube.com') || streamUrl.includes('youtu.be')) {
+      streamType = 'YOUTUBE';
+    } else if (streamUrl.includes('twitch.tv')) {
+      streamType = 'TWITCH';
+    } else if (streamUrl.includes('facebook.com')) {
+      streamType = 'FACEBOOK';
+    } else {
+      throw new BadRequestException('URL de stream invalide (YouTube, Twitch ou Facebook)');
+    }
+
+    const updated = await (this.prisma as any).tournamentMatch.update({
+      where: { id: matchId },
+      data: { streamUrl, streamType },
+    });
+
+    const playerName = match.player1.id === userId ? match.player1.username : match.player2.username;
+
+    if (match.challengeId) {
+      this.notifyChallenge(match.challengeId, 'stream_started', {
+        matchId,
+        streamUrl,
+        streamType,
+        playerName,
+      });
+    }
+
+    return updated;
+  }
+
   // ─── CHALLENGE CALENDAR (round-robin) ─────────────────────────────────────────
 
   async getChallengeCalendar(challengeId: string) {

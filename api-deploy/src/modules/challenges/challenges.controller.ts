@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -93,6 +94,16 @@ export class ChallengesController {
   @Get(':id/calendar')
   getCalendar(@Param('id') id: string) {
     return this.challengesService.getChallengeCalendar(id);
+  }
+
+  @UseGuards(JwtDualGuard)
+  @Patch('matches/:matchId/stream')
+  setMatchStream(
+    @Param('matchId') matchId: string,
+    @Body() body: { streamUrl: string },
+    @Request() req,
+  ) {
+    return this.challengesService.setMatchStream(matchId, req.user.id, body.streamUrl);
   }
 
   @Get(':id/rules.pdf')
