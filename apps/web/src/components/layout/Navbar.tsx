@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, LayoutDashboard, ChevronRight, ChevronDown, Pause, Shield, Lightbulb, Eye, Settings, Swords } from 'lucide-react'
+import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, LayoutDashboard, ChevronRight, ChevronDown, Pause, Shield, Lightbulb, Eye, Settings, Swords, Megaphone } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -98,6 +98,7 @@ const Navbar = () => {
     { href: '/challenges', label: 'Tournois', icon: Trophy },
     { href: '/notifications', label: 'Notifications', icon: Bell },
     { href: '/profile/responsabilite', label: 'Paramètres', icon: Settings },
+    { href: '/advertise', label: '📢 Annonceurs', icon: Megaphone },
   ]
 
   const bottomTabs = [
@@ -429,6 +430,7 @@ const Navbar = () => {
                     { href: '/leaderboard', label: 'Classement', icon: Trophy },
                     { href: '/profile', label: 'Mon profil', icon: User },
                     { href: '/profile/responsabilite', label: 'Jeu responsable', icon: Shield },
+                    { href: '/advertise', label: '📢 Annonceurs', icon: Megaphone },
                   ].map(item => {
                     const Icon = item.icon
                     return (
