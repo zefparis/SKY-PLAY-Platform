@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Trophy, Users, Calendar, ArrowLeft, Play, Clock } from 'lucide-react'
+import { Trophy, Users, Calendar, ArrowLeft, Play, Radio } from 'lucide-react'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { useAuthStore } from '@/lib/auth-store'
+import StreamPlayer from '@/components/tournaments/StreamPlayer'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -37,14 +38,37 @@ export default function TournamentPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [joining, setJoining] = useState(false)
+  const [liveMatches, setLiveMatches] = useState<Array<{ id: string; streamUrl: string; streamType: 'YOUTUBE' | 'TWITCH' | 'FACEBOOK'; player1: { username: string }; player2: { username: string } }>>([])
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API}/tournaments/${tournamentId}`)
-        if (!res.ok) throw new Error('Tournoi introuvable')
-        const data = await res.json()
+        const [tRes, cRes] = await Promise.all([
+          fetch(`${API}/tournaments/${tournamentId}`),
+          fetch(`${API}/tournaments/${tournamentId}/calendar`),
+        ])
+        if (!tRes.ok) throw new Error('Tournoi introuvable')
+        const data = await tRes.json()
         setTournament(data)
+
+        if (cRes.ok) {
+          const calendar = await cRes.json()
+          const live: typeof liveMatches = []
+          for (const matches of Object.values(calendar) as any[]) {
+            for (const m of matches) {
+              if (m.status === 'IN_PROGRESS' && m.streamUrl && m.streamType) {
+                live.push({
+                  id: m.id,
+                  streamUrl: m.streamUrl,
+                  streamType: m.streamType,
+                  player1: m.player1,
+                  player2: m.player2,
+                })
+              }
+            }
+          }
+          setLiveMatches(live)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur')
       } finally {
@@ -166,6 +190,40 @@ export default function TournamentPage() {
               </span>
             )}
           </div>
+
+          {/* Live matches section */}
+          {liveMatches.length > 0 && (
+            <div className="border-t border-white/20 pt-6 mb-6">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Radio className="w-5 h-5 text-red-400 animate-pulse" />
+                Matchs en direct
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {liveMatches.map((m) => (
+                  <div key={m.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/70 text-sm">
+                        {m.player1.username} vs {m.player2.username}
+                      </span>
+                      <span className="flex items-center gap-1 text-red-400 text-xs font-bold animate-pulse">
+                        <Radio className="w-3 h-3" /> LIVE
+                      </span>
+                    </div>
+                    <StreamPlayer streamUrl={m.streamUrl} streamType={m.streamType} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {liveMatches.length === 0 && tournament.status !== 'OPEN' && (
+            <div className="border-t border-white/20 pt-6 mb-6">
+              <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                <Radio className="w-5 h-5 text-white/50" />
+                Matchs en direct
+              </h2>
+              <p className="text-white/50 text-sm">Aucun match en direct pour l'instant</p>
+            </div>
+          )}
 
           <div className="border-t border-white/20 pt-6">
             <h2 className="text-xl font-bold text-white mb-4">Participants</h2>

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   Query,
@@ -87,5 +88,15 @@ export class TournamentsController {
     @Request() req,
   ) {
     return this.tournamentsService.submitMatchResult(matchId, req.user.id, dto);
+  }
+
+  @UseGuards(JwtDualGuard)
+  @Patch('matches/:matchId/stream')
+  setStream(
+    @Param('matchId') matchId: string,
+    @Body('streamUrl') streamUrl: string,
+    @Request() req,
+  ) {
+    return this.tournamentsService.setStream(matchId, req.user.id, streamUrl);
   }
 }

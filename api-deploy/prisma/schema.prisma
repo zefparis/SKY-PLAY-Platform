@@ -734,6 +734,8 @@ model TournamentMatch {
   deadlineAt     DateTime?
   walkedOver     Boolean      @default(false)
   walkoverUserId String?
+  streamUrl      String?
+  streamType     StreamType?
   createdAt      DateTime     @default(now())
 
   @@map("tournament_matches")
@@ -757,6 +759,12 @@ enum TMatchStatus {
   DISPUTED
   COMPLETED
   WALKOVER
+}
+
+enum StreamType {
+  YOUTUBE
+  TWITCH
+  FACEBOOK
 }
 
 // ─── LEAGUES ─────────────────────────────────────────────────────────────────
