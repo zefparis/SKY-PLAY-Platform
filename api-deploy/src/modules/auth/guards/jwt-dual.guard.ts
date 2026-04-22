@@ -23,7 +23,10 @@ export class JwtDualGuard extends AuthGuard(['jwt', 'jwt-custom']) {
 
   handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
     if (err || !user) {
-      this.logger.warn(`Authentication failed: ${info?.message || err?.message || 'Unknown error'}`);
+      const infoMsg = Array.isArray(info)
+        ? info.map((i: any) => i?.message).filter(Boolean).join(' | ') || 'no info'
+        : info?.message || 'no info';
+      this.logger.warn(`Authentication failed: ${err?.message || infoMsg}`);
       throw err || new UnauthorizedException('Token invalide ou expiré');
     }
     return user;
