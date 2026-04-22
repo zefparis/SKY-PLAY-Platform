@@ -1,9 +1,12 @@
-import { IsString, IsOptional, MaxLength, Matches } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, MinLength, MaxLength, Matches } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @IsNotEmpty({ message: 'Le pseudo ne peut pas être vide' })
+  @MinLength(3, { message: 'Le pseudo doit faire au moins 3 caractères' })
+  @MaxLength(20, { message: 'Le pseudo ne peut pas dépasser 20 caractères' })
+  @Matches(/^[a-zA-Z0-9_.-]+$/, { message: 'Le pseudo ne peut contenir que des lettres, chiffres, _, . ou -' })
   username?: string;
 
   @IsOptional()

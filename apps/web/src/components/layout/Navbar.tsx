@@ -381,7 +381,7 @@ const Navbar = () => {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-black dark:text-white text-[#00165F] text-base truncate">{user.username}</p>
-                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.email}</p>
+                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.role === 'ADMIN' ? '⚙️ Administrateur' : '🎮 Joueur SKY PLAY'}</p>
                     </div>
                     <Link href="/profile" onClick={() => setSuperMenuOpen(false)}
                       className="p-2 rounded-xl dark:bg-white/8 bg-[#00165F]/6 transition hover:bg-[#0097FC]/10">

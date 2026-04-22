@@ -5,6 +5,7 @@ import AdBanner from '@/components/ads/AdBanner'
 import { I18nProvider } from '@/components/i18n/I18nProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import SessionRestorer from '@/components/providers/SessionRestorer'
+import UsernameSetupModal from '@/components/auth/UsernameSetupModal'
 
 export const metadata: Metadata = {
   title: 'SKY PLAY ENTERTAINMENT — Compétitions e-sport fondées sur l\'habileté | Cameroun',
@@ -51,6 +52,7 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <SessionRestorer />
+            <UsernameSetupModal />
             <Navbar />
             <div className="pt-20 pb-1 px-4">
               <AdBanner />

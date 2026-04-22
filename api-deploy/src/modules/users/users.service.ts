@@ -17,19 +17,22 @@ export class UsersService {
   }
 
   private defaultUsernameFromEmail(email: string) {
-    return email.split('@')[0];
+    // Keep only allowed chars, max 20
+    return email.split('@')[0].replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 20) || 'player';
   }
 
   private async generateUniqueUsername(base: string): Promise<string> {
-    const sanitized = base.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20) || 'player';
+    const sanitized = base.replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 20) || 'player';
     const existing = await this.prisma.user.findUnique({ where: { username: sanitized } });
     if (!existing) return sanitized;
-    for (let i = 2; i <= 999; i++) {
-      const candidate = `${sanitized.slice(0, 16)}_${i}`;
+    // Random 4-digit suffix to avoid enumeration
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const suffix = Math.floor(1000 + Math.random() * 9000);
+      const candidate = `${sanitized.slice(0, 15)}_${suffix}`;
       const taken = await this.prisma.user.findUnique({ where: { username: candidate } });
       if (!taken) return candidate;
     }
-    return `player_${Date.now()}`;
+    return `player_${Date.now().toString().slice(-6)}`;
   }
 
   async create(data: any) {
