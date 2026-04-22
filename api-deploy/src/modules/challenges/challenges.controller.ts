@@ -90,6 +90,11 @@ export class ChallengesController {
     return this.challengesService.findOne(id);
   }
 
+  @Get(':id/calendar')
+  getCalendar(@Param('id') id: string) {
+    return this.challengesService.getChallengeCalendar(id);
+  }
+
   @Get(':id/rules.pdf')
   async downloadRulesPdf(@Param('id') id: string, @Res() res: Response) {
     const challenge = await this.challengesService.findOne(id);

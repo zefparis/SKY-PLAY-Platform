@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Users, Gamepad2, Clock, Trash2 } from 'lucide-react';
+import { Users, Gamepad2, Clock, Trash2, Calendar } from 'lucide-react';
 import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import { getAuthToken } from '@/lib/get-auth-token';
 import { useI18n } from '@/components/i18n/I18nProvider';
@@ -94,6 +94,7 @@ const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: Challenge
   const countdown = rawCountdown === '__expired__' ? t('challenge.card.expired') : rawCountdown;
   const isTimeLow = new Date(challenge.expiresAt).getTime() - Date.now() < 5 * 60 * 1000;
   const isCreator = currentUserId && challenge.creatorId === currentUserId;
+  const isTournamentType = challenge.type.includes('TOURNAMENT');
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -192,7 +193,7 @@ const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: Challenge
 
         {/* Timer / Action */}
         {challenge.status === 'OPEN' && (
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 mb-2">
             <div className={`flex items-center gap-1 text-xs ${isTimeLow ? 'text-red-500 animate-pulse' : 'dark:text-white/40 text-[#00165F]/40'}`}>
               <Clock className="w-3 h-3" />
               <span>{countdown}</span>
@@ -206,14 +207,22 @@ const ChallengeCard = ({ challenge, onJoin, onDelete, currentUserId }: Challenge
           </div>
         )}
         {challenge.status === 'FULL' && (
-          <div className={`text-center text-xs font-semibold py-1.5 rounded-lg ${isTimeLow ? 'bg-red-500/10 text-red-400 animate-pulse' : 'bg-orange-500/10 text-orange-400'}`}>
+          <div className={`text-center text-xs font-semibold py-1.5 rounded-lg mb-2 ${isTimeLow ? 'bg-red-500/10 text-red-400 animate-pulse' : 'bg-orange-500/10 text-orange-400'}`}>
             ⚡ {t('challenge.card.starting')} {countdown}
           </div>
         )}
         {challenge.status === 'IN_PROGRESS' && (
-          <div className="text-center text-xs font-semibold py-1.5 rounded-lg bg-red-500/10 text-red-400 animate-pulse">
+          <div className="text-center text-xs font-semibold py-1.5 rounded-lg bg-red-500/10 text-red-400 animate-pulse mb-2">
             {t('challenge.card.inProgress')}
           </div>
+        )}
+        {isTournamentType && challenge.status !== 'OPEN' && (
+          <button
+            onClick={(e) => { e.stopPropagation(); router.push(`/challenges/${challenge.id}/calendar`); }}
+            className="w-full text-xs font-semibold px-3 py-1.5 rounded-lg bg-transparent border border-[#2a2d3e] text-cyan-400 hover:bg-cyan-400/10 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <Calendar className="w-3 h-3" /> Calendrier
+          </button>
         )}
       </div>
     </motion.div>

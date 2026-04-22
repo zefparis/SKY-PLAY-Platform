@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import SpectatorView, { type SpectatorEvent } from '@/components/challenges/SpectatorView';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload, Calendar } from 'lucide-react';
 import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import ChallengeRules from '@/components/challenges/ChallengeRules';
 import AdSlot from '@/components/ads/AdSlot';
@@ -195,6 +195,19 @@ export default function ChallengePage() {
             </span>
           </div>
         </div>
+
+        {/* Calendar button for tournament-type challenges */}
+        {challenge.type?.includes('TOURNAMENT') && challenge.status !== 'OPEN' && (
+          <div className="mb-4">
+            <button
+              onClick={() => router.push(`/challenges/${id}/calendar`)}
+              className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-transparent border border-[#2a2d3e] text-cyan-400 font-semibold rounded-lg hover:bg-cyan-400/10 transition-colors"
+            >
+              <Calendar className="w-4 h-4" />
+              Voir le calendrier
+            </button>
+          </div>
+        )}
 
         {/* Section Spectateur */}
         {!isParticipant && challenge.status === 'IN_PROGRESS' && (

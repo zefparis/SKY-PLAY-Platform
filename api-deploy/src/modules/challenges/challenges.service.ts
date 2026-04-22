@@ -887,6 +887,123 @@ export class ChallengesService {
     return dispute;
   }
 
+  // ─── CHALLENGE CALENDAR (round-robin) ─────────────────────────────────────────
+
+  async getChallengeCalendar(challengeId: string) {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+      include: {
+        participants: { select: { userId: true, user: { select: { id: true, username: true, avatar: true } } } },
+        matches: {
+          include: {
+            player1: { select: { id: true, username: true, avatar: true } },
+            player2: { select: { id: true, username: true, avatar: true } },
+          },
+          orderBy: [{ round: 'asc' }, { createdAt: 'asc' }],
+        },
+      } as any,
+    });
+    if (!challenge) throw new NotFoundException('Défi introuvable');
+
+    const challengeAny = challenge as any;
+    const participants = challengeAny.participants.map((p: any) => p.user);
+    if (participants.length < 2) {
+      return { rounds: [], participants: participants.length, title: challenge.title, game: challenge.game, type: challenge.type };
+    }
+
+    // Generate matches if none exist
+    if ((challengeAny.matches?.length ?? 0) === 0) {
+      await this.generateChallengeMatches(challengeId, participants);
+      // Reload
+      const refreshed = await this.prisma.challenge.findUnique({
+        where: { id: challengeId },
+        include: {
+          matches: {
+            include: {
+              player1: { select: { id: true, username: true, avatar: true } },
+              player2: { select: { id: true, username: true, avatar: true } },
+            },
+            orderBy: [{ round: 'asc' }, { createdAt: 'asc' }],
+          },
+        } as any,
+      });
+      if (refreshed) challengeAny.matches = (refreshed as any).matches ?? [];
+    }
+
+    const now = new Date();
+    const enriched = (challengeAny.matches ?? []).map((m: any) => ({
+      id: m.id,
+      round: m.round,
+      player1: m.player1,
+      player2: m.player2,
+      status: m.status,
+      deadlineAt: m.deadlineAt,
+      walkedOver: m.walkedOver,
+      streamUrl: m.streamUrl,
+      streamType: m.streamType,
+      matchLink: `/challenges/${m.id}`,
+      timeRemaining: m.deadlineAt
+        ? Math.max(0, Math.floor((new Date(m.deadlineAt).getTime() - now.getTime()) / 1000))
+        : null,
+    }));
+
+    const grouped: Record<number, any[]> = {};
+    for (const m of enriched) {
+      const round = m.round ?? 1;
+      if (!grouped[round]) grouped[round] = [];
+      grouped[round].push(m);
+    }
+
+    const rounds = Object.entries(grouped)
+      .map(([round, matches]) => ({ round: parseInt(round, 10), matches }))
+      .sort((a, b) => a.round - b.round);
+
+    return { rounds, participants: participants.length, title: challenge.title, game: challenge.game, type: challenge.type };
+  }
+
+  private async generateChallengeMatches(challengeId: string, players: { id: string; username: string; avatar?: string | null }[]) {
+    const n = players.length;
+    // Circle method for round-robin aller-simple
+    const ids = players.map((p) => p.id);
+    const rounds: Array<[string, string][]> = [];
+
+    if (n % 2 === 1) {
+      ids.push('BYE');
+    }
+    const total = ids.length;
+
+    for (let r = 0; r < total - 1; r++) {
+      const roundMatches: [string, string][] = [];
+      for (let i = 0; i < total / 2; i++) {
+        const a = ids[i];
+        const b = ids[total - 1 - i];
+        if (a !== 'BYE' && b !== 'BYE') {
+          roundMatches.push([a, b]);
+        }
+      }
+      rounds.push(roundMatches);
+      // Rotate (keep first fixed, rotate rest)
+      ids.splice(1, 0, ids.pop()!);
+    }
+
+    const deadlineAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    for (let r = 0; r < rounds.length; r++) {
+      for (const [p1, p2] of rounds[r]) {
+        await (this.prisma as any).tournamentMatch.create({
+          data: {
+            challengeId,
+            phase: 'CHAMPIONSHIP_ROUND',
+            round: r + 1,
+            player1Id: p1,
+            player2Id: p2,
+            status: 'PENDING',
+            deadlineAt,
+          },
+        });
+      }
+    }
+  }
+
   // ─── DELETE CHALLENGE ─────────────────────────────────────────────────────────
 
   async deleteChallenge(challengeId: string, userId: string) {

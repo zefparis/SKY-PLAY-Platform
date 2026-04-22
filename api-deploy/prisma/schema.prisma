@@ -200,6 +200,7 @@ model Challenge {
   creator     User                  @relation(fields: [creatorId], references: [id])
   participants ChallengeParticipant[]
   results     ChallengeResult[]
+  matches     TournamentMatch[]
   dispute         ChallengeDispute?
   conversation    Conversation?
   ruleAcceptances ChallengeRuleAcceptance[]
@@ -709,8 +710,8 @@ model Pool {
 
 model TournamentMatch {
   id           String       @id @default(cuid())
-  tournamentId String
-  tournament   Tournament   @relation(fields: [tournamentId], references: [id])
+  tournamentId String?
+  tournament   Tournament?   @relation(fields: [tournamentId], references: [id])
   poolId       String?
   pool         Pool?        @relation(fields: [poolId], references: [id])
   phase        MatchPhase
@@ -736,9 +737,12 @@ model TournamentMatch {
   walkoverUserId String?
   streamUrl      String?
   streamType     StreamType?
+  challengeId    String?
+  challenge      Challenge?   @relation(fields: [challengeId], references: [id])
   createdAt      DateTime     @default(now())
 
   @@map("tournament_matches")
+  @@index([challengeId])
 }
 
 enum MatchPhase {
