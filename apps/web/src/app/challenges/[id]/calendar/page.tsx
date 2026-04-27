@@ -11,6 +11,7 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
 type Match = {
   id: string
+  challengeId: string
   round: number
   player1: { id: string; username: string; avatar?: string | null }
   player2: { id: string; username: string; avatar?: string | null }
@@ -346,10 +347,10 @@ function MatchCard({
         </button>
       )}
 
-      {/* Jouer button */}
+      {/* Jouer button — links to parent challenge (NOT match.id) */}
       <div className="flex items-center justify-end pt-1">
         <a
-          href={match.matchLink}
+          href={`/challenges/${match.challengeId}`}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0097FC] hover:bg-[#0097FC]/80 text-white text-xs font-semibold rounded-lg transition-colors"
         >
           <Play className="w-3 h-3" />

@@ -1090,6 +1090,7 @@ export class ChallengesService {
     const now = new Date();
     const enriched = (challengeAny.matches ?? []).map((m: any) => ({
       id: m.id,
+      challengeId,
       round: m.round,
       player1: m.player1,
       player2: m.player2,
@@ -1098,7 +1099,7 @@ export class ChallengesService {
       walkedOver: m.walkedOver,
       streamUrl: m.streamUrl,
       streamType: m.streamType,
-      matchLink: `/challenges/${m.id}`,
+      matchLink: `/challenges/${challengeId}`,
       timeRemaining: m.deadlineAt
         ? Math.max(0, Math.floor((new Date(m.deadlineAt).getTime() - now.getTime()) / 1000))
         : null,
