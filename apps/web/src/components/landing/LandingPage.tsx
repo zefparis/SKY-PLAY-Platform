@@ -1,633 +1,538 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
-import { AuthModal } from '@/components/auth/AuthModal'
-import { useAuthStore } from '@/lib/auth-store'
+import { motion } from 'framer-motion'
+import {
+  Trophy, Swords, Users, Crown, Zap, Star,
+  Play, ArrowRight, ChevronRight, Gamepad2,
+  UserPlus, Target, TrendingUp, Radio,
+  Twitter, Instagram, Youtube, MessageCircle,
+} from 'lucide-react'
 
-type Lang = 'fr' | 'en'
-type ViewMode = 'login' | 'signup'
+// ─── Animation helpers ────────────────────────────────────────────────────────
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-80px' },
+  transition: { duration: 0.55, delay, ease: 'easeOut' as const },
+})
 
-// ─── Translations ─────────────────────────────────────────────────────────────
-const translations = {
-  fr: {
-    nav: { login: 'Se connecter', signup: "S'inscrire" },
-    hero: {
-      badge: '🔥 +2 000 joueurs actifs au Cameroun',
-      title: 'Défie.\nJoue.\nGagne.',
-      subtitle: "La première plateforme de défis gaming en Afrique centrale. Jouez à FIFA, COD, Free Fire et gagnez jusqu'à 450 000 SKY.",
-      cta1: 'Commencer à jouer',
-      cta2: 'Voir comment ça marche',
-      float1: '🏆 +18 000 SKY gagnés',
-      float1sub: 'Il y a 2 min',
-      float2: '🎮 Défi en cours',
-      float2sub: 'FIFA • 3 vs 3',
-    },
-    stats: [
-      { value: '2 000+', label: 'Joueurs' },
-      { value: '450 000 SKY', label: 'Gain max' },
-      { value: '10 min', label: 'Temps moyen' },
-      { value: '100%', label: 'Sécurisé' },
-    ],
-    how: {
-      title: 'Comment ça marche ?',
-      steps: [
-        { icon: '🎮', title: 'Achetez votre Pass de participation', desc: "Choisissez votre compétition et achetez votre pass d'accès. Votre paiement couvre l'organisation, l'animation et l'infrastructure de la compétition." },
-        { icon: '⚔️', title: 'Jouez sur votre plateforme', desc: "Jouez normalement sur FIFA, COD, Free Fire ou tout autre jeu. SKY PLAY ne modifie pas votre jeu." },
-        { icon: '🏆', title: 'Recevez votre prime de performance', desc: "Le vainqueur reçoit une prime de performance prédéfinie selon le règlement officiel de la compétition." },
-      ],
-      cta: 'Je veux participer !',
-    },
-    games: {
-      title: 'Jeux supportés',
-      subtitle: 'Tous les jeux populaires en Afrique',
-      note: '+ Tout autre jeu sur demande',
-    },
-    table: {
-      title: 'Dotations des compétitions',
-      subtitle: 'Primes de performance prédéfinies par règlement officiel',
-      note: "⚖️ Les primes sont prédéfinies et encadrées par un règlement officiel. 🪙 Les Sky Credits sont la monnaie interne de SKY PLAY. 1 SKY = 1 CFA. Conversion en CFA disponible lors du retrait.",
-      badge: 'MEILLEURE PRIME',
-      cols: ['Type', 'Joueurs', 'Pass', 'Dotation', 'Prime 1er', "Frais d'org."],
-      rows: [
-        { type: 'Duel 1v1', players: '2', stake: '2 000 SKY', pot: '4 000 SKY', winner: '3 000 SKY', fee: '25%', highlight: false },
-        { type: 'Petit challenge', players: '5', stake: '2 000 SKY', pot: '10 000 SKY', winner: '5 000 SKY', fee: '20%', highlight: false },
-        { type: 'Challenge std', players: '10', stake: '2 000 SKY', pot: '20 000 SKY', winner: '9 000 SKY', fee: '10%', highlight: false },
-        { type: 'Tournoi moyen', players: '20', stake: '2 000 SKY', pot: '40 000 SKY', winner: '17 000 SKY', fee: '15%', highlight: false },
-        { type: 'Gros tournoi', players: '50', stake: '2 000 SKY', pot: '100 000 SKY', winner: '45 000 SKY', fee: '10%', highlight: false },
-        { type: 'Tournoi premium', players: '100', stake: '5 000 SKY', pot: '500 000 SKY', winner: '225 000 SKY', fee: '10%', highlight: true },
-      ],
-    },
-    apk: {
-      title: "Télécharge l'app SKY PLAY",
-      subtitle: 'Disponible sur Android — Installation directe',
-      button: '📱 Télécharger l\'APK Android',
-      note: "⚠️ Activez 'Sources inconnues' dans Paramètres → Sécurité pour installer",
-      size: '~15 MB',
-      version: 'v1.0.0',
-      navButton: '📱 App Android',
-    },
-    footer: {
-      tagline: 'La plateforme de défis gaming #1 en Afrique centrale',
-      legal: 'SKY PLAY ENTERTAINMENT — Plateforme de compétitions e-sport et de divertissement numérique fondées sur l\'habileté.',
-      sections: [
-        { title: 'Plateforme', links: [{ text: 'Compétitions', href: '/challenges' }, { text: 'Sky Credits', href: '/wallet' }, { text: 'Classement', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
-        { title: 'Légal', links: [{ text: 'CGU', href: '/cgu' }, { text: 'Politique de confidentialité', href: '/politique-confidentialite' }, { text: 'Jeu responsable', href: '/jeu-responsable' }] },
-        { title: 'Contact', links: [{ text: 'support@skyplay.cm', href: 'mailto:support@skyplay.cm' }, { text: 'Discord', href: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || 'https://discord.gg/skyplay' }, { text: 'Twitter / X', href: '#' }] },
-      ],
-      copyright: '© 2026 SKY PLAY ENTERTAINMENT — Tous droits réservés',
-      disclaimer: 'Compétitions fondées sur l\'habileté. Jouez de manière responsable.',
-    },
-  },
-  en: {
-    nav: { login: 'Log in', signup: 'Sign up' },
-    hero: {
-      badge: '🔥 2,000+ active players in Cameroon',
-      title: 'Challenge.\nPlay.\nWin.',
-      subtitle: 'The first gaming challenge platform in Central Africa. Play FIFA, COD, Free Fire and win up to 450,000 SKY.',
-      cta1: 'Start Playing',
-      cta2: 'See how it works',
-      float1: '🏆 +18,000 SKY won',
-      float1sub: '2 min ago',
-      float2: '🎮 Challenge in progress',
-      float2sub: 'FIFA • 3 vs 3',
-    },
-    stats: [
-      { value: '2,000+', label: 'Players' },
-      { value: '450K SKY', label: 'Max prize' },
-      { value: '10 min', label: 'Avg time' },
-      { value: '100%', label: 'Secure' },
-    ],
-    how: {
-      title: 'How it works?',
-      steps: [
-        { icon: '🎮', title: 'Buy your participation Pass', desc: "Choose your competition and buy your access pass. Your payment covers the organization, animation and infrastructure of the competition." },
-        { icon: '⚔️', title: 'Play on your platform', desc: "Play normally on FIFA, COD, Free Fire or any game. SKY PLAY doesn't modify your game." },
-        { icon: '🏆', title: 'Receive your performance reward', desc: "The winner receives a predefined performance reward according to the official competition rules." },
-      ],
-      cta: 'I want to compete!',
-    },
-    games: {
-      title: 'Supported Games',
-      subtitle: 'All popular games in Africa',
-      note: '+ Any other game on request',
-    },
-    table: {
-      title: 'Competition Prize Pools',
-      subtitle: 'Performance rewards predefined by official rules',
-      note: '⚖️ Prizes are predefined and governed by official rules. 🪙 Sky Credits are SKY PLAY\'s internal currency. 1 SKY = 1 CFA. Convert to CFA when withdrawing.',
-      badge: 'BEST REWARD',
-      cols: ['Type', 'Players', 'Pass', 'Prize Pool', '1st Prize', 'Org. Fee'],
-      rows: [
-        { type: '1v1 Duel', players: '2', stake: '2,000 SKY', pot: '4,000 SKY', winner: '3,000 SKY', fee: '25%', highlight: false },
-        { type: 'Small challenge', players: '5', stake: '2,000 SKY', pot: '10,000 SKY', winner: '5,000 SKY', fee: '20%', highlight: false },
-        { type: 'Std challenge', players: '10', stake: '2,000 SKY', pot: '20,000 SKY', winner: '9,000 SKY', fee: '10%', highlight: false },
-        { type: 'Mid tournament', players: '20', stake: '2,000 SKY', pot: '40,000 SKY', winner: '17,000 SKY', fee: '15%', highlight: false },
-        { type: 'Big tournament', players: '50', stake: '2,000 SKY', pot: '100,000 SKY', winner: '45,000 SKY', fee: '10%', highlight: false },
-        { type: 'Premium tournament', players: '100', stake: '5,000 SKY', pot: '500,000 SKY', winner: '225,000 SKY', fee: '10%', highlight: true },
-      ],
-    },
-    apk: {
-      title: 'Download SKY PLAY App',
-      subtitle: 'Available on Android — Direct install',
-      button: '📱 Download Android APK',
-      note: "⚠️ Enable 'Unknown sources' in Settings → Security to install",
-      size: '~15 MB',
-      version: 'v1.0.0',
-      navButton: '📱 Android App',
-    },
-    footer: {
-      tagline: 'The #1 gaming challenge platform in Central Africa',
-      legal: 'SKY PLAY ENTERTAINMENT — Skill-based e-sport competition and digital entertainment platform.',
-      sections: [
-        { title: 'Platform', links: [{ text: 'Competitions', href: '/challenges' }, { text: 'Sky Credits', href: '/wallet' }, { text: 'Leaderboard', href: '/leaderboard' }, { text: 'Chat', href: '/chat' }] },
-        { title: 'Legal', links: [{ text: 'Terms of Service', href: '/cgu' }, { text: 'Privacy Policy', href: '/politique-confidentialite' }, { text: 'Responsible Gaming', href: '/jeu-responsable' }] },
-        { title: 'Contact', links: [{ text: 'support@skyplay.cm', href: 'mailto:support@skyplay.cm' }, { text: 'Discord', href: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || 'https://discord.gg/skyplay' }, { text: 'Twitter / X', href: '#' }] },
-      ],
-      copyright: '© 2026 SKY PLAY ENTERTAINMENT — All rights reserved',
-      disclaimer: 'Skill-based competitions. Play responsibly.',
-    },
-  },
-}
+const fadeIn = (delay = 0) => ({
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
+  viewport: { once: true },
+  transition: { duration: 0.7, delay },
+})
 
-type Trans = typeof translations.fr
-
-// ─── Shared games list (visual only) ─────────────────────────────────────────
+// ─── Static data ──────────────────────────────────────────────────────────────
 const GAMES = [
-  { name: 'FIFA 25', emoji: '⚽', popular: true },
-  { name: 'Call of Duty', emoji: '🎯', popular: false },
-  { name: 'Free Fire', emoji: '🔥', popular: true },
-  { name: 'PUBG Mobile', emoji: '🪖', popular: false },
-  { name: 'Mobile Legends', emoji: '⚔️', popular: false },
-  { name: 'Fortnite', emoji: '🏗️', popular: false },
-  { name: 'Tekken', emoji: '👊', popular: false },
-  { name: 'eFootball', emoji: '🥅', popular: false },
+  { name: 'FIFA',           emoji: '⚽', color: '#00c8ff' },
+  { name: 'eFootball',      emoji: '🏟️', color: '#00e676' },
+  { name: 'Call of Duty',   emoji: '🎯', color: '#ff9800' },
+  { name: 'Mortal Kombat',  emoji: '🐉', color: '#ff3d00' },
+  { name: 'Street Fighter', emoji: '👊', color: '#f44336' },
+  { name: 'Tekken',         emoji: '⚡', color: '#ffd700' },
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
-  return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 36 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.55, delay, ease: 'easeOut' }} className={className}>
-      {children}
-    </motion.div>
-  )
-}
+const STEPS = [
+  {
+    n: '1',
+    icon: UserPlus,
+    title: 'Crée ton compte',
+    desc: 'Inscription gratuite en 2 minutes',
+    color: '#00c8ff',
+  },
+  {
+    n: '2',
+    icon: Target,
+    title: 'Rejoins une compétition',
+    desc: 'Choisis ton défi ou ton tournoi',
+    color: '#ffd700',
+  },
+  {
+    n: '3',
+    icon: TrendingUp,
+    title: 'Prouve ta valeur',
+    desc: 'Grimpe dans les leagues et domine le classement',
+    color: '#FD2E5F',
+  },
+]
 
-function StarField() {
-  return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      {Array.from({ length: 90 }, (_, i) => (
-        <span key={i} style={{
-          position: 'absolute',
-          left: `${(i * 37 + 11) % 100}%`,
-          top: `${(i * 53 + 7) % 100}%`,
-          width: `${(i % 3) + 1}px`,
-          height: `${(i % 3) + 1}px`,
-          borderRadius: '50%',
-          background: 'white',
-          animation: `sp-twinkle ${2 + (i % 3)}s ${(i % 5) * 0.7}s infinite ease-in-out`,
-        }} />
-      ))}
-      <style>{`@keyframes sp-twinkle{0%,100%{opacity:.08;transform:scale(1)}50%{opacity:.85;transform:scale(1.9)}}`}</style>
-    </div>
-  )
-}
+const LEAGUES = [
+  { emoji: '🥉', name: 'Bronze',  color: '#cd7f32' },
+  { emoji: '🥈', name: 'Argent',  color: '#c0c0c0' },
+  { emoji: '🥇', name: 'Or',      color: '#ffd700' },
+  { emoji: '💎', name: 'Diamant', color: '#00c8ff' },
+  { emoji: '⚡', name: 'Legend',  color: '#b06fff' },
+  { emoji: '🏆', name: 'Gloire',  color: '#ff4081' },
+]
 
-// ─── Public Navbar ─────────────────────────────────────────────────────────────
-function PublicNavbar({ lang, setLang, openLogin, openSignup, t }: {
-  lang: Lang; setLang: (l: Lang) => void; openLogin: () => void; openSignup: () => void; t: Trans
-}) {
-  const [scrolled, setScrolled] = useState(false)
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 24)
-    window.addEventListener('scroll', fn, { passive: true })
-    return () => window.removeEventListener('scroll', fn)
-  }, [])
+const FORMATS = [
+  { icon: Swords,  emoji: '⚔️', title: 'Duel 1v1',     desc: 'Face à face, le meilleur gagne',          color: '#00c8ff' },
+  { icon: Users,   emoji: '👥', title: 'Challenge',    desc: 'Jusqu\'à 10 joueurs, classement final',    color: '#00e676' },
+  { icon: Trophy,  emoji: '🏆', title: 'Tournoi',      desc: 'Phases de poules + élimination directe',  color: '#ffd700' },
+  { icon: Crown,   emoji: '🏅', title: 'Championnat',  desc: 'Une saison entière, aller-retour',        color: '#FD2E5F' },
+]
 
+const STATS = [
+  { icon: '🎮', value: '500+',   label: 'joueurs actifs' },
+  { icon: '🏆', value: '1 200+', label: 'compétitions organisées' },
+  { icon: '🌍', value: '5',      label: 'pays représentés' },
+  { icon: '⚡', value: '7j/7',   label: 'tournois chaque semaine' },
+]
+
+// ─── Component ────────────────────────────────────────────────────────────────
+export default function LandingPage() {
   return (
-    <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#00165F]/95 backdrop-blur-md border-b border-white/10 shadow-2xl shadow-black/30' : 'bg-transparent'}`}>
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <div className="leading-none">
-          <div className="font-black text-xl uppercase tracking-widest"
-            style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif", letterSpacing: '3px' }}>
-            SKY PLAY
-          </div>
-          <div className="text-white/70 uppercase mt-0.5"
-            style={{ fontSize: '9px', fontFamily: 'Montserrat, sans-serif', letterSpacing: '4px' }}>
-            ENTERTAINMENT
-          </div>
+    <main data-page="landing" className="min-h-screen bg-[#0d0f1a] text-white overflow-hidden">
+
+      {/* ════════════════════════════════════════════════════════════════════
+          HERO
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-16">
+        {/* Background grid + glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(0,200,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,200,255,0.5) 1px, transparent 1px)',
+              backgroundSize: '60px 60px',
+              maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
+            }}
+          />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] rounded-full bg-[#00c8ff]/15 blur-[120px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-[#ffd700]/10 blur-[100px]" />
+          <div className="absolute top-10 left-10 w-[300px] h-[300px] rounded-full bg-[#FD2E5F]/10 blur-[100px]" />
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
-            className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-white/15">
-            <span>{lang === 'fr' ? '🇫🇷' : '🇬🇧'}</span>
-            <span className="uppercase">{lang}</span>
-            <span className="opacity-40 mx-0.5">|</span>
-            <span className="opacity-60 uppercase">{lang === 'fr' ? 'en' : 'fr'}</span>
-          </button>
-          <a href="#download"
-            className="hidden rounded-xl border border-[#3DDC84]/40 bg-[#3DDC84]/8 px-3 py-1.5 text-xs font-bold text-[#3DDC84] transition hover:bg-[#3DDC84]/15 sm:block">
-            {t.apk.navButton}
-          </a>
-          <button onClick={openLogin}
-            className="hidden rounded-xl border border-white/25 bg-white/5 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/15 sm:block">
-            {t.nav.login}
-          </button>
-          <button onClick={openSignup}
-            className="rounded-xl bg-[#0097FC] px-4 py-1.5 text-sm font-bold text-white shadow-lg shadow-[#0097FC]/30 transition hover:brightness-110 active:scale-95">
-            {t.nav.signup}
-          </button>
+
+        {/* Logo */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 z-10">
+          <Link href="/" className="block">
+            <div className="font-black text-2xl uppercase tracking-[3px]" style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif" }}>
+              SKY PLAY
+            </div>
+            <div className="text-white/50 uppercase mt-0.5 tracking-[4px]" style={{ fontSize: '9px' }}>
+              ENTERTAINMENT
+            </div>
+          </Link>
         </div>
-      </div>
-    </nav>
-  )
-}
 
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-function HeroSection({ t, openSignup }: { t: Trans; openSignup: () => void }) {
-  return (
-    <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden pt-16"
-      style={{ background: 'radial-gradient(ellipse 130% 90% at 50% 30%, #0055cc 0%, #00165F 45%, #000d3d 100%)' }}>
-      <StarField />
+        {/* Top-right login link */}
+        <div className="absolute top-6 right-6 md:right-8 z-10 hidden sm:block">
+          <Link href="/login" className="text-sm text-white/70 hover:text-white transition">
+            Se connecter
+          </Link>
+        </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center gap-12 px-4 py-16 lg:flex-row lg:items-center lg:justify-between">
-        {/* Text side */}
-        <div className="max-w-xl text-center lg:text-left">
-          <motion.div initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.45 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#FD2E5F]/35 bg-[#FD2E5F]/12 px-4 py-2 text-sm font-semibold text-[#FD2E5F]">
-            {t.hero.badge}
+        <div className="relative max-w-5xl mx-auto text-center">
+          <motion.div {...fadeUp(0)}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-[#00c8ff]/30 text-[#00c8ff] text-xs font-bold mb-7 backdrop-blur-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00c8ff] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00c8ff]" />
+            </span>
+            COMPÉTITIONS E-SPORT · CAMEROUN 🇨🇲
           </motion.div>
-          <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.12 }}
-            className="mb-6 whitespace-pre-line text-6xl font-black leading-none tracking-tight text-white sm:text-7xl lg:text-8xl"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            {t.hero.title}
+
+          <motion.h1 {...fadeUp(0.1)}
+            className="text-4xl sm:text-5xl md:text-7xl font-black leading-[1.05] mb-6 tracking-tight">
+            La première plateforme de{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] via-[#ffd700] to-[#FD2E5F]">
+              compétitions e-sport
+            </span>
+            {' '}d&apos;Afrique centrale
           </motion.h1>
-          <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.28 }}
-            className="mb-10 text-lg leading-relaxed text-white/70 sm:text-xl">
-            {t.hero.subtitle}
+
+          <motion.p {...fadeUp(0.2)}
+            className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Défie les meilleurs joueurs, grimpe dans les classements,{' '}
+            <span className="text-white font-semibold">deviens une légende.</span>
           </motion.p>
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.42 }}
-            className="flex flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
-            <button onClick={openSignup}
-              className="rounded-2xl bg-[#0097FC] px-8 py-4 text-base font-extrabold text-white shadow-2xl shadow-[#0097FC]/40 transition hover:brightness-110 active:scale-[0.98]">
-              {t.hero.cta1}
-            </button>
-            <a href="#how-it-works"
-              className="rounded-2xl border border-white/25 bg-white/8 px-8 py-4 text-center text-base font-semibold text-white transition hover:bg-white/15">
-              {t.hero.cta2}
-            </a>
-          </motion.div>
-        </div>
 
-        {/* Floating cards side */}
-        <div className="relative hidden h-72 w-80 shrink-0 lg:block">
-          <motion.div animate={{ y: [0, -14, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute left-0 top-8 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 shadow-2xl backdrop-blur-md">
-            <p className="text-sm font-bold text-white">{t.hero.float1}</p>
-            <p className="mt-0.5 text-xs text-white/55">{t.hero.float1sub}</p>
+          <motion.div {...fadeUp(0.3)} className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <Link href="/signup"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#00c8ff] to-[#0097FC] text-[#0d0f1a] font-black text-base shadow-[0_0_40px_rgba(0,200,255,0.4)] hover:shadow-[0_0_60px_rgba(0,200,255,0.6)] hover:scale-[1.03] transition-all min-w-[220px]">
+              Rejoindre gratuitement
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
+            </Link>
+            <Link href="/challenges"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-white/20 text-white font-bold text-base hover:bg-white/5 hover:border-white/40 transition min-w-[220px]">
+              Voir les compétitions
+            </Link>
           </motion.div>
-          <motion.div animate={{ y: [0, 12, 0] }} transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut', delay: 0.9 }}
-            className="absolute bottom-8 right-0 rounded-2xl border border-[#0097FC]/40 bg-[#0097FC]/18 px-5 py-4 shadow-2xl backdrop-blur-md">
-            <p className="text-sm font-bold text-white">{t.hero.float2}</p>
-            <p className="mt-0.5 text-xs text-[#0097FC]">{t.hero.float2sub}</p>
-          </motion.div>
-          <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 rounded-3xl border border-white/8 bg-white/5 p-6 backdrop-blur-sm">
-            <div className="mb-3 flex items-center gap-2">
-              <div className="h-8 w-8 rounded-xl bg-[#0097FC] text-center text-lg leading-8">⚽</div>
-              <div>
-                <div className="text-xs font-bold text-white">FIFA 25 — 1v1</div>
-                <div className="text-[10px] text-white/50">Pass : 5 000 CFA</div>
-              </div>
-            </div>
-            <div className="h-1.5 w-full rounded-full bg-white/10">
-              <div className="h-full w-2/3 rounded-full bg-[#0097FC]" />
-            </div>
-            <div className="mt-2 flex justify-between text-[10px] text-white/40"><span>En cours</span><span>67%</span></div>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats bar */}
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
-        className="relative z-10 mx-auto mb-8 w-full max-w-4xl px-4">
-        <div className="grid grid-cols-2 divide-x divide-y divide-white/8 overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm sm:grid-cols-4 sm:divide-y-0">
-          {t.stats.map((s, i) => (
-            <div key={i} className="flex flex-col items-center px-4 py-5">
-              <span className="text-2xl font-black text-[#0097FC] sm:text-3xl">{s.value}</span>
-              <span className="mt-1 text-xs font-medium text-white/50">{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-    </section>
-  )
-}
-
-// ─── How It Works ─────────────────────────────────────────────────────────────
-function HowItWorksSection({ t, openSignup }: { t: Trans; openSignup: () => void }) {
-  return (
-    <section id="how-it-works" className="bg-[#000d3d] py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <FadeUp className="mb-16 text-center">
-          <h2 className="text-4xl font-black text-white sm:text-5xl">{t.how.title}</h2>
-        </FadeUp>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {t.how.steps.map((step, i) => (
-            <FadeUp key={i} delay={i * 0.14}>
-              <div className="group relative h-full rounded-3xl border border-white/10 bg-white/4 p-8 transition-all hover:border-[#0097FC]/50 hover:bg-white/8">
-                {i < 2 && (
-                  <span className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 text-2xl text-white/20 md:block">→</span>
-                )}
-                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#0097FC]/30 bg-[#0097FC]/12 text-3xl shadow-lg shadow-[#0097FC]/10 transition group-hover:shadow-[#0097FC]/25">
-                  {step.icon}
+          {/* Mock controllers / dashboard preview */}
+          <motion.div {...fadeIn(0.5)} className="relative max-w-3xl mx-auto">
+            <div className="relative aspect-[16/9] rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a1d2e] to-[#0d0f1a] overflow-hidden shadow-[0_25px_80px_rgba(0,200,255,0.15)]">
+              <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+              {/* Fake dashboard preview */}
+              <div className="absolute inset-0 p-4 sm:p-6 flex flex-col gap-3">
+                <div className="flex gap-2">
+                  <div className="h-2 w-2 rounded-full bg-red-500" />
+                  <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
                 </div>
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0097FC] text-xs font-black text-white">{i + 1}</span>
-                  <h3 className="text-lg font-extrabold text-white">{step.title}</h3>
+                <div className="grid grid-cols-3 gap-3 flex-1">
+                  <div className="rounded-xl bg-[#00c8ff]/10 border border-[#00c8ff]/20 p-3 flex flex-col justify-between">
+                    <Gamepad2 className="w-5 h-5 text-[#00c8ff]" />
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Défis actifs</p>
+                      <p className="text-2xl font-black text-white">12</p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-[#ffd700]/10 border border-[#ffd700]/20 p-3 flex flex-col justify-between">
+                    <Trophy className="w-5 h-5 text-[#ffd700]" />
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Tournois</p>
+                      <p className="text-2xl font-black text-white">5</p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-[#FD2E5F]/10 border border-[#FD2E5F]/20 p-3 flex flex-col justify-between">
+                    <Crown className="w-5 h-5 text-[#FD2E5F]" />
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">Rang</p>
+                      <p className="text-lg font-black text-white">💎 Diamant</p>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm leading-relaxed text-white/60">{step.desc}</p>
-              </div>
-            </FadeUp>
-          ))}
-        </div>
-        <FadeUp delay={0.48} className="mt-14 text-center">
-          <button onClick={openSignup}
-            className="rounded-2xl bg-gradient-to-r from-[#FD2E5F] to-rose-400 px-10 py-4 text-base font-extrabold text-white shadow-xl shadow-[#FD2E5F]/30 transition hover:brightness-110 active:scale-[0.98]">
-            {t.how.cta}
-          </button>
-        </FadeUp>
-      </div>
-    </section>
-  )
-}
-
-// ─── Games ────────────────────────────────────────────────────────────────────
-function GamesSection({ t }: { t: Trans }) {
-  return (
-    <section className="bg-[#00165F] py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <FadeUp className="mb-12 text-center">
-          <h2 className="text-4xl font-black text-white sm:text-5xl">{t.games.title}</h2>
-          <p className="mt-3 text-lg text-white/55">{t.games.subtitle}</p>
-        </FadeUp>
-        <FadeUp delay={0.1}>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {GAMES.map((game, i) => (
-              <div key={i} className="group relative cursor-default rounded-2xl border border-[#0097FC]/20 bg-[#00165F]/80 p-6 text-center transition-all duration-200 hover:scale-105 hover:border-[#0097FC]/60 hover:bg-[#0097FC]/12 hover:shadow-xl hover:shadow-[#0097FC]/15">
-                {game.popular && (
-                  <span className="absolute -right-2 -top-2 rounded-full bg-[#FD2E5F] px-2 py-0.5 text-[10px] font-black text-white shadow-lg">
-                    POPULAIRE
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3 flex items-center gap-3">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                   </span>
-                )}
-                <div className="mb-3 text-4xl">{game.emoji}</div>
-                <div className="text-sm font-bold text-white">{game.name}</div>
+                  <span className="text-xs text-white/60">FIFA · Tournoi en cours · 8 joueurs</span>
+                  <Play className="w-4 h-4 text-white/40 ml-auto" />
+                </div>
               </div>
-            ))}
-          </div>
-          <p className="mt-6 text-center text-sm italic text-white/40">{t.games.note}</p>
-        </FadeUp>
-      </div>
-    </section>
-  )
-}
-
-// ─── Pricing Table ────────────────────────────────────────────────────────────
-function PricingSection({ t }: { t: Trans }) {
-  return (
-    <section className="bg-[#000d3d] py-24">
-      <div className="mx-auto max-w-5xl px-4">
-        <FadeUp className="mb-12 text-center">
-          <h2 className="text-4xl font-black text-white sm:text-5xl">{t.table.title}</h2>
-          <p className="mt-3 text-white/55">{t.table.subtitle}</p>
-        </FadeUp>
-        <FadeUp delay={0.1} className="space-y-2.5">
-          <div className="hidden grid-cols-6 gap-4 px-5 md:grid">
-            {t.table.cols.map((c, i) => (
-              <span key={i} className={`text-xs font-bold uppercase tracking-[0.14em] ${i === 4 ? 'text-[#0097FC]' : 'text-white/35'}`}>{c}</span>
-            ))}
-          </div>
-          {t.table.rows.map((row, i) => (
-            <motion.div key={i}
-              initial={{ opacity: 0, x: 28 }} whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.4 }}
-              className={`relative grid grid-cols-2 items-center gap-x-4 gap-y-1 rounded-2xl border px-5 py-4 md:grid-cols-6 ${
-                row.highlight
-                  ? 'border-[#FD2E5F]/45 bg-[#FD2E5F]/8 shadow-lg shadow-[#FD2E5F]/8'
-                  : 'border-white/8 bg-white/4 transition hover:border-white/18'
-              }`}>
-              {row.highlight && (
-                <span className="absolute -top-2.5 right-5 rounded-full bg-[#FD2E5F] px-3 py-0.5 text-[10px] font-black text-white shadow-md">
-                  {t.table.badge}
-                </span>
-              )}
-              <span className="col-span-2 text-sm font-bold text-white md:col-span-1">{row.type}</span>
-              <span className="text-sm text-white/55"><span className="text-[10px] text-white/35 md:hidden">👥 </span>{row.players}</span>
-              <span className="text-sm text-white/55"><span className="text-[10px] text-white/35 md:hidden">💰 </span>{row.stake}</span>
-              <span className="text-sm text-white/55">{row.pot}</span>
-              <span className="text-base font-black text-[#0097FC]">{row.winner}</span>
-              <span className="text-sm text-white/45">{row.fee}</span>
-            </motion.div>
-          ))}
-          <p className="mt-4 rounded-2xl border border-white/8 bg-white/4 px-5 py-4 text-center text-sm text-white/50">
-            {t.table.note}
-          </p>
-        </FadeUp>
-      </div>
-    </section>
-  )
-}
-
-// ─── APK Download ────────────────────────────────────────────────────────────
-function ApkDownloadSection({ t }: { t: Trans }) {
-  const apkUrl = process.env.NEXT_PUBLIC_APK_URL || '#'
-
-  return (
-    <section id="download" className="border-t border-white/8 py-24"
-      style={{ background: 'linear-gradient(160deg, #00165F 0%, #000d3d 60%, #000820 100%)' }}>
-      <div className="mx-auto max-w-4xl px-4 text-center">
-        <FadeUp>
-          {/* Android robot icon */}
-          <div className="mb-8 flex justify-center">
-            <div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-[#3DDC84]/30 bg-[#3DDC84]/10 shadow-2xl shadow-[#3DDC84]/20">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <path d="M6 18 L6 36 Q6 40 10 40 L38 40 Q42 40 42 36 L42 18 Q42 14 38 14 L10 14 Q6 14 6 18Z" fill="#3DDC84"/>
-                <circle cx="17" cy="27" r="3" fill="#00165F"/>
-                <circle cx="31" cy="27" r="3" fill="#00165F"/>
-                <path d="M15 14 L10 6" stroke="#3DDC84" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M33 14 L38 6" stroke="#3DDC84" strokeWidth="2.5" strokeLinecap="round"/>
-                <circle cx="10" cy="5" r="2" fill="#3DDC84"/>
-                <circle cx="38" cy="5" r="2" fill="#3DDC84"/>
-                <rect x="2" y="20" width="4" height="12" rx="2" fill="#3DDC84"/>
-                <rect x="42" y="20" width="4" height="12" rx="2" fill="#3DDC84"/>
-              </svg>
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          GAMES SUPPORTED
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-4 relative">
+        <div className="max-w-6xl mx-auto">
+          <motion.div {...fadeUp()} className="text-center mb-12">
+            <p className="text-[#00c8ff] text-xs font-bold uppercase tracking-[3px] mb-3">Jeux supportés</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-4">
+              Tes jeux favoris,<br className="md:hidden" />{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] to-[#ffd700]">
+                en mode compétitif
+              </span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {GAMES.map((game, i) => (
+              <motion.div key={game.name} {...fadeUp(i * 0.06)}
+                className="group relative bg-white/[0.03] border border-white/10 rounded-2xl p-5 text-center hover:border-white/30 hover:bg-white/[0.06] transition cursor-pointer overflow-hidden">
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition" style={{ background: `radial-gradient(circle at center, ${game.color}22, transparent 70%)` }} />
+                <div className="relative">
+                  <div className="text-4xl mb-3">{game.emoji}</div>
+                  <p className="font-bold text-white text-sm mb-1">{game.name}</p>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider">Compétitions disponibles</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          HOW IT WORKS
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-4 bg-white/[0.015] border-y border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div {...fadeUp()} className="text-center mb-14">
+            <p className="text-[#ffd700] text-xs font-bold uppercase tracking-[3px] mb-3">Comment ça marche</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-3">
+              Simple. Rapide. <span className="text-[#00c8ff]">Compétitif.</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 relative">
+            {/* Connecting line on desktop */}
+            <div className="hidden md:block absolute top-[68px] left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+
+            {STEPS.map((step, i) => {
+              const Icon = step.icon
+              return (
+                <motion.div key={step.n} {...fadeUp(i * 0.12)}
+                  className="relative bg-[#13162a] border border-white/10 rounded-2xl p-7 text-center hover:border-white/20 transition group">
+                  <div className="relative w-20 h-20 mx-auto mb-5">
+                    <div className="absolute inset-0 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition" style={{ backgroundColor: step.color }} />
+                    <div className="relative w-full h-full rounded-full flex items-center justify-center border-2"
+                      style={{ borderColor: step.color, backgroundColor: `${step.color}22` }}>
+                      <Icon className="w-9 h-9" style={{ color: step.color }} />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#0d0f1a] border-2 flex items-center justify-center text-xs font-black"
+                      style={{ borderColor: step.color, color: step.color }}>
+                      {step.n}
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-black mb-2">{step.title}</h3>
+                  <p className="text-sm text-white/50">{step.desc}</p>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          LEAGUES
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-[#ffd700]/5 blur-[120px]" />
+        </div>
+
+        <div className="relative max-w-6xl mx-auto">
+          <motion.div {...fadeUp()} className="text-center mb-14">
+            <p className="text-[#FD2E5F] text-xs font-bold uppercase tracking-[3px] mb-3">Système de progression</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-3">
+              Un système de <span className="text-[#ffd700]">progression complet</span>
+            </h2>
+            <p className="text-white/60 max-w-2xl mx-auto">Chaque victoire te rapproche du sommet</p>
+          </motion.div>
+
+          {/* Leagues progression */}
+          <div className="flex flex-wrap justify-center gap-3 md:gap-2 mb-10">
+            {LEAGUES.map((tier, i) => (
+              <motion.div key={tier.name} {...fadeUp(i * 0.08)} className="flex items-center">
+                <div className="flex flex-col items-center group">
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition" style={{ backgroundColor: tier.color }} />
+                    <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl border-2 flex items-center justify-center text-3xl md:text-4xl bg-[#13162a]"
+                      style={{ borderColor: tier.color }}>
+                      {tier.emoji}
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs md:text-sm font-bold" style={{ color: tier.color }}>{tier.name}</p>
+                </div>
+                {i < LEAGUES.length - 1 && (
+                  <ChevronRight className="w-4 h-4 mx-1 md:mx-2 text-white/20 hidden sm:block" />
+                )}
+              </motion.div>
+            ))}
           </div>
 
-          <h2 className="mb-4 text-4xl font-black text-white sm:text-5xl">{t.apk.title}</h2>
-          <p className="mb-10 text-lg text-white/60">{t.apk.subtitle}</p>
+          <motion.p {...fadeUp(0.2)} className="text-center text-white/55 max-w-2xl mx-auto leading-relaxed">
+            Accumule des <span className="text-[#00c8ff] font-semibold">SKY Points</span> à chaque victoire et monte de rang.
+            Les meilleurs joueurs accèdent aux <span className="text-[#ffd700] font-semibold">compétitions exclusives</span>.
+          </motion.p>
+        </div>
+      </section>
 
-          <a
-            href={apkUrl}
-            download="skyplay.apk"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 rounded-2xl bg-[#3DDC84] px-10 py-5 text-lg font-extrabold text-black shadow-2xl shadow-[#3DDC84]/30 transition hover:brightness-110 active:scale-[0.98]"
-          >
-            <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-              <path d="M6 18 L6 36 Q6 40 10 40 L38 40 Q42 40 42 36 L42 18 Q42 14 38 14 L10 14 Q6 14 6 18Z" fill="black" opacity="0.75"/>
-              <circle cx="17" cy="27" r="3" fill="#3DDC84"/>
-              <circle cx="31" cy="27" r="3" fill="#3DDC84"/>
-            </svg>
-            {t.apk.button}
-          </a>
+      {/* ════════════════════════════════════════════════════════════════════
+          COMPETITION FORMATS
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-4 bg-white/[0.015] border-y border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <motion.div {...fadeUp()} className="text-center mb-12">
+            <p className="text-[#00c8ff] text-xs font-bold uppercase tracking-[3px] mb-3">Formats disponibles</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-3">
+              Des formats pour <span className="text-[#00c8ff]">tous les niveaux</span>
+            </h2>
+          </motion.div>
 
-          <div className="mt-4 flex items-center justify-center gap-6 text-sm text-white/40">
-            <span>📦 {t.apk.size}</span>
-            <span>🏷️ {t.apk.version}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {FORMATS.map((f, i) => {
+              const Icon = f.icon
+              return (
+                <motion.div key={f.title} {...fadeUp(i * 0.08)}
+                  className="group bg-[#13162a] border border-white/10 rounded-2xl p-6 hover:border-white/30 transition relative overflow-hidden">
+                  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-10 group-hover:opacity-20 transition blur-2xl" style={{ backgroundColor: f.color }} />
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                        style={{ backgroundColor: `${f.color}22`, border: `1px solid ${f.color}40` }}>
+                        {f.emoji}
+                      </div>
+                      <Icon className="w-5 h-5 text-white/30 ml-auto" />
+                    </div>
+                    <h3 className="text-lg font-black mb-2" style={{ color: f.color }}>{f.title}</h3>
+                    <p className="text-sm text-white/55 leading-relaxed">{f.desc}</p>
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
+        </div>
+      </section>
 
-          <p className="mx-auto mt-8 max-w-lg rounded-2xl border border-yellow-500/25 bg-yellow-500/8 px-6 py-4 text-sm text-yellow-300/80">
-            {t.apk.note}
-          </p>
-        </FadeUp>
-      </div>
-    </section>
-  )
-}
+      {/* ════════════════════════════════════════════════════════════════════
+          LIVE & STREAMING
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-0 w-[500px] h-[500px] rounded-full bg-[#FD2E5F]/10 blur-[120px]" />
+        </div>
 
-// ─── Discord Widget ──────────────────────────────────────────────────────────
-function DiscordWidget() {
-  const guildId = process.env.NEXT_PUBLIC_DISCORD_GUILD_ID || ''
-  
-  if (!guildId) return null
+        <div className="relative max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <motion.div {...fadeUp()}>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-black mb-5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
+              LIVE
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black mb-5 leading-tight">
+              Regarde les matchs <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-[#FD2E5F]">en direct</span>
+            </h2>
+            <p className="text-white/60 mb-8 leading-relaxed">
+              Les joueurs streament leurs parties en direct sur la plateforme. Suis l&apos;action,
+              encourage tes favoris et apprends des meilleurs.
+            </p>
+            <Link href="/live"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-400 font-bold hover:bg-red-500/25 transition">
+              <Radio className="w-5 h-5" />
+              Voir les matchs en cours
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
 
-  return (
-    <section className="border-t border-white/8 bg-[#000820] py-16">
-      <div className="mx-auto max-w-6xl px-4">
-        <FadeUp>
-          <h2 className="mb-3 text-center text-3xl font-black text-white sm:text-4xl">
-            Rejoins notre communauté <span className="text-[#5865F2]">Discord</span>
+          <motion.div {...fadeUp(0.15)} className="relative">
+            <div className="relative aspect-video rounded-2xl border-2 border-white/10 bg-gradient-to-br from-[#1a1d2e] to-[#0d0f1a] overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:scale-110 transition cursor-pointer">
+                  <Play className="w-8 h-8 text-white ml-1" fill="currentColor" />
+                </div>
+              </div>
+              <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/90 text-white text-[10px] font-black">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                LIVE
+              </div>
+              <div className="absolute bottom-3 left-3 right-3 text-xs text-white/70 bg-black/40 backdrop-blur-sm rounded-md px-2 py-1.5">
+                FIFA · Finale tournoi · 1 247 spectateurs
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          COMMUNITY STATS
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-20 px-4 bg-white/[0.015] border-y border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div {...fadeUp()} className="text-center mb-12">
+            <p className="text-[#ffd700] text-xs font-bold uppercase tracking-[3px] mb-3">Communauté</p>
+            <h2 className="text-3xl md:text-5xl font-black">
+              Rejoins la communauté <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] to-[#FD2E5F]">SKY PLAY</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {STATS.map((stat, i) => (
+              <motion.div key={stat.label} {...fadeUp(i * 0.08)}
+                className="bg-[#13162a] border border-white/10 rounded-2xl p-6 text-center hover:border-[#00c8ff]/30 transition">
+                <div className="text-4xl mb-3">{stat.icon}</div>
+                <p className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] to-[#ffd700] mb-1">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-white/50 uppercase tracking-wider">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          FINAL CTA
+      ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#00c8ff]/15 via-[#0d0f1a] to-[#FD2E5F]/15" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-[#00c8ff]/20 blur-[120px]" />
+        </div>
+
+        <motion.div {...fadeUp()} className="relative max-w-3xl mx-auto text-center">
+          <Zap className="w-12 h-12 text-[#ffd700] mx-auto mb-5" />
+          <h2 className="text-4xl md:text-6xl font-black mb-5 tracking-tight">
+            Prêt à <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] to-[#ffd700]">dominer</span> ?
           </h2>
-          <p className="mx-auto mb-12 max-w-2xl text-center text-base leading-relaxed text-white/55">
-            Connecte-toi avec d'autres joueurs, participe aux discussions et reste informé des dernières nouveautés.
+          <p className="text-lg text-white/70 mb-10">
+            Rejoins SKY PLAY et commence à compétir aujourd&apos;hui.
           </p>
-          <div className="hidden justify-center md:flex">
-            <iframe
-              src={`https://discord.com/widget?id=${guildId}&theme=dark`}
-              width="350"
-              height="500"
-              allowTransparency={true}
-              frameBorder={0}
-              sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-              className="rounded-2xl border border-white/10 shadow-2xl"
-            />
-          </div>
-          <div className="flex justify-center md:hidden">
-            <a
-              href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || 'https://discord.gg/skyplay'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-2xl bg-[#5865F2] px-6 py-3 font-bold text-white shadow-lg shadow-[#5865F2]/30 transition hover:brightness-110"
-            >
-              <svg width="20" height="20" viewBox="0 0 71 55" fill="none">
-                <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="white"/>
-              </svg>
-              Rejoindre le Discord
-            </a>
-          </div>
-        </FadeUp>
-      </div>
-    </section>
-  )
-}
+          <Link href="/signup"
+            className="group inline-flex items-center justify-center gap-2 px-10 py-4 rounded-xl bg-gradient-to-r from-[#00c8ff] to-[#0097FC] text-[#0d0f1a] font-black text-lg shadow-[0_0_60px_rgba(0,200,255,0.5)] hover:shadow-[0_0_80px_rgba(0,200,255,0.7)] hover:scale-[1.03] transition-all">
+            Créer mon compte
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
+          </Link>
+        </motion.div>
+      </section>
 
-// ─── Footer ───────────────────────────────────────────────────────────────────
-function FooterSection({ t }: { t: Trans }) {
-  return (
-    <footer className="border-t border-white/8 bg-[#000820] pb-10 pt-16">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="mb-12 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-2xl font-black text-white"><span className="text-[#0097FC]">SKY</span> PLAY</p>
-            <p className="mt-3 text-sm leading-relaxed text-white/45">{t.footer.tagline}</p>
-          </div>
-          {t.footer.sections.map((sec, i) => (
-            <div key={i}>
-              <h4 className="mb-4 text-[10px] font-bold uppercase tracking-[0.22em] text-white/35">{sec.title}</h4>
-              <ul className="space-y-2.5">
-                {sec.links.map((link, j) => (
-                  <li key={j}>
-                    <Link href={link.href} className="text-sm text-white/55 transition hover:text-white">{link.text}</Link>
-                  </li>
-                ))}
+      {/* ════════════════════════════════════════════════════════════════════
+          FOOTER
+      ════════════════════════════════════════════════════════════════════ */}
+      <footer className="border-t border-white/10 bg-[#0a0c14] px-4 py-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-10 mb-10">
+
+            {/* Logo + tagline */}
+            <div>
+              <div className="font-black text-2xl uppercase tracking-[3px] mb-2" style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif" }}>
+                SKY PLAY
+              </div>
+              <div className="text-white/40 uppercase mb-4 tracking-[4px]" style={{ fontSize: '9px' }}>
+                ENTERTAINMENT
+              </div>
+              <p className="text-sm text-white/50 leading-relaxed">
+                Compétitions e-sport fondées sur l&apos;habileté.<br />
+                Cameroun & Afrique centrale 🇨🇲
+              </p>
+            </div>
+
+            {/* Nav links */}
+            <div>
+              <p className="text-xs text-white/40 uppercase tracking-[2px] font-bold mb-4">Navigation</p>
+              <ul className="space-y-2.5 text-sm">
+                <li><Link href="/" className="text-white/70 hover:text-[#00c8ff] transition">Accueil</Link></li>
+                <li><Link href="/challenges" className="text-white/70 hover:text-[#00c8ff] transition">Défis</Link></li>
+                <li><Link href="/how-it-works" className="text-white/70 hover:text-[#00c8ff] transition">Comment ça marche</Link></li>
+                <li><Link href="/advertise" className="text-white/70 hover:text-[#00c8ff] transition">Annonceurs</Link></li>
+                <li><Link href="/privacy" className="text-white/70 hover:text-[#00c8ff] transition">Confidentialité</Link></li>
               </ul>
             </div>
-          ))}
-        </div>
-        <div className="border-t border-white/8 pt-8 space-y-3">
-          <p className="text-xs text-white/40 text-center">{t.footer.legal}</p>
-          <div className="flex flex-col items-center justify-between gap-3 text-xs text-white/30 sm:flex-row">
-            <span>{t.footer.copyright}</span>
-            <span className="text-center">{t.footer.disclaimer}</span>
+
+            {/* Social */}
+            <div>
+              <p className="text-xs text-white/40 uppercase tracking-[2px] font-bold mb-4">Suis-nous</p>
+              <div className="flex gap-3 mb-5">
+                {[
+                  { Icon: Twitter,        href: 'https://twitter.com',  color: '#1DA1F2' },
+                  { Icon: Instagram,      href: 'https://instagram.com', color: '#E4405F' },
+                  { Icon: Youtube,        href: 'https://youtube.com',   color: '#FF0000' },
+                  { Icon: MessageCircle,  href: 'https://discord.com',   color: '#5865F2' },
+                ].map(({ Icon, href, color }, i) => (
+                  <a key={i} href={href} target="_blank" rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:border-white/30 hover:bg-white/10 transition"
+                    style={{ ['--hover' as any]: color }}>
+                    <Icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
+              <p className="text-xs text-white/40">
+                Contact : <a href="mailto:contact@skyplays.tech" className="hover:text-white">contact@skyplays.tech</a>
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
+            <p>© 2026 SKY PLAY ENTERTAINMENT 🇨🇲 — Tous droits réservés</p>
+            <p className="flex items-center gap-1">
+              <Star className="w-3 h-3 text-[#ffd700]" />
+              Made with passion for African gamers
+            </p>
           </div>
         </div>
-      </div>
-    </footer>
-  )
-}
+      </footer>
 
-// ─── Main Export ──────────────────────────────────────────────────────────────
-export default function LandingPage() {
-  const router = useRouter()
-  const tokens = useAuthStore((s) => s.tokens)
-  const [lang, setLang] = useState<Lang>('fr')
-  const [authOpen, setAuthOpen] = useState(false)
-  const [authView, setAuthView] = useState<ViewMode>('login')
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
-
-  useEffect(() => {
-    if (mounted && tokens) router.replace('/dashboard')
-  }, [mounted, tokens, router])
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('skyplay-lang') as Lang | null
-      if (saved === 'fr' || saved === 'en') setLang(saved)
-    } catch { /* noop */ }
-  }, [])
-
-  const changeLang = (l: Lang) => {
-    setLang(l)
-    try { localStorage.setItem('skyplay-lang', l) } catch { /* noop */ }
-  }
-
-  const openLogin = () => { setAuthView('login'); setAuthOpen(true) }
-  const openSignup = () => { setAuthView('signup'); setAuthOpen(true) }
-
-  const t = translations[lang]
-
-  if (!mounted || tokens) return null
-
-  return (
-    <>
-      <div data-page="landing" className="overflow-x-hidden bg-[#00165F] text-white">
-        <PublicNavbar lang={lang} setLang={changeLang} openLogin={openLogin} openSignup={openSignup} t={t} />
-        <HeroSection t={t} openSignup={openSignup} />
-        <HowItWorksSection t={t} openSignup={openSignup} />
-        <GamesSection t={t} />
-        <PricingSection t={t} />
-        <ApkDownloadSection t={t} />
-        <DiscordWidget />
-        <FooterSection t={t} />
-      </div>
-      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} initialView={authView} />
-    </>
+    </main>
   )
 }
