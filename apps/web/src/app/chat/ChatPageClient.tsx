@@ -151,27 +151,43 @@ export default function ChatPageClient() {
     if (activeConv.type !== 'CHALLENGE') return
     const challengeId = activeConv.conv.challengeId
     const conversationId = activeConv.conversationId
+    // eslint-disable-next-line no-console
+    console.log('[chat/stream] conv type:', activeConv.type, 'challengeId:', challengeId, 'conversationId:', conversationId)
+    // eslint-disable-next-line no-console
+    console.log('[chat/stream] streamByConv:', streamByConv)
     if (!challengeId || streamByConv[conversationId]) return
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch(`${API}/challenges/${challengeId}`)
-        if (!res.ok) return
+        const res = await fetch(`${API}/challenges/${challengeId}/calendar`, {
+          headers: tokens?.idToken ? { Authorization: `Bearer ${tokens.idToken}` } : undefined,
+        })
+        if (!res.ok) {
+          // eslint-disable-next-line no-console
+          console.warn('[chat/stream] calendar fetch failed', res.status)
+          return
+        }
         const data = await res.json()
-        const match = (data?.matches ?? []).find((m: any) => m.streamUrl)
-        if (cancelled || !match) return
+        const allMatches: any[] = (data?.rounds ?? []).flatMap((r: any) => r.matches ?? [])
+        const live = allMatches.find((m: any) => m.streamUrl)
+        // eslint-disable-next-line no-console
+        console.log('[chat/stream] calendar matches:', allMatches.length, 'live match:', live)
+        if (cancelled || !live) return
         setStreamByConv((prev) => ({
           ...prev,
           [conversationId]: {
-            streamUrl: match.streamUrl,
-            streamType: match.streamType ?? 'YOUTUBE',
-            playerName: match.player1?.username ?? match.player2?.username,
+            streamUrl: live.streamUrl,
+            streamType: (live.streamType as StreamInfo['streamType']) ?? 'YOUTUBE',
+            playerName: live.player1?.username ?? live.player2?.username ?? 'Live',
           },
         }))
-      } catch {}
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[chat/stream] fetch error', err)
+      }
     })()
     return () => { cancelled = true }
-  }, [activeConv, streamByConv])
+  }, [activeConv, streamByConv, tokens?.idToken])
 
   // ── SOUND: play "pop" on incoming foreign message not in the active conv ────
   useEffect(() => {
