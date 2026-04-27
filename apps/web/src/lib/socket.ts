@@ -28,16 +28,21 @@ export const getSocket = (idToken?: string): Socket | null => {
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
-    reconnectionAttempts: 5,
+    reconnectionAttempts: Infinity,
     transports: ['websocket', 'polling'],
   })
 
   socket.on('connect', () => {
-    console.log('[Socket] Connected to chat server')
+    console.log('[Socket] Connected:', socket?.id)
   })
 
   socket.on('disconnect', (reason) => {
     console.log('[Socket] Disconnected:', reason)
+    // The server forced the disconnect (e.g. cycled the dyno) — socket.io
+    // does not auto-reconnect in that case, so we kick it manually.
+    if (reason === 'io server disconnect') {
+      socket?.connect()
+    }
   })
 
   socket.on('connect_error', (error) => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '@/lib/auth-store'
-import { io, Socket } from 'socket.io-client'
+import type { Socket } from 'socket.io-client'
+import { getSocket } from '@/lib/socket'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -271,66 +272,43 @@ export function useFriendships() {
     return () => clearInterval(interval)
   }, [initialized, tokens?.idToken, fetchFriends])
 
-  // Socket.io listeners for friend notifications
+  // Socket.io listeners for friend notifications — uses the shared singleton
+  // so we don't open a second WS connection per page that mounts this hook.
   useEffect(() => {
     if (!initialized || !tokens?.idToken) return
 
-    let socket: Socket | null = null
+    const socket: Socket | null = getSocket(tokens.idToken)
+    if (!socket) return
 
-    try {
-      socket = io(`${API}/chat`, {
-        auth: { token: tokens.idToken },
-        transports: ['websocket', 'polling'],
-      })
-
-      socket.on('connect', () => {
-        console.log('[Friends] Connected to Socket.io for friend notifications')
-      })
-
-      // Listen for friend request
-      socket.on('friend_request', (data: { from: { id: string; username: string; avatar?: string } }) => {
-        console.log('[Friends] Received friend request from:', data.from.username)
-        
-        // Show toast notification
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification('Nouvelle demande d\'ami', {
-            body: `${data.from.username} vous a envoyé une demande d'ami`,
-            icon: data.from.avatar || '/logo.png',
-          })
-        }
-
-        // Refresh pending requests
-        fetchPendingRequests()
-      })
-
-      // Listen for friend accepted
-      socket.on('friend_accepted', (data: { user: { id: string; username: string; avatar?: string } }) => {
-        console.log('[Friends] Friend request accepted by:', data.user.username)
-        
-        // Show toast notification
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification('Demande d\'ami acceptée', {
-            body: `${data.user.username} a accepté votre demande d'ami`,
-            icon: data.user.avatar || '/logo.png',
-          })
-        }
-
-        // Refresh friends list
-        fetchFriends()
-      })
-
-      socket.on('disconnect', () => {
-        console.log('[Friends] Disconnected from Socket.io')
-      })
-
-    } catch (err) {
-      console.error('[Friends] Socket.io connection error:', err)
+    const onFriendRequest = (data: { from: { id: string; username: string; avatar?: string } }) => {
+      console.log('[Friends] Received friend request from:', data.from.username)
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('Nouvelle demande d\'ami', {
+          body: `${data.from.username} vous a envoyé une demande d'ami`,
+          icon: data.from.avatar || '/logo.png',
+        })
+      }
+      fetchPendingRequests()
     }
 
-    return () => {
-      if (socket) {
-        socket.disconnect()
+    const onFriendAccepted = (data: { user: { id: string; username: string; avatar?: string } }) => {
+      console.log('[Friends] Friend request accepted by:', data.user.username)
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('Demande d\'ami acceptée', {
+          body: `${data.user.username} a accepté votre demande d'ami`,
+          icon: data.user.avatar || '/logo.png',
+        })
       }
+      fetchFriends()
+    }
+
+    socket.on('friend_request', onFriendRequest)
+    socket.on('friend_accepted', onFriendAccepted)
+
+    // Detach listeners on unmount; do NOT disconnect the shared socket.
+    return () => {
+      socket.off('friend_request', onFriendRequest)
+      socket.off('friend_accepted', onFriendAccepted)
     }
   }, [initialized, tokens?.idToken, fetchFriends, fetchPendingRequests])
 

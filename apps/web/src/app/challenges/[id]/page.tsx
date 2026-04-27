@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { io } from 'socket.io-client';
+import { getSocket } from '@/lib/socket';
 import SpectatorView, { type SpectatorEvent } from '@/components/challenges/SpectatorView';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -101,28 +101,52 @@ export default function ChallengePage() {
   useEffect(() => {
     const token = getToken();
     if (!token || !id) return;
-    const s = io(`${API}/chat`, { auth: { token }, transports: ['websocket', 'polling'] });
-    s.on('connect', () => { s.emit('join_challenge_room', { challengeId: id }); });
-    s.on('challenge_started',   () => { addEvent('🎮', 'Match démarré'); load(); });
-    s.on('challenge_update',    () => { load(); });
-    s.on('challenge_completed', () => { addEvent('🏆', 'Résultat validé'); load(); });
-    s.on('challenge_disputed',  () => { addEvent('⚠️', 'Litige ouvert'); load(); });
-    s.on('result_submitted', (data: { submittedCount: number; totalPlayers: number }) => {
+    const s = getSocket(token);
+    if (!s) return;
+
+    // The room may not yet be joined if the socket was already connected
+    // before this page mounted, so emit immediately and on every reconnect.
+    const joinRoom = () => { s.emit('join_challenge_room', { challengeId: id }); };
+    if (s.connected) joinRoom();
+    s.on('connect', joinRoom);
+
+    const onStarted = () => { addEvent('🎮', 'Match démarré'); load(); };
+    const onUpdate = () => { load(); };
+    const onCompleted = () => { addEvent('🏆', 'Résultat validé'); load(); };
+    const onDisputed = () => { addEvent('⚠️', 'Litige ouvert'); load(); };
+    const onResultSubmitted = (data: { submittedCount: number; totalPlayers: number }) => {
       setSubmissionStatus({ submittedCount: data.submittedCount, totalPlayers: data.totalPlayers });
       addEvent('✅', `Un joueur a soumis son résultat (${data.submittedCount}/${data.totalPlayers})`);
-    });
-    s.on('analysis_completed', (data: { resultId: string; userId: string; verifiedRank: number | null; confidence: number; status: 'ANALYZED' | 'LOW_CONFIDENCE' | 'FAILED' }) => {
+    };
+    const onAnalysis = (data: { resultId: string; userId: string; verifiedRank: number | null; confidence: number; status: 'ANALYZED' | 'LOW_CONFIDENCE' | 'FAILED' }) => {
       if (data.userId === currentUserId) {
         setAnalysisResult({ verifiedRank: data.verifiedRank, confidence: data.confidence, status: data.status });
       }
       load();
-    });
-    s.on('auto_verified', (data: { message: string; verifiedCount: number; totalCount: number }) => {
+    };
+    const onAutoVerified = (data: { message: string; verifiedCount: number; totalCount: number }) => {
       addEvent('🤖', `${data.message} (${data.verifiedCount}/${data.totalCount})`);
-    });
+    };
+
+    s.on('challenge_started',   onStarted);
+    s.on('challenge_update',    onUpdate);
+    s.on('challenge_completed', onCompleted);
+    s.on('challenge_disputed',  onDisputed);
+    s.on('result_submitted',    onResultSubmitted);
+    s.on('analysis_completed',  onAnalysis);
+    s.on('auto_verified',       onAutoVerified);
+
     return () => {
       s.emit('leave_challenge_room', { challengeId: id });
-      s.disconnect();
+      s.off('connect',             joinRoom);
+      s.off('challenge_started',   onStarted);
+      s.off('challenge_update',    onUpdate);
+      s.off('challenge_completed', onCompleted);
+      s.off('challenge_disputed',  onDisputed);
+      s.off('result_submitted',    onResultSubmitted);
+      s.off('analysis_completed',  onAnalysis);
+      s.off('auto_verified',       onAutoVerified);
+      // Do NOT disconnect — the singleton lives across navigation.
     };
   }, [id, addEvent, load, currentUserId]);
 

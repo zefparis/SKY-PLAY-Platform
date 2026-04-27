@@ -13,7 +13,8 @@ import {
   Info,
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
-import { io, Socket } from 'socket.io-client'
+import type { Socket } from 'socket.io-client'
+import { getSocket } from '@/lib/socket'
 import { useSoundNotification } from '@/hooks/useSoundNotification'
 
 type NotificationType =
@@ -152,31 +153,33 @@ export default function NotificationBell() {
   }, [initialized, tokens?.idToken, fetchAll])
 
   /* ---------- Socket realtime ---------- */
+  // Re-uses the shared singleton from `@/lib/socket`. We only attach/detach
+  // listeners here — the underlying connection is owned by the app shell.
   useEffect(() => {
     if (!tokens?.idToken || !initialized) return
 
-    const sock = io(`${API_URL}/chat`, {
-      auth: { token: tokens.idToken },
-      transports: ['websocket'],
-      reconnection: true,
-    })
+    const sock = getSocket(tokens.idToken)
+    if (!sock) return
     socketRef.current = sock
 
-    sock.on('new_notification', (notif: Notification) => {
+    const onNewNotification = (notif: Notification) => {
       setNotifications((prev) => [notif, ...prev].slice(0, 50))
       setCount((prev) => prev + 1)
       playSound('notification')
-    })
-
-    sock.on('notification_count', (data: { count: number }) => {
+    }
+    const onCount = (data: { count: number }) => {
       setCount(Math.max(0, data?.count ?? 0))
-    })
+    }
+
+    sock.on('new_notification', onNewNotification)
+    sock.on('notification_count', onCount)
 
     return () => {
-      sock.disconnect()
+      sock.off('new_notification', onNewNotification)
+      sock.off('notification_count', onCount)
       socketRef.current = null
     }
-  }, [tokens?.idToken, initialized])
+  }, [tokens?.idToken, initialized, playSound])
 
   /* ---------- Open / close ---------- */
   const handleOpen = useCallback(async () => {
