@@ -115,6 +115,63 @@ export class LinkedAccountsService {
   }
 
   /**
+   * Links a YouTube account — access/refresh tokens stored encrypted so the
+   * streaming module can create live broadcasts on behalf of the user.
+   */
+  async linkYoutube(
+    userId: string,
+    youtubeChannelId: string,
+    accessToken: string,
+    refreshToken: string,
+    username?: string,
+  ): Promise<SafeLinkedAccount> {
+    const existing = await this.prisma.linkedAccount.findUnique({
+      where: {
+        provider_externalId: {
+          provider: GameProvider.YOUTUBE,
+          externalId: youtubeChannelId,
+        },
+      },
+    });
+
+    if (existing && existing.userId !== userId) {
+      throw new ConflictException(
+        'Ce compte YouTube est déjà lié à un autre compte Skyplay',
+      );
+    }
+
+    const encryptedAccess = this.crypto.encrypt(accessToken);
+    const encryptedRefresh = refreshToken
+      ? this.crypto.encrypt(refreshToken)
+      : null;
+
+    const account = await this.prisma.linkedAccount.upsert({
+      where: { userId_provider: { userId, provider: GameProvider.YOUTUBE } },
+      create: {
+        userId,
+        provider: GameProvider.YOUTUBE,
+        externalId: youtubeChannelId,
+        username: username ?? null,
+        accessToken: encryptedAccess,
+        refreshToken: encryptedRefresh,
+        isVerified: true,
+      },
+      update: {
+        externalId: youtubeChannelId,
+        username: username ?? null,
+        accessToken: encryptedAccess,
+        // Only overwrite the refresh token if YouTube returned a new one.
+        // Subsequent consents re-use the original refresh token.
+        ...(encryptedRefresh ? { refreshToken: encryptedRefresh } : {}),
+        isVerified: true,
+      },
+    });
+
+    const { accessToken: _a, refreshToken: _r, ...safe } = account;
+    return safe;
+  }
+
+  /**
    * Unlinks a gaming account. Blocks unlinking if user has an active challenge.
    */
   async unlink(userId: string, provider: GameProvider): Promise<void> {

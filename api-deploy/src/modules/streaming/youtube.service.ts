@@ -1,0 +1,183 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { google, youtube_v3 } from 'googleapis';
+import type { OAuth2Client } from 'google-auth-library';
+
+export interface YoutubeBroadcast {
+  broadcastId: string;
+  streamKey: string;
+  streamUrl: string;
+  watchUrl: string;
+}
+
+/**
+ * Thin wrapper around the YouTube Data API v3 that handles the OAuth2
+ * dance and the live broadcast lifecycle.
+ *
+ * Every mutating call creates a short-lived OAuth2 client seeded with the
+ * caller's access token so this service can serve concurrent users without
+ * sharing credential state.
+ */
+@Injectable()
+export class YoutubeService {
+  private readonly logger = new Logger(YoutubeService.name);
+  private readonly clientId: string;
+  private readonly clientSecret: string;
+  private readonly redirectUri: string;
+
+  constructor(private readonly config: ConfigService) {
+    this.clientId = this.config.get<string>('YOUTUBE_CLIENT_ID') ?? '';
+    this.clientSecret = this.config.get<string>('YOUTUBE_CLIENT_SECRET') ?? '';
+    this.redirectUri = this.config.get<string>('YOUTUBE_REDIRECT_URI') ?? '';
+
+    if (!this.clientId || !this.clientSecret || !this.redirectUri) {
+      this.logger.warn(
+        'YouTube OAuth is not fully configured — set YOUTUBE_CLIENT_ID, ' +
+          'YOUTUBE_CLIENT_SECRET and YOUTUBE_REDIRECT_URI to enable streaming.',
+      );
+    }
+  }
+
+  /**
+   * Builds a fresh OAuth2 client. Keeping it per-call avoids credential
+   * cross-contamination between concurrent requests.
+   */
+  private buildOAuthClient(accessToken?: string): OAuth2Client {
+    const client = new google.auth.OAuth2(
+      this.clientId,
+      this.clientSecret,
+      this.redirectUri,
+    );
+    if (accessToken) {
+      client.setCredentials({ access_token: accessToken });
+    }
+    return client;
+  }
+
+  /**
+   * Returns the Google consent URL. `userId` is echoed back via the `state`
+   * query param so the callback can match the token to the right user.
+   */
+  getAuthUrl(userId: string): string {
+    return this.buildOAuthClient().generateAuthUrl({
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: [
+        'https://www.googleapis.com/auth/youtube',
+        'https://www.googleapis.com/auth/youtube.upload',
+      ],
+      state: userId,
+    });
+  }
+
+  /**
+   * Exchanges the authorisation code for a token pair. The refresh token is
+   * only returned the first time a user consents — callers must persist it.
+   */
+  async exchangeCode(
+    code: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const client = this.buildOAuthClient();
+    const { tokens } = await client.getToken(code);
+
+    if (!tokens.access_token) {
+      throw new Error('YouTube did not return an access_token');
+    }
+
+    return {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token ?? '',
+    };
+  }
+
+  /**
+   * Creates a broadcast + RTMP stream on YouTube and binds them together.
+   * The caller is expected to pipe OBS (or any RTMP source) to the returned
+   * `streamUrl`; YouTube will auto-start the broadcast when the first frame
+   * arrives (`enableAutoStart: true`).
+   */
+  async createLiveBroadcast(
+    accessToken: string,
+    title: string,
+  ): Promise<YoutubeBroadcast> {
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: this.buildOAuthClient(accessToken),
+    });
+
+    const broadcast = await youtube.liveBroadcasts.insert({
+      part: ['snippet', 'status', 'contentDetails'],
+      requestBody: {
+        snippet: {
+          title,
+          scheduledStartTime: new Date().toISOString(),
+        },
+        status: { privacyStatus: 'public', selfDeclaredMadeForKids: false },
+        contentDetails: { enableAutoStart: true, enableAutoStop: true },
+      },
+    });
+
+    const stream = await youtube.liveStreams.insert({
+      part: ['snippet', 'cdn'],
+      requestBody: {
+        snippet: { title },
+        cdn: {
+          frameRate: 'variable',
+          ingestionType: 'rtmp',
+          resolution: 'variable',
+        },
+      },
+    });
+
+    const broadcastId = broadcast.data.id;
+    const streamId = stream.data.id;
+
+    if (!broadcastId || !streamId) {
+      throw new Error('YouTube did not return broadcast/stream IDs');
+    }
+
+    await youtube.liveBroadcasts.bind({
+      part: ['id'],
+      id: broadcastId,
+      streamId,
+    });
+
+    const ingestion: youtube_v3.Schema$IngestionInfo | undefined =
+      stream.data.cdn?.ingestionInfo ?? undefined;
+    const rtmpUrl = ingestion?.ingestionAddress;
+    const streamKey = ingestion?.streamName;
+
+    if (!rtmpUrl || !streamKey) {
+      throw new Error('YouTube did not return ingestion RTMP details');
+    }
+
+    return {
+      broadcastId,
+      streamKey,
+      streamUrl: `${rtmpUrl}/${streamKey}`,
+      watchUrl: `https://youtube.com/watch?v=${broadcastId}`,
+    };
+  }
+
+  /**
+   * Transitions a broadcast to `complete`. Idempotent from our point of view:
+   * YouTube will reject redundant transitions with a 400 which we swallow.
+   */
+  async endBroadcast(accessToken: string, broadcastId: string): Promise<void> {
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: this.buildOAuthClient(accessToken),
+    });
+    try {
+      await youtube.liveBroadcasts.transition({
+        part: ['status'],
+        broadcastStatus: 'complete',
+        id: broadcastId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `endBroadcast(${broadcastId}) failed: ${(err as Error).message}`,
+      );
+    }
+  }
+}

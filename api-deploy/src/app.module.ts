@@ -24,6 +24,7 @@ import { LeaguesModule } from './modules/leagues/leagues.module';
 import { AdsModule } from './modules/ads/ads.module';
 import { LinkedAccountsModule } from './modules/linked-accounts/linked-accounts.module';
 import { RekognitionModule } from './modules/rekognition/rekognition.module';
+import { StreamingModule } from './modules/streaming/streaming.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { RekognitionModule } from './modules/rekognition/rekognition.module';
     LeaguesModule,
     AdsModule,
     LinkedAccountsModule,
+    StreamingModule,
     RekognitionModule,
   ],
   providers: [
