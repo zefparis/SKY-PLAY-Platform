@@ -5,7 +5,8 @@ import { io } from 'socket.io-client';
 import SpectatorView, { type SpectatorEvent } from '@/components/challenges/SpectatorView';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload, Calendar, Sparkles, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload, Calendar, Sparkles, Camera, Loader2, X, RefreshCw } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import ChallengeRules from '@/components/challenges/ChallengeRules';
 import AdSlot from '@/components/ads/AdSlot';
@@ -51,6 +52,18 @@ export default function ChallengePage() {
   const [uploadedUrl, setUploadedUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+
+  // ── Submit-result modal (3-step flow: choice → preview/rank → confirmation) ────
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submitStep, setSubmitStep] = useState<1 | 2 | 3>(1);
+  const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
+  const [capturedPreview, setCapturedPreview] = useState<string | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [submitErrorModal, setSubmitErrorModal] = useState<string | null>(null);
+  const [modalRank, setModalRank] = useState(1);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const modalFileInputRef = useRef<HTMLInputElement>(null);
   const [analysisResult, setAnalysisResult] = useState<{
     verifiedRank: number | null;
     confidence: number | null;
@@ -136,6 +149,135 @@ export default function ChallengePage() {
       setActionLoading(false);
     }
   };
+
+  // ── Submit-result modal helpers ──────────────────────────────────────────────
+  const stopCameraStream = useCallback(() => {
+    setCameraStream((s) => {
+      s?.getTracks().forEach((t) => t.stop());
+      return null;
+    });
+    setCameraActive(false);
+  }, []);
+
+  const closeSubmitModal = useCallback(() => {
+    stopCameraStream();
+    if (capturedPreview) URL.revokeObjectURL(capturedPreview);
+    setCapturedPreview(null);
+    setCapturedBlob(null);
+    setSubmitErrorModal(null);
+    setShowSubmitModal(false);
+    setSubmitStep(1);
+  }, [capturedPreview, stopCameraStream]);
+
+  const openCamera = useCallback(async () => {
+    setSubmitErrorModal(null);
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false,
+      });
+      setCameraStream(s);
+      setCameraActive(true);
+      // Attach stream once the <video> element is mounted
+      requestAnimationFrame(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = s;
+          videoRef.current.play().catch(() => {});
+        }
+      });
+    } catch (err: any) {
+      setSubmitErrorModal('Caméra non disponible — utilise plutôt l’upload');
+    }
+  }, []);
+
+  const capturePhoto = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        if (capturedPreview) URL.revokeObjectURL(capturedPreview);
+        setCapturedBlob(blob);
+        setCapturedPreview(URL.createObjectURL(blob));
+        stopCameraStream();
+        setSubmitStep(2);
+      },
+      'image/jpeg',
+      0.9,
+    );
+  }, [capturedPreview, stopCameraStream]);
+
+  const handleModalFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      e.target.value = '';
+      if (!f) return;
+      setSubmitErrorModal(null);
+      if (f.size > 5 * 1024 * 1024) { setSubmitErrorModal('Fichier trop volumineux (max 5 Mo)'); return; }
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(f.type)) {
+        setSubmitErrorModal('Format non supporté (JPEG/PNG/WebP)'); return;
+      }
+      if (capturedPreview) URL.revokeObjectURL(capturedPreview);
+      setCapturedBlob(f);
+      setCapturedPreview(URL.createObjectURL(f));
+      setSubmitStep(2);
+    },
+    [capturedPreview],
+  );
+
+  const submitResultFromModal = useCallback(async () => {
+    if (!capturedBlob) return;
+    setSubmitStep(3);
+    setSubmitErrorModal(null);
+    try {
+      const form = new FormData();
+      const filename = capturedBlob instanceof File ? capturedBlob.name : `screenshot_${Date.now()}.jpg`;
+      form.append('file', capturedBlob, filename);
+
+      const uploadRes = await fetch(`${API}/upload/screenshot`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: form,
+      });
+      if (!uploadRes.ok) throw new Error('Upload échoué');
+      const { url } = await uploadRes.json();
+
+      const submitRes = await fetch(`${API}/challenges/${id}/submit-result`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({ rank: modalRank, screenshotUrl: url }),
+      });
+      if (!submitRes.ok) {
+        const err = await submitRes.json().catch(() => ({}));
+        throw new Error(err.message || 'Soumission échouée');
+      }
+
+      await load();
+      // Brief success display before closing
+      setTimeout(() => closeSubmitModal(), 1800);
+    } catch (e: any) {
+      setSubmitErrorModal(e.message || 'Erreur lors de la soumission');
+      setSubmitStep(2);
+    }
+  }, [capturedBlob, id, modalRank, load, closeSubmitModal]);
+
+  // Cleanup camera + object URL on unmount
+  useEffect(() => {
+    return () => {
+      cameraStream?.getTracks().forEach((t) => t.stop());
+      if (capturedPreview) URL.revokeObjectURL(capturedPreview);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (
@@ -385,13 +527,17 @@ export default function ChallengePage() {
           </div>
         )}
 
-        {/* Fallback submit button — ensures participants on IN_PROGRESS always see the action */}
-        {isParticipant && challenge.status === 'IN_PROGRESS' && !myResult && (
+        {/* Submit-result CTA — opens the 3-step modal */}
+        {isParticipant && (challenge.status === 'IN_PROGRESS' || challenge.status === 'VALIDATING') && !myResult && (
           <div className="mb-4">
             <button
               onClick={() => {
-                const el = document.getElementById('submit-result-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setSubmitStep(1);
+                setCapturedBlob(null);
+                setCapturedPreview(null);
+                setSubmitErrorModal(null);
+                setModalRank(rank || 1);
+                setShowSubmitModal(true);
               }}
               className="w-full flex items-center justify-center gap-2 bg-[#FD2E5F] hover:bg-[#FD2E5F]/90 text-white font-bold rounded-xl py-3 transition"
             >
@@ -436,8 +582,8 @@ export default function ChallengePage() {
           />
         )}
 
-        {/* IN_PROGRESS — Déclarer résultat */}
-        {(challenge.status === 'IN_PROGRESS' || challenge.status === 'VALIDATING') && isParticipant && !myResult && (
+        {/* IN_PROGRESS — Legacy inline form (kept hidden — the modal flow above is now the canonical entry point) */}
+        {false && (challenge.status === 'IN_PROGRESS' || challenge.status === 'VALIDATING') && isParticipant && !myResult && (
           <div id="submit-result-section" className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
             <h2 className="font-bold dark:text-white text-[#00165F] mb-4">{t('challenge.detail.result.title')}</h2>
             <div className="mb-4">
@@ -641,6 +787,193 @@ export default function ChallengePage() {
           </div>
         )}
       </div>
+
+      {/* ════ SUBMIT-RESULT MODAL (3 steps) ═════════════════════════════════════ */}
+      <AnimatePresence>
+        {showSubmitModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={submitStep === 3 ? undefined : closeSubmitModal}
+              className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm"
+            />
+            <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pointer-events-none">
+              <motion.div
+                initial={{ y: 20, opacity: 0, scale: 0.97 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 20, opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-md pointer-events-auto"
+              >
+                <div className="bg-[#0d1226] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
+                  {/* Header */}
+                  <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-white">📸 Soumettre ton résultat</h3>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {[1, 2, 3].map((n) => (
+                          <span
+                            key={n}
+                            className={`h-1 w-6 rounded-full transition ${
+                              submitStep >= (n as 1 | 2 | 3) ? 'bg-[#0097FC]' : 'bg-white/15'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={closeSubmitModal}
+                      disabled={submitStep === 3}
+                      className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Fermer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* ── STEP 1 — Choice ─────────────────────────────────── */}
+                  {submitStep === 1 && (
+                    <div className="p-5 space-y-3">
+                      {!cameraActive ? (
+                        <>
+                          <button
+                            onClick={openCamera}
+                            className="w-full flex items-center gap-3 px-4 py-4 rounded-xl bg-[#0097FC]/10 border border-[#0097FC]/40 hover:bg-[#0097FC]/20 transition text-left"
+                          >
+                            <span className="text-2xl">📷</span>
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-white">Prendre une photo maintenant</p>
+                              <p className="text-xs text-white/50">Caméra arrière (mobile) ou webcam</p>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => modalFileInputRef.current?.click()}
+                            className="w-full flex items-center gap-3 px-4 py-4 rounded-xl bg-white/5 border border-white/15 hover:bg-white/10 transition text-left"
+                          >
+                            <span className="text-2xl">🖼️</span>
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-white">Uploader un screenshot</p>
+                              <p className="text-xs text-white/50">JPEG, PNG ou WebP (max 5 Mo)</p>
+                            </div>
+                          </button>
+                          <input
+                            ref={modalFileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={handleModalFileChange}
+                          />
+                          {submitErrorModal && (
+                            <p className="text-xs text-red-400 mt-2">⚠ {submitErrorModal}</p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
+                            <video
+                              ref={videoRef}
+                              autoPlay
+                              playsInline
+                              muted
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => { stopCameraStream(); }}
+                              className="flex-1 px-4 py-2.5 rounded-xl bg-white/8 hover:bg-white/15 text-white text-sm font-semibold transition"
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              onClick={capturePhoto}
+                              className="flex-1 px-4 py-2.5 rounded-xl bg-[#0097FC] hover:brightness-110 text-white text-sm font-bold transition inline-flex items-center justify-center gap-2"
+                            >
+                              <Camera className="w-4 h-4" /> Capturer
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── STEP 2 — Preview + rank ────────────────────────── */}
+                  {submitStep === 2 && capturedPreview && (
+                    <div className="p-5 space-y-4">
+                      <div className="relative rounded-xl overflow-hidden bg-black">
+                        <img src={capturedPreview} alt="Preview" className="w-full h-auto max-h-[280px] object-contain" />
+                        <button
+                          onClick={() => {
+                            if (capturedPreview) URL.revokeObjectURL(capturedPreview);
+                            setCapturedPreview(null);
+                            setCapturedBlob(null);
+                            setSubmitStep(1);
+                          }}
+                          title="Reprendre"
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white/80 hover:text-white backdrop-blur transition"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider mb-2 block">
+                          Ma place finale
+                        </label>
+                        <div className="grid grid-cols-5 gap-2">
+                          {Array.from(
+                            { length: Math.min(challenge.participants?.length ?? 5, 10) },
+                            (_, i) => i + 1,
+                          ).map((r) => (
+                            <button
+                              key={r}
+                              onClick={() => setModalRank(r)}
+                              className={`py-2.5 rounded-lg font-bold text-sm transition ${
+                                modalRank === r
+                                  ? 'bg-[#0097FC] text-white'
+                                  : 'bg-white/8 text-white/70 hover:bg-white/15'
+                              }`}
+                            >
+                              #{r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {submitErrorModal && (
+                        <p className="text-xs text-red-400">⚠ {submitErrorModal}</p>
+                      )}
+                      <button
+                        onClick={submitResultFromModal}
+                        disabled={!capturedBlob}
+                        className="w-full py-3 rounded-xl bg-[#FD2E5F] hover:brightness-110 text-white text-sm font-bold transition disabled:opacity-40 inline-flex items-center justify-center gap-2"
+                      >
+                        ✅ Confirmer et soumettre
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ── STEP 3 — Confirmation ──────────────────────────── */}
+                  {submitStep === 3 && (
+                    <div className="p-8 text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+                      <p className="text-cyan-400 font-bold text-lg mb-1 animate-pulse">
+                        🔍 Analyse IA en cours…
+                      </p>
+                      <p className="text-white/50 text-sm">
+                        Notre système vérifie ton screenshot automatiquement.
+                      </p>
+                      <p className="text-white/40 text-xs mt-3">
+                        Tu peux fermer cette fenêtre, le résultat apparaîtra dans le défi.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
