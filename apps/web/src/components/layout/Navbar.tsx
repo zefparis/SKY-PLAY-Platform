@@ -86,6 +86,7 @@ const Navbar = () => {
   // Mega menu "Plus" — only entries that are NOT already in the main navbar.
   const megaDiscover = [
     { href: '/how-it-works', label: 'Comment ça marche', icon: Lightbulb },
+    { href: '/profile', label: 'Mon profil', icon: User },
     { href: '/tournaments', label: 'Tournois', icon: Trophy },
     { href: '/notifications', label: 'Notifications', icon: Bell },
     { href: '/settings', label: 'Paramètres', icon: Settings },
