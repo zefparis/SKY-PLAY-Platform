@@ -2,10 +2,10 @@
 
 import { motion } from 'framer-motion'
 import {
-  Trophy, Zap, Star, Shield, TrendingUp, Sparkles,
+  Trophy, Zap, Star, TrendingUp, Sparkles,
   Users, CheckCircle, Clock, Camera, BarChart3,
   Calendar, Medal, Crown, Target, Tv, Megaphone,
-  Lock, Gamepad2, ChevronRight,
+  Lock, Gamepad2, ChevronRight, UserPlus,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useI18n } from '@/components/i18n/I18nProvider'
@@ -18,14 +18,41 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.5, delay },
 })
 
-// ─── Static (non-translated) data ─────────────────────────────────────────────
-const MATCH_META = [
-  { key: 'hiw.mt.duel',    players: 2,   entry: '2 000',   pot: '4 000',     gains: '3 000',   comm: '1 000',  rate: '25%', color: '#00c8ff' },
-  { key: 'hiw.mt.small',   players: 5,   entry: '2 000',   pot: '10 000',    gains: '8 000',   comm: '2 000',  rate: '20%', color: '#00e676' },
-  { key: 'hiw.mt.std',     players: 10,  entry: '2 000',   pot: '20 000',    gains: '18 000',  comm: '2 000',  rate: '10%', color: '#0097FC' },
-  { key: 'hiw.mt.medium',  players: 20,  entry: '2 000',   pot: '40 000',    gains: '34 000',  comm: '6 000',  rate: '15%', color: '#ffd700' },
-  { key: 'hiw.mt.big',     players: 50,  entry: '2 000',   pot: '100 000',   gains: '90 000',  comm: '10 000', rate: '10%', color: '#b06fff' },
-  { key: 'hiw.mt.premium', players: 100, entry: '5 000',   pot: '500 000',   gains: '450 000', comm: '50 000', rate: '10%', color: '#ff9800' },
+// ─── Static (non-translated) data ───────────────────────────────────
+const HOW_STEPS = [
+  {
+    n: '1',
+    icon: UserPlus,
+    color: '#00c8ff',
+    title: 'Rejoins une compétition',
+    bullets: [
+      'Choisis ton format (Duel, Challenge, Tournoi, Championnat)',
+      'Accepte le règlement',
+      'C’est parti',
+    ],
+  },
+  {
+    n: '2',
+    icon: Gamepad2,
+    color: '#ffd700',
+    title: 'Joue et prouve ta valeur',
+    bullets: [
+      'Joue le match sur ta console ou ton PC',
+      'Soumets ton résultat avec une capture d’écran',
+      'Le système valide automatiquement',
+    ],
+  },
+  {
+    n: '3',
+    icon: TrendingUp,
+    color: '#FD2E5F',
+    title: 'Grimpe dans les Leagues',
+    bullets: [
+      'Chaque victoire te rapporte des SKY Points',
+      'Monte de Bronze jusqu’à Gloire',
+      'Accède aux compétitions exclusives',
+    ],
+  },
 ]
 
 const LEAGUE_TIERS = [
@@ -35,13 +62,6 @@ const LEAGUE_TIERS = [
   { emoji: '💎', name: 'Diamant', pts: '60 000',  color: '#00c8ff' },
   { emoji: '⚡', name: 'Legend',  pts: '80 000',  color: '#b06fff' },
   { emoji: '🏆', name: 'Gloire',  pts: '100 000', color: '#ff4081' },
-]
-
-const KEY_POINT_META = [
-  { icon: TrendingUp, color: '#00e676', key: 'hiw.s1.kp1' },
-  { icon: Zap,        color: '#ffd700', key: 'hiw.s1.kp2' },
-  { icon: Trophy,     color: '#00c8ff', key: 'hiw.s1.kp3' },
-  { icon: Shield,     color: '#b06fff', key: 'hiw.s1.kp4' },
 ]
 
 const MODULE_META = [
@@ -75,18 +95,6 @@ function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: stri
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HowItWorksPage() {
   const { t } = useI18n()
-
-  const COL_HEADERS = [
-    t('hiw.s1.col.type'), t('hiw.s1.col.players'), t('hiw.s1.col.entry'),
-    t('hiw.s1.col.pot'), t('hiw.s1.col.gains'), t('hiw.s1.col.comm'), t('hiw.s1.col.rate'),
-  ]
-
-  const DIST_ITEMS = [
-    { rankKey: 'hiw.dist.1st', val: '10 000 SKY', color: '#ffd700' },
-    { rankKey: 'hiw.dist.2nd', val: '5 000 SKY',  color: '#c0c0c0' },
-    { rankKey: 'hiw.dist.3rd', val: '3 000 SKY',  color: '#cd7f32' },
-    { rankKey: 'hiw.dist.plat', val: '2 000 SKY', color: '#0097FC' },
-  ]
 
   return (
     <div className="min-h-screen dark:bg-[#080c18] bg-gray-50">
@@ -138,86 +146,53 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          SECTION 1 — FINANCIAL MODEL
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ═════════════════════════════════════════════════════════════
+          SECTION 1 — HOW SKY PLAY WORKS (3 STEPS)
+      ═════════════════════════════════════════════════════════════ */}
       <section className="py-16 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div {...fadeUp(0)}>
-            <SectionTitle sub={t('hiw.s1.sub')}>{t('hiw.s1.title')}</SectionTitle>
+            <SectionTitle sub="Trois étapes pour passer du gamer occasionnel à la légende.">
+              Comment fonctionne SKY PLAY ?
+            </SectionTitle>
           </motion.div>
 
-          {/* Table */}
-          <motion.div {...fadeUp(0.05)} className="overflow-x-auto rounded-2xl border dark:border-white/10 border-[#00165F]/10 mb-10">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="dark:bg-[#0d1124] bg-[#00165F]/5 text-left">
-                  {COL_HEADERS.map((h) => (
-                    <th key={h} className="px-4 py-3 text-xs font-black uppercase tracking-wider dark:text-white/50 text-[#00165F]/50">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {MATCH_META.map((row, i) => (
-                  <tr key={row.key}
-                    className={`border-t dark:border-white/5 border-[#00165F]/5 transition-colors dark:hover:bg-white/3 hover:bg-[#00165F]/3 ${i % 2 === 0 ? 'dark:bg-[#0a0f1e]/60' : 'dark:bg-[#0d1124]/40'}`}
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: row.color }} />
-                        <span className="font-bold dark:text-white text-[#00165F]">{t(row.key)}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 dark:text-white/70 text-[#00165F]/70 font-mono">{row.players}</td>
-                    <td className="px-4 py-3 dark:text-white/70 text-[#00165F]/70 font-mono">{row.entry}</td>
-                    <td className="px-4 py-3 dark:text-white/70 text-[#00165F]/70 font-mono">{row.pot}</td>
-                    <td className="px-4 py-3 font-bold" style={{ color: '#00e676' }}>{row.gains}</td>
-                    <td className="px-4 py-3 font-mono dark:text-white/50 text-[#00165F]/50">{row.comm}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded-full text-xs font-bold"
-                        style={{ background: `${row.color}18`, color: row.color }}>
-                        {row.rate}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </motion.div>
+          <div className="grid md:grid-cols-3 gap-5 relative">
+            {/* Connecting line on desktop */}
+            <div className="hidden md:block absolute top-[78px] left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-          {/* Distribution example */}
-          <motion.div {...fadeUp(0.08)}
-            className="dark:bg-[#0d1124] bg-white rounded-2xl border dark:border-white/10 border-[#00165F]/10 p-6 mb-10"
-          >
-            <p className="text-xs font-black uppercase tracking-wider dark:text-white/40 text-[#00165F]/40 mb-4">
-              {t('hiw.s1.dist.title')}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {DIST_ITEMS.map((item) => (
-                <div key={item.rankKey} className="flex-1 min-w-[120px] px-4 py-3 rounded-xl text-center"
-                  style={{ background: `${item.color}12`, border: `1px solid ${item.color}25` }}>
-                  <p className="text-lg font-black mb-0.5" style={{ color: item.color }}>{item.val}</p>
-                  <p className="text-xs dark:text-white/50 text-[#00165F]/50">{t(item.rankKey)}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Key points */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {KEY_POINT_META.map((pt, i) => {
-              const Icon = pt.icon
+            {HOW_STEPS.map((step, i) => {
+              const Icon = step.icon
               return (
-                <motion.div key={i} {...fadeUp(0.05 * (i + 1))}
-                  className="flex items-center gap-4 px-5 py-4 rounded-xl dark:bg-[#0d1124] bg-white border dark:border-white/8 border-[#00165F]/8"
+                <motion.div key={step.n} {...fadeUp(0.08 * (i + 1))}
+                  className="relative dark:bg-[#0d1124] bg-white rounded-2xl border dark:border-white/10 border-[#00165F]/10 p-7 hover:shadow-xl transition-shadow"
+                  style={{ boxShadow: `0 0 0 1px ${step.color}10` }}
                 >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: `${pt.color}18` }}>
-                    <Icon className="w-4.5 h-4.5" style={{ color: pt.color }} />
+                  {/* Icon + step number */}
+                  <div className="relative w-16 h-16 mb-5 mx-auto">
+                    <div className="absolute inset-0 rounded-2xl blur-lg opacity-40" style={{ backgroundColor: step.color }} />
+                    <div className="relative w-full h-full rounded-2xl flex items-center justify-center border-2"
+                      style={{ borderColor: step.color, backgroundColor: `${step.color}18` }}>
+                      <Icon className="w-7 h-7" style={{ color: step.color }} />
+                    </div>
+                    <div className="absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full dark:bg-[#080c18] bg-white border-2 flex items-center justify-center text-xs font-black"
+                      style={{ borderColor: step.color, color: step.color }}>
+                      {step.n}
+                    </div>
                   </div>
-                  <p className="text-sm font-semibold dark:text-white/80 text-[#00165F]/80">{t(pt.key)}</p>
+
+                  <h3 className="text-lg font-black dark:text-white text-[#00165F] text-center mb-4">
+                    {step.title}
+                  </h3>
+
+                  <ul className="space-y-2.5">
+                    {step.bullets.map((b, j) => (
+                      <li key={j} className="flex items-start gap-2.5 text-sm dark:text-white/70 text-[#00165F]/70">
+                        <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: step.color }} />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </motion.div>
               )
             })}
