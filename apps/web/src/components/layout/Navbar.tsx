@@ -153,7 +153,25 @@ const Navbar = () => {
                 <span>Live</span>
               </Link>
 
-              {/* Plus mega menu */}
+              {/* Remaining priority links */}
+              {navLinks.slice(2).map((link) => {
+                const Icon = link.icon
+                const isActive = pathname === link.href
+                return (
+                  <Link key={link.href} href={link.href}
+                    className={cn(
+                      'flex items-center space-x-2 px-3 py-2 rounded-md border border-transparent transition duration-200 text-sm',
+                      isActive
+                        ? 'text-secondary bg-secondary/10 border-secondary/20'
+                        : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
+                    )}>
+                    <Icon className="w-4 h-4" />
+                    <span>{link.label}</span>
+                  </Link>
+                )
+              })}
+
+              {/* Plus mega menu (after main links, before right-side icons) */}
               <div ref={megaMenuRef} className="relative">
                 <button
                   onClick={() => setMegaMenuOpen(v => !v)}
@@ -178,7 +196,7 @@ const Navbar = () => {
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.18, ease: 'easeOut' }}
                       onMouseLeave={closeMega}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-[#0d0f1a] border border-[#2a2d3e] rounded-xl shadow-2xl z-50 overflow-hidden"
+                      className="absolute top-full right-0 mt-2 w-64 bg-[#0d0f1a] border border-[#2a2d3e] rounded-xl shadow-2xl z-50 overflow-hidden"
                     >
                       <div className="p-3">
                         <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-2 pb-2">Découvrir</p>
@@ -204,24 +222,6 @@ const Navbar = () => {
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* Remaining priority links */}
-              {navLinks.slice(2).map((link) => {
-                const Icon = link.icon
-                const isActive = pathname === link.href
-                return (
-                  <Link key={link.href} href={link.href}
-                    className={cn(
-                      'flex items-center space-x-2 px-3 py-2 rounded-md border border-transparent transition duration-200 text-sm',
-                      isActive
-                        ? 'text-secondary bg-secondary/10 border-secondary/20'
-                        : 'dark:text-white/75 text-[#00165F]/75 dark:hover:text-secondary hover:text-secondary dark:hover:bg-white/5 hover:bg-[#00165F]/5'
-                    )}>
-                    <Icon className="w-4 h-4" />
-                    <span>{link.label}</span>
-                  </Link>
-                )
-              })}
             </div>
 
             {/* Desktop right actions */}
