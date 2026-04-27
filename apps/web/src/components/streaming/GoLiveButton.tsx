@@ -159,7 +159,8 @@ export default function GoLiveButton({
 
       // Start screen capture only after YouTube has provisioned the broadcast.
       // The hook handles its own error reporting via `streamError`.
-      await startStream(data.rtmpEndpoint, data.streamKey)
+      // The token authenticates the WebSocket upgrade against RtmpWsGateway.
+      await startStream(data.rtmpEndpoint, data.streamKey, token)
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {

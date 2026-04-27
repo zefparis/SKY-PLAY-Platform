@@ -3,13 +3,14 @@ import { ConfigModule } from '@nestjs/config';
 import { LinkedAccountsModule } from '../linked-accounts/linked-accounts.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { RtmpService } from './rtmp.service';
+import { RtmpWsGateway } from './rtmp-ws.gateway';
 import { StreamingController } from './streaming.controller';
 import { YoutubeService } from './youtube.service';
 
 @Module({
   imports: [ConfigModule, LinkedAccountsModule, PrismaModule],
   controllers: [StreamingController],
-  providers: [YoutubeService, RtmpService],
-  exports: [YoutubeService],
+  providers: [YoutubeService, RtmpService, RtmpWsGateway],
+  exports: [YoutubeService, RtmpWsGateway],
 })
 export class StreamingModule {}

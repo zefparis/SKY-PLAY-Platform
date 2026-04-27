@@ -23,7 +23,9 @@ export class RtmpService implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     // Opt-out switch for environments where the RTMP ports would clash.
     if (process.env.DISABLE_RTMP_SERVER === 'true') {
-      this.logger.log('DISABLE_RTMP_SERVER=true — skipping RTMP relay boot');
+      this.logger.log(
+        '[RTMP] Server skipped (DISABLE_RTMP_SERVER=true) — using ffmpeg relay only',
+      );
       return;
     }
 

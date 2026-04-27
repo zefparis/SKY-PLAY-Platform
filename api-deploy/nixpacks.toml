@@ -1,5 +1,9 @@
 [phases.setup]
-nixPkgs = ['nodejs_20', 'npm-10_x', 'openssl']
+# `ffmpeg` is required by the RTMP relay (rtmp-ws.gateway.ts) to transcode
+# WebM screen-capture chunks into FLV/H.264. We also keep `ffmpeg-static` as
+# an npm dependency for environments where Nixpacks/Railpack ignores this
+# file (e.g. Railpack 0.23 currently does).
+nixPkgs = ['nodejs_20', 'npm-10_x', 'openssl', 'ffmpeg']
 
 # Override default 'npm ci' — api-deploy/package-lock.json is not maintained
 # in a monorepo workspace setup, so use 'npm install' which tolerates drift.

@@ -16,7 +16,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
  * already auto-stop when the user revokes the screen-share permission.
  */
 export interface UseScreenStreamResult {
-  startStream: (rtmpEndpoint: string, streamKey: string) => Promise<void>
+  /**
+   * Begin capturing the screen and pushing chunks to the backend RTMP relay.
+   * The `authToken` is forwarded as a `?token=` query param so the gateway
+   * can authenticate the WebSocket upgrade before spawning ffmpeg.
+   */
+  startStream: (
+    rtmpEndpoint: string,
+    streamKey: string,
+    authToken: string,
+  ) => Promise<void>
   stopStream: () => void
   isStreaming: boolean
   error: string | null
@@ -72,8 +81,13 @@ export function useScreenStream(): UseScreenStreamResult {
   }, [cleanup])
 
   const startStream = useCallback(
-    async (rtmpEndpoint: string, streamKey: string) => {
+    async (rtmpEndpoint: string, streamKey: string, authToken: string) => {
       setError(null)
+
+      if (!authToken) {
+        setError('Token manquant — reconnecte-toi')
+        return
+      }
 
       if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getDisplayMedia) {
         setError("Le partage d'écran n'est pas supporté par ce navigateur")
@@ -129,6 +143,7 @@ export function useScreenStream(): UseScreenStreamResult {
       try {
         const u = new URL('/rtmp-ws', API_URL)
         u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:'
+        u.searchParams.set('token', authToken)
         wsUrl = u.toString()
       } catch {
         cleanup()
