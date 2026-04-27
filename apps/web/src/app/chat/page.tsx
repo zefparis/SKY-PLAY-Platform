@@ -274,7 +274,7 @@ export default function ChatPage() {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 top-16 bottom-20 flex overflow-hidden" style={{ background: '#030b1a', color: 'white' }}>
+    <div className="fixed inset-0 top-16 bottom-16 md:bottom-0 flex overflow-hidden" style={{ background: '#030b1a', color: 'white' }}>
 
       {/* ══ SIDEBAR ══════════════════════════════════════════════ */}
       <AnimatePresence>
