@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import SpectatorView, { type SpectatorEvent } from '@/components/challenges/SpectatorView';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload, Calendar } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, CheckCircle, AlertTriangle, Upload, Calendar, Sparkles, Camera, Loader2 } from 'lucide-react';
 import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import ChallengeRules from '@/components/challenges/ChallengeRules';
 import AdSlot from '@/components/ads/AdSlot';
@@ -45,7 +45,16 @@ export default function ChallengePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [rank, setRank] = useState(1);
-  const [screenshotUrl, setScreenshotUrl] = useState('');
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [analysisResult, setAnalysisResult] = useState<{
+    verifiedRank: number | null;
+    confidence: number | null;
+    status: 'ANALYZING' | 'ANALYZED' | 'LOW_CONFIDENCE' | 'FAILED';
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [disputeReason, setDisputeReason] = useState('');
   const [showRules, setShowRules] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -93,11 +102,20 @@ export default function ChallengePage() {
       setSubmissionStatus({ submittedCount: data.submittedCount, totalPlayers: data.totalPlayers });
       addEvent('✅', `Un joueur a soumis son résultat (${data.submittedCount}/${data.totalPlayers})`);
     });
+    s.on('analysis_completed', (data: { resultId: string; userId: string; verifiedRank: number | null; confidence: number; status: 'ANALYZED' | 'LOW_CONFIDENCE' | 'FAILED' }) => {
+      if (data.userId === currentUserId) {
+        setAnalysisResult({ verifiedRank: data.verifiedRank, confidence: data.confidence, status: data.status });
+      }
+      load();
+    });
+    s.on('auto_verified', (data: { message: string; verifiedCount: number; totalCount: number }) => {
+      addEvent('🤖', `${data.message} (${data.verifiedCount}/${data.totalCount})`);
+    });
     return () => {
       s.emit('leave_challenge_room', { challengeId: id });
       s.disconnect();
     };
-  }, [id, addEvent, load]);
+  }, [id, addEvent, load, currentUserId]);
 
   const doAction = async (endpoint: string, body: object) => {
     setActionLoading(true);
@@ -309,7 +327,9 @@ export default function ChallengePage() {
             {challenge.participants?.length === 0 ? (
               <p className="text-sm dark:text-white/40 text-[#00165F]/40">{t('challenge.detail.noParticipants')}</p>
             ) : (
-              challenge.participants?.map((p: any) => (
+              challenge.participants?.map((p: any) => {
+                const pResult = challenge.results?.find((r: any) => r.userId === p.userId);
+                return (
                 <div key={p.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#0097FC] to-[#00165F] flex items-center justify-center text-white text-xs font-bold">
@@ -319,6 +339,17 @@ export default function ChallengePage() {
                     {p.userId === currentUserId && <span className="text-xs text-[#0097FC]">{t('challenge.detail.you')}</span>}
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* AI verification badge */}
+                    {pResult?.dataSource === 'AUTO_VERIFIED' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 border border-green-500/30 text-green-400 text-[10px] font-bold" title="Vérifié par IA">
+                        🤖 Vérifié IA
+                      </span>
+                    )}
+                    {pResult && pResult.dataSource !== 'AUTO_VERIFIED' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-500/15 border border-gray-500/30 text-gray-400 text-[10px] font-bold" title="Résultat soumis">
+                        📸 Soumis
+                      </span>
+                    )}
                     {p.rank && <span className="text-xs font-bold text-[#FD2E5F]">#{p.rank}</span>}
                     {p.winnings && p.winnings > 0 && <span className="text-xs text-[#0097FC]">🪙 {formatSKY(p.winnings)}</span>}
                     {p.hasPaid ? (
@@ -328,7 +359,8 @@ export default function ChallengePage() {
                     )}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -399,32 +431,126 @@ export default function ChallengePage() {
                 ))}
               </div>
             </div>
+
+            {/* File upload — replaces the legacy URL input */}
             <div className="mb-4">
-              <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-2 block">{t('challenge.detail.result.screenshot')}</label>
+              <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-2 block">
+                Screenshot du résultat (obligatoire)
+              </label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className={`w-full py-6 rounded-xl border-2 border-dashed transition text-sm flex flex-col items-center justify-center gap-2 ${
+                  uploadedUrl
+                    ? 'border-green-400 bg-green-400/10 text-green-400'
+                    : screenshotFile
+                      ? 'border-cyan-400 bg-cyan-400/10 text-cyan-400'
+                      : 'border-gray-400/30 text-gray-400 hover:border-cyan-400/50 hover:text-cyan-400'
+                }`}
+              >
+                {uploading ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /><span>Envoi vers S3…</span></>
+                ) : uploadedUrl ? (
+                  <><CheckCircle className="w-5 h-5" /><span>✓ Screenshot uploadé</span></>
+                ) : screenshotFile ? (
+                  <><Camera className="w-5 h-5" /><span>{screenshotFile.name}</span></>
+                ) : (
+                  <><Upload className="w-5 h-5" /><span>Choisir une image (JPG/PNG, max 5 Mo)</span></>
+                )}
+              </button>
               <input
-                type="text"
-                value={screenshotUrl}
-                onChange={e => setScreenshotUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-4 py-2.5 rounded-xl dark:bg-white/10 bg-gray-50 dark:text-white text-[#00165F] border dark:border-white/10 border-gray-200 focus:outline-none focus:border-[#0097FC] text-sm"
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!f) return;
+                  setUploadError('');
+                  setUploadedUrl('');
+                  if (f.size > 5 * 1024 * 1024) { setUploadError('Fichier trop volumineux (max 5 Mo)'); return; }
+                  if (!['image/jpeg', 'image/jpg', 'image/png'].includes(f.type)) { setUploadError('Format non supporté (JPEG/PNG uniquement)'); return; }
+                  setScreenshotFile(f);
+                  setUploading(true);
+                  try {
+                    const form = new FormData();
+                    form.append('file', f);
+                    const res = await fetch(`${API}/upload/screenshot`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${getToken()}` },
+                      body: form,
+                    });
+                    if (!res.ok) throw new Error('Upload échoué');
+                    const { url } = await res.json();
+                    setUploadedUrl(url);
+                  } catch (err: any) {
+                    setUploadError(err.message || 'Erreur d’upload');
+                    setScreenshotFile(null);
+                  } finally {
+                    setUploading(false);
+                  }
+                }}
               />
+              {uploadError && (
+                <p className="mt-2 text-xs text-red-400">{uploadError}</p>
+              )}
             </div>
+
             <button
-              onClick={() => doAction('submit-result', { rank, screenshotUrl: screenshotUrl || undefined })}
-              disabled={actionLoading}
-              className="w-full py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 disabled:opacity-50"
+              onClick={() => doAction('submit-result', { rank, screenshotUrl: uploadedUrl })}
+              disabled={actionLoading || !uploadedUrl || uploading}
+              className="w-full py-3 rounded-xl bg-[#0097FC] text-white font-bold hover:bg-[#0097FC]/90 disabled:opacity-40 transition"
             >
               {actionLoading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> : t('challenge.detail.result.submit')}
             </button>
           </div>
         )}
 
-        {/* VALIDATING — Résultat soumis */}
+        {/* VALIDATING — Résultat soumis + statut analyse IA */}
         {(challenge.status === 'VALIDATING') && isParticipant && myResult && (
           <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4 text-center">
             <CheckCircle className="w-10 h-10 text-green-400 mx-auto mb-3" />
             <p className="font-bold dark:text-white text-[#00165F]">{t('challenge.detail.result.submitted')}{myResult.declaredRank}</p>
             <p className="text-sm dark:text-white/50 text-[#00165F]/50 mt-1">{t('challenge.detail.result.waiting')}</p>
+
+            {/* AI analysis status — prefer live socket data, fallback to DB-loaded result */}
+            {(() => {
+              const status = analysisResult?.status ?? myResult.analysisStatus;
+              const confidence = analysisResult?.confidence ?? myResult.confidence;
+              const verifiedRank = analysisResult?.verifiedRank ?? myResult.verifiedRank;
+
+              if (status === 'ANALYZING' || status === 'PENDING' || (!status && myResult.screenshotUrl)) {
+                return (
+                  <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 animate-pulse text-sm font-bold">
+                    🔍 Analyse IA en cours…
+                  </div>
+                );
+              }
+              if (status === 'ANALYZED' && typeof confidence === 'number' && confidence >= 80) {
+                return (
+                  <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm font-bold">
+                    ✅ Score détecté{verifiedRank ? ` : Rang #${verifiedRank}` : ''} (confiance : {confidence.toFixed(0)}%)
+                  </div>
+                );
+              }
+              if (status === 'LOW_CONFIDENCE' || (status === 'ANALYZED' && typeof confidence === 'number' && confidence < 80)) {
+                return (
+                  <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-bold">
+                    ⚠️ Analyse peu concluante — vérification manuelle possible
+                  </div>
+                );
+              }
+              if (status === 'FAILED') {
+                return (
+                  <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-500/10 border border-gray-500/30 text-gray-400 text-sm font-bold">
+                    📋 Vérification manuelle par l’équipe
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
 

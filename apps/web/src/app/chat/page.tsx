@@ -83,6 +83,7 @@ export default function ChatPage() {
   const [submitRank, setSubmitRank] = useState(1)
   const [submitFile, setSubmitFile] = useState<File | null>(null)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [submitAnalyzing, setSubmitAnalyzing] = useState(false)
 
   // Voice
   const [showVoice, setShowVoice] = useState(false)
@@ -249,8 +250,14 @@ export default function ChatPage() {
         body: JSON.stringify({ rank: submitRank, screenshotUrl: url }),
       })
       sendConv(`📸 J'ai soumis mon résultat : place #${submitRank}`)
-      setShowSubmit(false)
+      // Show "analyzing" state immediately (don't wait for socket) for instant UX feedback
+      setSubmitAnalyzing(true)
       setSubmitFile(null)
+      // Auto-close modal after 3s so the user sees the analyzing message
+      setTimeout(() => {
+        setShowSubmit(false)
+        setSubmitAnalyzing(false)
+      }, 3000)
     } finally { setSubmitLoading(false) }
   }, [submitFile, submitRank, tokens?.idToken, activeConv, sendConv])
 
@@ -881,11 +888,22 @@ export default function ChatPage() {
                 transition={{ duration: 0.2 }} className="w-full max-w-md pointer-events-auto">
                 <div className="bg-[#00165F] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
                   <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white">📸 Soumettre mon résultat</h3>
-                    <button onClick={() => setShowSubmit(false)} className="p-2 rounded-lg text-white/50 hover:bg-white/10 transition">
+                    <h3 className="text-lg font-bold text-white">
+                      {submitAnalyzing ? '� Analyse en cours' : '� Soumettre mon résultat'}
+                    </h3>
+                    <button onClick={() => { setShowSubmit(false); setSubmitAnalyzing(false) }} className="p-2 rounded-lg text-white/50 hover:bg-white/10 transition">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {submitAnalyzing ? (
+                    <div className="p-8 text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+                      <p className="text-cyan-400 font-bold text-lg mb-1 animate-pulse">🔍 Analyse IA en cours…</p>
+                      <p className="text-white/50 text-sm">Notre système vérifie ton screenshot automatiquement.</p>
+                      <p className="text-white/40 text-xs mt-3">Tu peux fermer cette fenêtre, le résultat apparaîtra dans le défi.</p>
+                    </div>
+                  ) : (
                   <div className="p-5 space-y-4">
                     <div>
                       <label className="text-xs text-white/50 uppercase tracking-wider mb-2 block">Ma place finale</label>
@@ -912,6 +930,7 @@ export default function ChatPage() {
                       {submitLoading ? 'Envoi...' : 'Confirmer mon résultat'}
                     </button>
                   </div>
+                  )}
                 </div>
               </motion.div>
             </div>
