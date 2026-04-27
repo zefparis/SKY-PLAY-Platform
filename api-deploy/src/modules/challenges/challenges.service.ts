@@ -36,6 +36,21 @@ export class ChallengesService {
   private readonly logger = new Logger(ChallengesService.name);
   private server: any = null; // Set by ChatGateway via setServer()
 
+  /**
+   * Best-effort admin log writer — never throws.
+   * Audit logs should never block business operations (e.g. FK violation if
+   * adminId='SYSTEM' or a Cognito sub that isn't in the users table).
+   */
+  private async safeAdminLog(data: { adminId: string; action: string; targetId?: string; targetType?: string; details?: any }) {
+    try {
+      await this.prisma.adminLog.create({ data });
+    } catch (e: any) {
+      this.logger.warn(
+        `AdminLog skipped (action=${data.action}, adminId=${data.adminId}): ${e?.message ?? e}`,
+      );
+    }
+  }
+
   constructor(
     private prisma: PrismaService,
     private walletService: WalletService,
@@ -498,18 +513,16 @@ export class ChallengesService {
             where: { challengeId_userId: { challengeId, userId: result.userId } },
             data: { rank: result.declaredRank, winnings, winningsStatus: 'PENDING_REVIEW' },
           });
-          await this.prisma.adminLog.create({
-            data: {
-              adminId: 'SYSTEM',
-              action: 'WINNINGS_PENDING_REVIEW',
-              targetId: result.userId,
-              targetType: 'USER',
-              details: {
-                challengeId,
-                winnings,
-                rank: result.declaredRank,
-                reason: flaggedDevice ? 'DEVICE_FLAGGED' : 'AMOUNT_THRESHOLD',
-              },
+          await this.safeAdminLog({
+            adminId: 'SYSTEM',
+            action: 'WINNINGS_PENDING_REVIEW',
+            targetId: result.userId,
+            targetType: 'USER',
+            details: {
+              challengeId,
+              winnings,
+              rank: result.declaredRank,
+              reason: flaggedDevice ? 'DEVICE_FLAGGED' : 'AMOUNT_THRESHOLD',
             },
           });
           const notifReview = await this.prisma.notification.create({
@@ -693,14 +706,12 @@ export class ChallengesService {
       where: { id: participantId },
       data: { winningsStatus: 'PAID', winningsApprovedAt: new Date() },
     });
-    await this.prisma.adminLog.create({
-      data: {
-        adminId,
-        action: 'WINNINGS_APPROVED',
-        targetId: participant.userId,
-        targetType: 'USER',
-        details: { participantId, winnings: participant.winnings, challengeId: participant.challengeId },
-      },
+    await this.safeAdminLog({
+      adminId,
+      action: 'WINNINGS_APPROVED',
+      targetId: participant.userId,
+      targetType: 'USER',
+      details: { participantId, winnings: participant.winnings, challengeId: participant.challengeId },
     });
     const notifApproved = await this.prisma.notification.create({
       data: {
@@ -730,14 +741,12 @@ export class ChallengesService {
         winningsRejectReason: reason,
       },
     });
-    await this.prisma.adminLog.create({
-      data: {
-        adminId,
-        action: 'WINNINGS_REJECTED',
-        targetId: participant.userId,
-        targetType: 'USER',
-        details: { participantId, winnings: participant.winnings, reason, challengeId: participant.challengeId },
-      },
+    await this.safeAdminLog({
+      adminId,
+      action: 'WINNINGS_REJECTED',
+      targetId: participant.userId,
+      targetType: 'USER',
+      details: { participantId, winnings: participant.winnings, reason, challengeId: participant.challengeId },
     });
     const notifRejected = await this.prisma.notification.create({
       data: {
@@ -789,14 +798,12 @@ export class ChallengesService {
     });
 
     if (adminId !== 'SYSTEM') {
-      await this.prisma.adminLog.create({
-        data: {
-          adminId,
-          action: 'CHALLENGE_CANCELLED',
-          targetId: challengeId,
-          targetType: 'CHALLENGE',
-          details: { reason, refundCount, entryFee: challenge.entryFee },
-        },
+      await this.safeAdminLog({
+        adminId,
+        action: 'CHALLENGE_CANCELLED',
+        targetId: challengeId,
+        targetType: 'CHALLENGE',
+        details: { reason, refundCount, entryFee: challenge.entryFee },
       });
     }
 

@@ -1,9 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Server } from 'socket.io';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
+  /** Best-effort admin log writer — never throws on FK / write failure. */
+  private async safeAdminLog(data: { adminId: string; action: string; targetId?: string; targetType?: string; details?: any }) {
+    try {
+      await this.prisma.adminLog.create({ data });
+    } catch (e: any) {
+      this.logger.warn(`AdminLog skipped (action=${data.action}, adminId=${data.adminId}): ${e?.message ?? e}`);
+    }
+  }
   private server: Server | null = null;
 
   constructor(private prisma: PrismaService) {}
@@ -735,14 +745,12 @@ export class UsersService {
       });
 
       if (ipAccounts.length >= 3) {
-        await this.prisma.adminLog.create({
-          data: {
-            adminId: 'SYSTEM',
-            action: 'IP_MULTI_ACCOUNT_SOFT_FLAG',
-            targetId: userId,
-            targetType: 'USER',
-            details: { ipAddress, linkedAccountCount: ipAccounts.length + 1, linkedAccounts: ipAccounts.map((a: any) => a.userId) },
-          },
+        await this.safeAdminLog({
+          adminId: 'SYSTEM',
+          action: 'IP_MULTI_ACCOUNT_SOFT_FLAG',
+          targetId: userId,
+          targetType: 'USER',
+          details: { ipAddress, linkedAccountCount: ipAccounts.length + 1, linkedAccounts: ipAccounts.map((a: any) => a.userId) },
         });
       }
     }
@@ -758,16 +766,14 @@ export class UsersService {
     });
 
     // Admin log
-    await this.prisma.adminLog.create({
-      data: {
-        adminId: 'SYSTEM',
-        action: 'MULTI_ACCOUNT_DETECTED',
-        targetId: userId,
-        targetType: 'USER',
-        details: {
-          fingerprint,
-          linkedAccounts: otherUsers.map((u: any) => ({ userId: u.userId, username: u.user?.username, email: u.user?.email })),
-        },
+    await this.safeAdminLog({
+      adminId: 'SYSTEM',
+      action: 'MULTI_ACCOUNT_DETECTED',
+      targetId: userId,
+      targetType: 'USER',
+      details: {
+        fingerprint,
+        linkedAccounts: otherUsers.map((u: any) => ({ userId: u.userId, username: u.user?.username, email: u.user?.email })),
       },
     });
   }

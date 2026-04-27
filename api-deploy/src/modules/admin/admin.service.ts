@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, TransactionType, TransactionStatus, ChallengeStatus } from '@prisma/client';
 import { 
@@ -18,18 +18,28 @@ import {
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(private prisma: PrismaService) {}
 
   private async createAdminLog(adminId: string, action: string, targetId?: string, targetType?: string, details?: any) {
-    await this.prisma.adminLog.create({
-      data: {
-        adminId,
-        action,
-        targetId,
-        targetType,
-        details,
-      },
-    });
+    // Best-effort logging — never let an audit log failure break the admin action itself
+    // (e.g. FK violation if adminId is 'SYSTEM' or a Cognito sub that's not in users table)
+    try {
+      await this.prisma.adminLog.create({
+        data: {
+          adminId,
+          action,
+          targetId,
+          targetType,
+          details,
+        },
+      });
+    } catch (e: any) {
+      this.logger.warn(
+        `AdminLog skipped (action=${action}, adminId=${adminId}, target=${targetType ?? '-'}/${targetId ?? '-'}): ${e?.message ?? e}`,
+      );
+    }
   }
 
   async getStats() {
