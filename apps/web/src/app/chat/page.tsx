@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2, Phone, PhoneOff, Volume2 } from 'lucide-react'
+import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2, Phone, PhoneOff, Volume2, Bell, BellOff } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
@@ -12,6 +12,7 @@ import { useVoiceChat } from '@/hooks/useVoiceChat'
 import { useConversations, Conversation, ConvMessage } from '@/hooks/useConversations'
 import { useMessages } from '@/hooks/useMessages'
 import { useFriendships } from '@/hooks/useFriendships'
+import { useSoundNotification } from '@/hooks/useSoundNotification'
 import EmojiPicker from '@/components/chat/EmojiPicker'
 import VoiceChannelList from '@/components/voice/VoiceChannelList'
 import VoiceRoom from '@/components/voice/VoiceRoom'
@@ -105,6 +106,28 @@ export default function ChatPage() {
   const { dms, challenges, openDm, markAsRead } = useConversations(socket)
   const convId = activeConv.type !== 'GLOBAL' ? activeConv.conversationId : null
   const { messages: convMsgs, sendMessage: sendConv, sendImage } = useMessages(convId, socket)
+  const { playSound, soundEnabled, toggleSound } = useSoundNotification()
+
+  // ── SOUND: play "pop" on incoming foreign message not in the active conv ────
+  useEffect(() => {
+    if (!socket || !currentUser) return
+    const handler = (msg: any) => {
+      const authorId = msg?.author?.id ?? msg?.authorId
+      if (!authorId || authorId === currentUser.id) return
+      // Skip if user is currently focused on this exact conversation
+      const isViewingThisConv =
+        activeConv.type !== 'GLOBAL' &&
+        activeConv.conversationId === msg.conversationId &&
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'visible' &&
+        document.hasFocus()
+      if (isViewingThisConv) return
+      playSound('message')
+    }
+    socket.on('conversation_message', handler)
+    return () => { socket.off('conversation_message', handler) }
+  }, [socket, currentUser, activeConv, playSound])
+
   const [deletingMsg, setDeletingMsg] = useState<string | null>(null)
 
   // Auth redirect
@@ -533,6 +556,20 @@ export default function ChatPage() {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Sound toggle */}
+            <button
+              onClick={toggleSound}
+              title={soundEnabled ? 'Sons activés' : 'Sons désactivés'}
+              aria-label={soundEnabled ? 'Couper les sons' : 'Activer les sons'}
+              className={`p-2 rounded-lg transition border ${
+                soundEnabled
+                  ? 'bg-white/8 text-white/70 border-white/15 hover:bg-white/15'
+                  : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
+              }`}
+            >
+              {soundEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+            </button>
+
             {/* Voir le défi / Soumettre / Vocal défi */}
             {activeConv.type === 'CHALLENGE' && activeConv.conv.challengeId && (
               <>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Socket } from 'socket.io-client'
 import { VoiceUser } from '@/types/voice'
 import { useCallRingtone } from './useCallRingtone'
+import { useSoundNotification } from './useSoundNotification'
 import { useAuthStore } from '@/lib/auth-store'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
@@ -527,16 +528,23 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     }
   }, [socket, currentVoiceRoom, createPeerConnection])
 
-  // Ringback tone (côté appelant)
+  // Ringback tone (caller side) and incoming-call ringtone (callee side).
+  // Both respect the global sound-enabled preference.
+  const { soundEnabled } = useSoundNotification()
   const { startRing: startRingback, stopRing: stopRingback } = useCallRingtone()
+  const { startRing: startIncomingRing, stopRing: stopIncomingRing } = useCallRingtone()
+
   useEffect(() => {
-    if (callingUser) {
-      startRingback('ringback')
-    } else {
-      stopRingback()
-    }
+    if (callingUser && soundEnabled) startRingback('ringback')
+    else stopRingback()
     return () => stopRingback()
-  }, [callingUser?.targetUserId])
+  }, [callingUser?.targetUserId, soundEnabled])
+
+  useEffect(() => {
+    if (incomingCall && soundEnabled) startIncomingRing('incoming')
+    else stopIncomingRing()
+    return () => stopIncomingRing()
+  }, [incomingCall?.fromUserId, soundEnabled])
 
   // Cleanup on unmount
   useEffect(() => {

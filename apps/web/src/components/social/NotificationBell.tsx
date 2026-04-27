@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
 import { io, Socket } from 'socket.io-client'
+import { useSoundNotification } from '@/hooks/useSoundNotification'
 
 type NotificationType =
   | 'FRIEND_REQUEST'
@@ -100,6 +101,7 @@ function getNotificationAccent(type: NotificationType): string {
 export default function NotificationBell() {
   const tokens = useAuthStore((state) => state.tokens)
   const initialized = useAuthStore((state) => state.initialized)
+  const { playSound } = useSoundNotification()
 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [count, setCount] = useState(0)
@@ -163,6 +165,7 @@ export default function NotificationBell() {
     sock.on('new_notification', (notif: Notification) => {
       setNotifications((prev) => [notif, ...prev].slice(0, 50))
       setCount((prev) => prev + 1)
+      playSound('notification')
     })
 
     sock.on('notification_count', (data: { count: number }) => {
