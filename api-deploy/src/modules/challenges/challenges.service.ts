@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   BadRequestException,
   NotFoundException,
   ForbiddenException,
@@ -10,7 +11,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { ChatService } from '../chat/chat.service';
 import { LeaguesService } from '../leagues/leagues.service';
+import { RekognitionService } from '../rekognition/rekognition.service';
 import { CHALLENGE_TYPES, PRIZE_DISTRIBUTION, MANUAL_REVIEW_THRESHOLD, AUTO_APPROVE_DELAY_MS, ALLOWED_GAMES } from './challenges.constants';
+
+const AUTO_VERIFY_CONFIDENCE = 80;
+const CONSENSUS_RETRY_DELAY_MS = 5000;
 
 type ChallengeTypeKey = keyof typeof CHALLENGE_TYPES;
 
@@ -28,6 +33,7 @@ const PARTICIPANT_SELECT = {
 
 @Injectable()
 export class ChallengesService {
+  private readonly logger = new Logger(ChallengesService.name);
   private server: any = null; // Set by ChatGateway via setServer()
 
   constructor(
@@ -35,6 +41,7 @@ export class ChallengesService {
     private walletService: WalletService,
     @Inject(forwardRef(() => ChatService)) private chatService: ChatService,
     private leagueService: LeaguesService,
+    private rekognition: RekognitionService,
   ) {}
 
   setServer(server: any) {
@@ -307,8 +314,14 @@ export class ChallengesService {
       }
     }
 
-    await this.prisma.challengeResult.create({
-      data: { challengeId, userId, declaredRank: rank, screenshotUrl },
+    const result = await this.prisma.challengeResult.create({
+      data: {
+        challengeId,
+        userId,
+        declaredRank: rank,
+        screenshotUrl,
+        analysisStatus: screenshotUrl ? ('ANALYZING' as any) : ('FAILED' as any),
+      },
     });
 
     await this.prisma.challenge.update({
@@ -324,6 +337,14 @@ export class ChallengesService {
       totalPlayers: challenge.maxPlayers,
       submittedBy: userId,
     });
+
+    // Fire-and-forget Rekognition analysis (no await — runs in background)
+    if (screenshotUrl) {
+      this.analyzeResultAsync(result.id, screenshotUrl, challenge.game).catch((err) =>
+        this.logger.error(`Rekognition async failed for result=${result.id}`, err?.stack),
+      );
+    }
+
     if (updatedChallenge.results.length >= updatedChallenge.participants.length) {
       await this.checkConsensus(challengeId);
     }
@@ -331,19 +352,110 @@ export class ChallengesService {
     return updatedChallenge;
   }
 
-  // ─── CHECK CONSENSUS ─────────────────────────────────────────────────────────
+  // ─── ANALYZE RESULT (async, fire-and-forget) ────────────────────────────────────
 
-  async checkConsensus(challengeId: string) {
-    const challenge = await this.findOne(challengeId);
-    const ranks = challenge.results.map((r) => r.declaredRank).sort((a, b) => a - b);
-    const uniqueRanks = new Set(ranks);
+  private async analyzeResultAsync(
+    resultId: string,
+    screenshotUrl: string,
+    game: string,
+  ): Promise<void> {
+    let s3Key: string;
+    try {
+      s3Key = this.rekognition.extractS3Key(screenshotUrl);
+    } catch (err: any) {
+      this.logger.error(`Invalid screenshot URL for result=${resultId}: ${err?.message}`);
+      await this.prisma.challengeResult.update({
+        where: { id: resultId },
+        data: {
+          analysisStatus: 'FAILED' as any,
+          analyzedAt: new Date(),
+          rekognitionData: { error: 'invalid_url', message: err?.message } as any,
+        },
+      });
+      return;
+    }
 
-    const hasConsensus = uniqueRanks.size === ranks.length;
+    const analysis = await this.rekognition.analyzeScreenshot(s3Key, game);
+    const isHighConfidence =
+      analysis.confidence >= AUTO_VERIFY_CONFIDENCE && analysis.verifiedRank !== null;
+
+    const updated = await this.prisma.challengeResult.update({
+      where: { id: resultId },
+      data: {
+        verifiedRank: analysis.verifiedRank,
+        verifiedScore: analysis.verifiedScore,
+        confidence: analysis.confidence,
+        rekognitionData: analysis.rawData as any,
+        analyzedAt: new Date(),
+        analysisStatus: analysis.status as any,
+        dataSource: (isHighConfidence ? 'AUTO_VERIFIED' : 'SCREENSHOT') as any,
+      },
+    });
+
+    this.notifyChallenge(updated.challengeId, 'analysis_completed', {
+      resultId,
+      userId: updated.userId,
+      verifiedRank: analysis.verifiedRank,
+      confidence: analysis.confidence,
+      status: analysis.status,
+    });
+  }
+
+  // ─── CHECK CONSENSUS (hybrid: declared + Rekognition) ───────────────────────────
+
+  async checkConsensus(challengeId: string): Promise<void> {
+    const results = await this.prisma.challengeResult.findMany({
+      where: { challengeId },
+    });
+
+    // Wait until every result has reached a terminal analysis state
+    const allAnalyzed = results.every(
+      (r) => r.analysisStatus !== 'ANALYZING' && r.analysisStatus !== 'PENDING',
+    );
+
+    if (!allAnalyzed) {
+      this.logger.log(
+        `Consensus deferred for challenge=${challengeId} — ${results.filter((r) => r.analysisStatus === 'ANALYZING' || r.analysisStatus === 'PENDING').length} analyses pending`,
+      );
+      setTimeout(
+        () => this.checkConsensus(challengeId).catch((e) => this.logger.error(e?.message)),
+        CONSENSUS_RETRY_DELAY_MS,
+      );
+      return;
+    }
+
+    // Use verified rank when confidence is high enough, otherwise fall back to declared
+    const effectiveRanks = results.map((r) => {
+      const useVerified =
+        r.confidence !== null &&
+        r.confidence !== undefined &&
+        r.confidence >= AUTO_VERIFY_CONFIDENCE &&
+        r.verifiedRank !== null;
+      return {
+        userId: r.userId,
+        rank: useVerified ? (r.verifiedRank as number) : r.declaredRank,
+        source: useVerified ? ('AUTO_VERIFIED' as const) : ('DECLARED' as const),
+      };
+    });
+
+    const uniqueRanks = new Set(effectiveRanks.map((r) => r.rank));
+    const hasConsensus = uniqueRanks.size === effectiveRanks.length;
 
     if (hasConsensus) {
       await this.distributeWinnings(challengeId);
+      const autoVerified = effectiveRanks.filter((r) => r.source === 'AUTO_VERIFIED');
+      if (autoVerified.length > 0) {
+        this.notifyChallenge(challengeId, 'auto_verified', {
+          message: 'Résultats vérifiés automatiquement par IA',
+          verifiedCount: autoVerified.length,
+          totalCount: effectiveRanks.length,
+        });
+      }
     } else {
-      await this.createDispute(challengeId, 'Résultats contradictoires entre les joueurs');
+      await this.createDispute(
+        challengeId,
+        'Résultats contradictoires — vérification IA non concluante',
+      );
     }
   }
 

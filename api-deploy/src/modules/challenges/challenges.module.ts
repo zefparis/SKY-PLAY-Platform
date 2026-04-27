@@ -5,9 +5,10 @@ import { ChallengesController, AdminChallengesController } from './challenges.co
 import { WalletModule } from '../wallet/wallet.module';
 import { ChatModule } from '../chat/chat.module';
 import { LeaguesModule } from '../leagues/leagues.module';
+import { RekognitionModule } from '../rekognition/rekognition.module';
 
 @Module({
-  imports: [WalletModule, forwardRef(() => ChatModule), LeaguesModule],
+  imports: [WalletModule, forwardRef(() => ChatModule), LeaguesModule, RekognitionModule],
   controllers: [ChallengesController, AdminChallengesController],
   providers: [ChallengesService, ChallengeInviteService],
   exports: [ChallengesService, ChallengeInviteService],
