@@ -5,6 +5,7 @@ import AdBanner from '@/components/ads/AdBanner'
 import { I18nProvider } from '@/components/i18n/I18nProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import SessionRestorer from '@/components/providers/SessionRestorer'
+import KeepAlive from '@/components/providers/KeepAlive'
 import UsernameSetupModal from '@/components/auth/UsernameSetupModal'
 
 export const metadata: Metadata = {
@@ -52,6 +53,7 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <SessionRestorer />
+            <KeepAlive />
             <UsernameSetupModal />
             <Navbar />
             <div className="pt-20 pb-1 px-4">
