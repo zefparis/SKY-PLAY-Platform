@@ -5,6 +5,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
+  async getUnreadCount(userId: string): Promise<{ count: number }> {
+    const count = await this.prisma.notification.count({
+      where: { userId, read: false },
+    });
+    return { count };
+  }
+
   async getNotifications(userId: string, limit = 50, offset = 0) {
     const notifications = await this.prisma.notification.findMany({
       where: { userId },
@@ -37,7 +44,7 @@ export class NotificationsService {
 
     return this.prisma.notification.update({
       where: { id: notificationId },
-      data: { read: true },
+      data: { read: true, readAt: new Date() },
     });
   }
 
@@ -47,7 +54,7 @@ export class NotificationsService {
         userId,
         read: false,
       },
-      data: { read: true },
+      data: { read: true, readAt: new Date() },
     });
 
     return { updated: result.count };

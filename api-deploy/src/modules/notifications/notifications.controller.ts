@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   UseGuards,
@@ -27,8 +28,19 @@ export class NotificationsController {
     return this.notificationsService.getNotifications(req.user.id, limit, offset);
   }
 
+  @Get('unread-count')
+  async getUnreadCount(@Request() req) {
+    return this.notificationsService.getUnreadCount(req.user.id);
+  }
+
   @Post(':id/read')
   async markAsRead(@Request() req, @Param('id') id: string) {
+    return this.notificationsService.markAsRead(req.user.id, id);
+  }
+
+  // PATCH alias for the same operation (REST-friendly)
+  @Patch(':id/read')
+  async markAsReadPatch(@Request() req, @Param('id') id: string) {
     return this.notificationsService.markAsRead(req.user.id, id);
   }
 

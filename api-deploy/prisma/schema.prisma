@@ -433,6 +433,7 @@ model Notification {
   title     String
   body      String
   read      Boolean            @default(false)
+  readAt    DateTime?
   data      Json?
   createdAt DateTime           @default(now())
 

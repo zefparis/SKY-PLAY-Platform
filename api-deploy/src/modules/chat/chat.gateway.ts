@@ -275,6 +275,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         username: user.username,
         rooms: ['global'],
       });
+
+      // → Push the current unread notification count to the client
+      try {
+        const unread = await this.prisma.notification.count({
+          where: { userId: user.id, read: false },
+        });
+        client.emit('notification_count', { count: unread });
+      } catch (e) {
+        this.logger.warn(`Failed to fetch unread notification count for ${user.id}: ${e?.message}`);
+      }
     } catch (error) {
       this.logger.error(`Authentication failed: ${error.message}`);
       client.disconnect();
@@ -939,6 +949,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   pushNotification(userId: string, notif: any) {
     this.server.to(`user_${userId}`).emit('new_notification', notif);
+    // Refresh the unread badge count immediately after pushing a new notification.
+    // Best-effort: any error is swallowed so it never breaks the producer flow.
+    this.emitUnreadCount(userId).catch(() => {});
+  }
+
+  /**
+   * Recomputes the unread notification count for `userId` and emits it on the
+   * `notification_count` event. Used both on connection and whenever the count
+   * changes (new notification, mark-as-read).
+   */
+  async emitUnreadCount(userId: string) {
+    try {
+      const count = await this.prisma.notification.count({
+        where: { userId, read: false },
+      });
+      this.server.to(`user_${userId}`).emit('notification_count', { count });
+    } catch (e) {
+      this.logger.warn(`emitUnreadCount failed for ${userId}: ${e?.message}`);
+    }
   }
 
   // ===== FRIEND NOTIFICATIONS =====
