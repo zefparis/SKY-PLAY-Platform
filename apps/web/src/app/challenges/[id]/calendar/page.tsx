@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Clock, ArrowLeft, Play, Radio, Trophy, Users, AlertCircle } from 'lucide-react'
+import { Clock, ArrowLeft, Play, Radio, Trophy, Users, AlertCircle, MessageCircle, FileText } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
 import StreamPlayer from '@/components/tournaments/StreamPlayer'
 import Avatar from '@/components/ui/Avatar'
@@ -64,6 +64,7 @@ export default function ChallengeCalendarPage() {
   const [game, setGame] = useState('')
   const [type, setType] = useState('')
   const [participantCount, setParticipantCount] = useState(0)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [rounds, setRounds] = useState<Round[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -78,6 +79,7 @@ export default function ChallengeCalendarPage() {
       setGame(data.game ?? '')
       setType(data.type ?? '')
       setParticipantCount(data.participants ?? 0)
+      setConversationId(data.conversationId ?? null)
       setRounds(data.rounds ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur')
@@ -166,6 +168,7 @@ export default function ChallengeCalendarPage() {
                     match={match}
                     user={user}
                     now={now}
+                    conversationId={conversationId}
                     onStreamStarted={loadCalendar}
                   />
                 ))}
@@ -193,11 +196,13 @@ function MatchCard({
   match,
   user,
   now,
+  conversationId,
   onStreamStarted,
 }: {
   match: Match
   user: any
   now: number
+  conversationId: string | null
   onStreamStarted: () => void
 }) {
   const timeRemaining = match.deadlineAt
@@ -338,14 +343,22 @@ function MatchCard({
         </button>
       )}
 
-      {/* Jouer button — links to parent challenge (NOT match.id) */}
-      <div className="flex items-center justify-end pt-1">
+      {/* Primary CTA: jump into the challenge chat room. Falls back to the
+          challenge detail page if the conversation isn't ready yet. */}
+      <div className="flex flex-col items-stretch gap-1.5 pt-1">
+        <a
+          href={conversationId ? `/chat?conv=${conversationId}` : `/challenges/${match.challengeId}`}
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#0097FC] hover:bg-[#0097FC]/80 text-white text-xs font-bold rounded-lg transition-colors"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          Rejoindre le salon
+        </a>
         <a
           href={`/challenges/${match.challengeId}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0097FC] hover:bg-[#0097FC]/80 text-white text-xs font-semibold rounded-lg transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-white/15 hover:border-white/30 text-white/70 hover:text-white text-[11px] font-semibold rounded-lg transition-colors"
         >
-          <Play className="w-3 h-3" />
-          Jouer
+          <FileText className="w-3 h-3" />
+          Voir le défi
         </a>
       </div>
     </div>

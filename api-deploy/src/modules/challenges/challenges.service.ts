@@ -1103,8 +1103,17 @@ export class ChallengesService {
 
     const challengeAny = challenge as any;
     const participants = challengeAny.participants.map((p: any) => p.user);
+
+    // Look up the chat conversation for this challenge so the frontend can
+    // deep-link into the chat room from the calendar "Jouer" button.
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { challengeId },
+      select: { id: true },
+    });
+    const conversationId = conversation?.id ?? null;
+
     if (participants.length < 2) {
-      return { rounds: [], participants: participants.length, title: challenge.title, game: challenge.game, type: challenge.type };
+      return { rounds: [], participants: participants.length, title: challenge.title, game: challenge.game, type: challenge.type, conversationId };
     }
 
     // Generate matches if none exist
@@ -1155,7 +1164,7 @@ export class ChallengesService {
       .map(([round, matches]) => ({ round: parseInt(round, 10), matches }))
       .sort((a, b) => a.round - b.round);
 
-    return { rounds, participants: participants.length, title: challenge.title, game: challenge.game, type: challenge.type };
+    return { rounds, participants: participants.length, title: challenge.title, game: challenge.game, type: challenge.type, conversationId };
   }
 
   private async generateChallengeMatches(challengeId: string, players: { id: string; username: string; avatar?: string | null }[]) {

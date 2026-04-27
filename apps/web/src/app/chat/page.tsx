@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2, Phone, PhoneOff, Volume2, Bell, BellOff } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Send, Smile, Zap, Plus, Search, X, ArrowLeft, Paperclip, Swords, ChevronRight, Trash2, Phone, PhoneOff, Volume2, Bell, BellOff, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
@@ -108,6 +108,19 @@ export default function ChatPage() {
   const convId = activeConv.type !== 'GLOBAL' ? activeConv.conversationId : null
   const { messages: convMsgs, sendMessage: sendConv, sendImage } = useMessages(convId, socket)
   const { playSound, soundEnabled, toggleSound } = useSoundNotification()
+
+  // ── DEEP-LINK: open a specific conversation from /chat?conv=<id> ─────────────
+  const searchParams = useSearchParams()
+  const deepLinkConv = searchParams?.get('conv') ?? null
+  const [deepLinkConsumed, setDeepLinkConsumed] = useState(false)
+  useEffect(() => {
+    if (!deepLinkConv || deepLinkConsumed) return
+    const all = [...dms, ...challenges]
+    const target = all.find((c) => c.id === deepLinkConv)
+    if (!target) return
+    setActiveConv({ type: target.type, conversationId: target.id, conv: target })
+    setDeepLinkConsumed(true)
+  }, [deepLinkConv, deepLinkConsumed, dms, challenges])
 
   // ── STREAM BANNER (per-conversation: { streamUrl, streamType, playerName }) ─────
   type StreamInfo = { streamUrl: string; streamType: 'YOUTUBE' | 'TWITCH' | 'FACEBOOK'; playerName?: string }
@@ -629,7 +642,13 @@ export default function ChatPage() {
                   title="Voir le défi"
                   className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-white/8 text-white/70 hover:bg-white/15 transition flex items-center gap-1">
                   <ChevronRight className="w-4 h-4" />
-                  <span className="hidden sm:inline text-xs">Voir</span>
+                  <span className="hidden sm:inline text-xs">👁️ Voir</span>
+                </Link>
+                <Link href={`/challenges/${activeConv.conv.challengeId}/calendar`}
+                  title="Calendrier du défi"
+                  className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-white/8 text-white/70 hover:bg-white/15 transition flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span className="hidden sm:inline text-xs">📅 Calendrier</span>
                 </Link>
                 {activeConv.conv.challenge?.status === 'IN_PROGRESS' && (
                   <>
