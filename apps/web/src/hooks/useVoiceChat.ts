@@ -9,6 +9,7 @@ const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
   ],
 }
 
@@ -42,6 +43,8 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const retryCountRef = useRef<Map<string, number>>(new Map())
+  // Queue ICE candidates received before remoteDescription is set (per peer)
+  const pendingIceRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map())
 
   // Voice Activity Detection
   const startVAD = useCallback(() => {
@@ -235,6 +238,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
     setVoiceUsers([])
     setIsSpeaking(false)
     retryCountRef.current.clear()
+    pendingIceRef.current.clear()
   }, [currentVoiceRoom, socket])
 
   // Call a user
@@ -246,6 +250,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       // Auto-cancel after 30s if no response
       if (callTimeoutRef.current) clearTimeout(callTimeoutRef.current)
       callTimeoutRef.current = setTimeout(() => {
+        socket.emit('call_cancelled', { targetUserId })
         setCallingUser(null)
         setError(`${targetUsername} n'a pas répondu`)
         setTimeout(() => setError(null), 4000)
@@ -334,6 +339,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
         pc.close()
         peersRef.current.delete(socketId)
       }
+      pendingIceRef.current.delete(socketId)
       // Cleanup audio element
       const audioEl = audioElementsRef.current.get(socketId)
       if (audioEl) {
@@ -344,10 +350,24 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       }
     }
 
+    const flushPendingIce = async (pc: RTCPeerConnection, fromSocketId: string) => {
+      const queued = pendingIceRef.current.get(fromSocketId)
+      if (!queued || queued.length === 0) return
+      for (const c of queued) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(c))
+        } catch (err) {
+          console.error('Flush queued ICE error:', err)
+        }
+      }
+      pendingIceRef.current.delete(fromSocketId)
+    }
+
     const handleVoiceOffer = async ({ fromSocketId, offer }: any) => {
       const pc = createPeerConnection(fromSocketId)
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(offer))
+        await flushPendingIce(pc, fromSocketId)
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
         socket.emit('voice_answer', {
@@ -364,6 +384,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       if (pc) {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(answer))
+          await flushPendingIce(pc, fromSocketId)
         } catch (err) {
           console.error('Handle answer error:', err)
         }
@@ -372,12 +393,17 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
 
     const handleVoiceIceCandidate = async ({ fromSocketId, candidate }: any) => {
       const pc = peersRef.current.get(fromSocketId)
-      if (pc) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(candidate))
-        } catch (err) {
-          console.error('Add ICE candidate error:', err)
-        }
+      // Queue if peer not ready or remoteDescription not set yet
+      if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
+        const q = pendingIceRef.current.get(fromSocketId) ?? []
+        q.push(candidate)
+        pendingIceRef.current.set(fromSocketId, q)
+        return
+      }
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate))
+      } catch (err) {
+        console.error('Add ICE candidate error:', err)
       }
     }
 
@@ -463,6 +489,10 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current)
+        callTimeoutRef.current = null
+      }
       if (isInVoice) {
         leaveVoiceRoom()
       }
