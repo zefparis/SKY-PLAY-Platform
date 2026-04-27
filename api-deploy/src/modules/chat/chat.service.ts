@@ -1,7 +1,11 @@
 import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { v2 as cloudinary } from 'cloudinary';
 import { Server } from 'socket.io';
+
+// Statuses for which a CHALLENGE conversation should be visible in the user's chat sidebar.
+const ACTIVE_CHALLENGE_STATUSES = ['OPEN', 'FULL', 'IN_PROGRESS', 'VALIDATING'] as const;
 
 @Injectable()
 export class ChatService {
@@ -43,12 +47,54 @@ export class ChatService {
 
   async getUserConversations(userId: string) {
     const convs = await this.prisma.conversation.findMany({
-      where: { members: { some: { userId } } },
+      where: {
+        members: { some: { userId } },
+        archived: false,
+        // DMs are always shown; CHALLENGE rooms only while the challenge is active.
+        OR: [
+          { type: 'DM' },
+          {
+            type: 'CHALLENGE',
+            challenge: { status: { in: [...ACTIVE_CHALLENGE_STATUSES] as any } },
+          },
+        ],
+      },
       include: this.conversationInclude(userId),
       orderBy: { updatedAt: 'desc' },
     });
 
     return Promise.all(convs.map((c) => this.withUnread(c, userId)));
+  }
+
+  // ─── CRON: ARCHIVE COMPLETED CHALLENGE ROOMS ─────────────────────────────────
+  //
+  // Daily at 03:00 server time, mark CHALLENGE conversations whose challenge has
+  // been COMPLETED for more than 7 days as archived. DM conversations are never
+  // touched.
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async archiveCompletedChallengeConversations() {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const result = await this.prisma.conversation.updateMany({
+      where: {
+        type: 'CHALLENGE',
+        archived: false,
+        challenge: {
+          status: 'COMPLETED',
+          endedAt: { lt: sevenDaysAgo },
+        },
+      },
+      data: {
+        archived: true,
+        archivedAt: new Date(),
+      },
+    });
+
+    if (result.count > 0) {
+      this.logger.log(
+        `[archiveCompletedChallengeConversations] Archived ${result.count} challenge conversation(s) completed > 7d ago`,
+      );
+    }
   }
 
   // ─── MESSAGES ────────────────────────────────────────────────────────────────

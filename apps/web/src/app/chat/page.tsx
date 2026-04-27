@@ -389,11 +389,17 @@ export default function ChatPage() {
             </>
           )}
 
-          {/* Challenge rooms */}
-          {challenges.length > 0 && (
-            <>
-              <SectionLabel>Salons Défis</SectionLabel>
-              {challenges.filter(c => !search || c.challenge?.title.toLowerCase().includes(search.toLowerCase())).map(ch => {
+          {/* Challenge rooms — only active challenges (OPEN/FULL/IN_PROGRESS/VALIDATING) */}
+          {(() => {
+            const ACTIVE = new Set(['OPEN', 'FULL', 'IN_PROGRESS', 'VALIDATING'])
+            const activeChallenges = challenges.filter(c => c.challenge?.status && ACTIVE.has(c.challenge.status))
+            return (
+              <>
+                <SectionLabel>Salons Défis</SectionLabel>
+                {activeChallenges.length === 0 ? (
+                  <p className="px-4 py-2 text-xs text-white/30 italic">Aucun défi en cours</p>
+                ) : (
+                  activeChallenges.filter(c => !search || c.challenge?.title.toLowerCase().includes(search.toLowerCase())).map(ch => {
                 const isActive = activeConv.type === 'CHALLENGE' && activeConv.conversationId === ch.id
                 const isLive = ch.challenge?.status === 'IN_PROGRESS'
                 return (
@@ -420,9 +426,11 @@ export default function ChatPage() {
                     )}
                   </button>
                 )
-              })}
-            </>
-          )}
+              })
+                )}
+              </>
+            )
+          })()}
 
           {/* Global channels */}
           <SectionLabel>Channels Globaux</SectionLabel>
