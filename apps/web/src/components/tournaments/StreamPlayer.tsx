@@ -23,6 +23,12 @@ function extractYouTubeId(url: string): string | null {
   return null
 }
 
+function extractYouTubeChannel(url: string): string | null {
+  // Live stream by channel id: https://www.youtube.com/channel/UCxxx/live  or  /live_stream?channel=UCxxx
+  const m = url.match(/youtube\.com\/(?:channel\/(UC[a-zA-Z0-9_-]{20,})|live_stream\?channel=(UC[a-zA-Z0-9_-]{20,}))/)
+  return m ? (m[1] ?? m[2] ?? null) : null
+}
+
 function extractTwitchChannel(url: string): string | null {
   const m = url.match(/twitch\.tv\/([a-zA-Z0-9_]+)/)
   return m ? m[1] : null
@@ -32,8 +38,12 @@ export default function StreamPlayer({ streamUrl, streamType }: StreamPlayerProp
   const embedUrl = useMemo(() => {
     switch (streamType) {
       case 'YOUTUBE': {
+        const params = 'autoplay=1&mute=0&rel=0&modestbranding=1&enablejsapi=1'
         const id = extractYouTubeId(streamUrl)
-        return id ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1` : null
+        if (id) return `https://www.youtube.com/embed/${id}?${params}`
+        const channelId = extractYouTubeChannel(streamUrl)
+        if (channelId) return `https://www.youtube.com/embed/live_stream?channel=${channelId}&${params}`
+        return null
       }
       case 'TWITCH': {
         const channel = extractTwitchChannel(streamUrl)
@@ -61,7 +71,7 @@ export default function StreamPlayer({ streamUrl, streamType }: StreamPlayerProp
     <div className="w-full aspect-video rounded-xl overflow-hidden border border-[#2a2d3e] bg-black">
       <iframe
         src={embedUrl}
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
         className="w-full h-full"
         frameBorder="0"

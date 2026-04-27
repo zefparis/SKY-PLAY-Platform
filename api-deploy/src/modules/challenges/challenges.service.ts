@@ -1040,12 +1040,29 @@ export class ChallengesService {
     const playerName = match.player1.id === userId ? match.player1.username : match.player2.username;
 
     if (match.challengeId) {
-      this.notifyChallenge(match.challengeId, 'stream_started', {
+      const payload = {
         matchId,
         streamUrl,
         streamType,
         playerName,
-      });
+        challengeId: match.challengeId,
+      };
+      this.notifyChallenge(match.challengeId, 'stream_started', payload);
+
+      // Broadcast also into the challenge's chat conversation so users in the
+      // chat sidebar see the stream banner without joining the challenge page.
+      try {
+        const conv = await (this.prisma as any).conversation.findUnique({
+          where: { challengeId: match.challengeId },
+          select: { id: true },
+        });
+        if (conv && this.server) {
+          this.server.to(`conv_${conv.id}`).emit('stream_started', {
+            ...payload,
+            conversationId: conv.id,
+          });
+        }
+      } catch {}
     }
 
     return updated;

@@ -14,6 +14,7 @@ import { useMessages } from '@/hooks/useMessages'
 import { useFriendships } from '@/hooks/useFriendships'
 import { useSoundNotification } from '@/hooks/useSoundNotification'
 import EmojiPicker from '@/components/chat/EmojiPicker'
+import StreamPlayer from '@/components/tournaments/StreamPlayer'
 import VoiceChannelList from '@/components/voice/VoiceChannelList'
 import VoiceRoom from '@/components/voice/VoiceRoom'
 import IncomingCallModal from '@/components/voice/IncomingCallModal'
@@ -107,6 +108,57 @@ export default function ChatPage() {
   const convId = activeConv.type !== 'GLOBAL' ? activeConv.conversationId : null
   const { messages: convMsgs, sendMessage: sendConv, sendImage } = useMessages(convId, socket)
   const { playSound, soundEnabled, toggleSound } = useSoundNotification()
+
+  // ── STREAM BANNER (per-conversation: { streamUrl, streamType, playerName }) ─────
+  type StreamInfo = { streamUrl: string; streamType: 'YOUTUBE' | 'TWITCH' | 'FACEBOOK'; playerName?: string }
+  const [streamByConv, setStreamByConv] = useState<Record<string, StreamInfo>>({})
+  const [streamHidden, setStreamHidden] = useState<Record<string, boolean>>({})
+
+  // ── STREAM: listen for live stream announcements on the chat socket ───────────
+  useEffect(() => {
+    if (!socket) return
+    const handler = (data: { conversationId?: string; streamUrl: string; streamType: string; playerName?: string }) => {
+      if (!data?.conversationId || !data.streamUrl) return
+      setStreamByConv((prev) => ({
+        ...prev,
+        [data.conversationId!]: {
+          streamUrl: data.streamUrl,
+          streamType: (data.streamType as StreamInfo['streamType']) ?? 'YOUTUBE',
+          playerName: data.playerName,
+        },
+      }))
+      setStreamHidden((prev) => ({ ...prev, [data.conversationId!]: false }))
+    }
+    socket.on('stream_started', handler)
+    return () => { socket.off('stream_started', handler) }
+  }, [socket])
+
+  // ── STREAM: fetch existing stream when opening a CHALLENGE conv ───────────────
+  useEffect(() => {
+    if (activeConv.type !== 'CHALLENGE') return
+    const challengeId = activeConv.conv.challengeId
+    const conversationId = activeConv.conversationId
+    if (!challengeId || streamByConv[conversationId]) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`${API}/challenges/${challengeId}`)
+        if (!res.ok) return
+        const data = await res.json()
+        const match = (data?.matches ?? []).find((m: any) => m.streamUrl)
+        if (cancelled || !match) return
+        setStreamByConv((prev) => ({
+          ...prev,
+          [conversationId]: {
+            streamUrl: match.streamUrl,
+            streamType: match.streamType ?? 'YOUTUBE',
+            playerName: match.player1?.username ?? match.player2?.username,
+          },
+        }))
+      } catch {}
+    })()
+    return () => { cancelled = true }
+  }, [activeConv, streamByConv])
 
   // ── SOUND: play "pop" on incoming foreign message not in the active conv ────
   useEffect(() => {
@@ -617,7 +669,35 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* ── MESSAGES ────────────────────────────────────────── */}
+        {/* ── STREAM BANNER (CHALLENGE conv with active streamUrl) ───────────── */}
+        {activeConv.type === 'CHALLENGE' && streamByConv[activeConv.conversationId] && (() => {
+          const info = streamByConv[activeConv.conversationId]
+          const hidden = !!streamHidden[activeConv.conversationId]
+          const title = info.playerName ?? activeConv.conv.challenge?.title ?? 'Match en cours'
+          return (
+            <div className="shrink-0 border-b border-white/8 bg-[#00165F]/30 px-3 sm:px-4 py-2.5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black bg-[#FD2E5F] text-white animate-pulse">● LIVE</span>
+                  <span className="text-xs sm:text-sm font-bold text-white truncate">{title}</span>
+                </div>
+                <button
+                  onClick={() => setStreamHidden((p) => ({ ...p, [activeConv.conversationId]: !hidden }))}
+                  className="shrink-0 px-2 py-1 rounded-lg text-[11px] font-semibold bg-white/8 hover:bg-white/15 text-white/70 hover:text-white transition"
+                >
+                  {hidden ? 'Afficher le stream ▲' : 'Masquer le stream ▼'}
+                </button>
+              </div>
+              {!hidden && (
+                <div className="max-w-3xl mx-auto">
+                  <StreamPlayer streamUrl={info.streamUrl} streamType={info.streamType} />
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* ── MESSAGES ───────────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4 space-y-1" style={{ minHeight: 0 }}>
           {activeMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 px-4">
