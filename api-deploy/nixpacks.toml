@@ -1,2 +1,7 @@
 [phases.setup]
 nixPkgs = ['nodejs_20', 'npm-10_x', 'openssl']
+
+# Override default 'npm ci' — api-deploy/package-lock.json is not maintained
+# in a monorepo workspace setup, so use 'npm install' which tolerates drift.
+[phases.install]
+cmds = ['npm install --no-audit --no-fund']
