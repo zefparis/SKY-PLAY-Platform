@@ -4,8 +4,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { v2 as cloudinary } from 'cloudinary';
 import { Server } from 'socket.io';
 
-// Statuses for which a CHALLENGE conversation should be visible in the user's chat sidebar.
-const ACTIVE_CHALLENGE_STATUSES = ['OPEN', 'FULL', 'IN_PROGRESS', 'VALIDATING'] as const;
+// A CHALLENGE conversation stays visible in the sidebar unless its challenge
+// has reached a terminal state. Using a blacklist is safer than a whitelist
+// — any new intermediate status automatically remains visible.
+const TERMINAL_CHALLENGE_STATUSES = ['COMPLETED', 'CANCELLED'] as const;
 
 @Injectable()
 export class ChatService {
@@ -50,12 +52,13 @@ export class ChatService {
       where: {
         members: { some: { userId } },
         archived: false,
-        // DMs are always shown; CHALLENGE rooms only while the challenge is active.
+        // DMs are always shown; CHALLENGE rooms are shown as long as the
+        // underlying challenge has not reached a terminal state.
         OR: [
           { type: 'DM' },
           {
             type: 'CHALLENGE',
-            challenge: { status: { in: [...ACTIVE_CHALLENGE_STATUSES] as any } },
+            challenge: { status: { notIn: [...TERMINAL_CHALLENGE_STATUSES] as any } },
           },
         ],
       },
@@ -166,11 +169,36 @@ export class ChatService {
     return conv.id;
   }
 
-  async createChallengeConversation(challengeId: string, participantIds: string[]) {
+  async createChallengeConversation(
+    challengeId: string,
+    participantIds: string[],
+    opts?: { systemMessage?: string },
+  ) {
     const existing = await this.prisma.conversation.findFirst({
       where: { challengeId },
     });
-    if (existing) return existing;
+    if (existing) {
+      // Ensure every passed participant is a member (idempotent top-up)
+      if (participantIds.length > 0) {
+        await Promise.all(
+          participantIds.map((userId) =>
+            this.prisma.conversationMember
+              .upsert({
+                where: {
+                  conversationId_userId: {
+                    conversationId: existing.id,
+                    userId,
+                  },
+                },
+                update: {},
+                create: { conversationId: existing.id, userId },
+              })
+              .catch(() => null),
+          ),
+        );
+      }
+      return existing;
+    }
 
     const conv = await this.prisma.conversation.create({
       data: {
@@ -183,11 +211,32 @@ export class ChatService {
     await this.prisma.conversationMessage.create({
       data: {
         conversationId: conv.id,
-        content: '⚔️ Le défi a commencé ! Coordonnez-vous ici.',
+        content: opts?.systemMessage ?? '⚔️ Salon du défi ouvert — discutez ici en attendant le démarrage.',
         type: 'SYSTEM',
       },
     });
 
+    return conv;
+  }
+
+  // Idempotently add a single user to an existing CHALLENGE conversation.
+  // Creates the conversation on the fly if it doesn't exist yet.
+  async addChallengeConversationMember(challengeId: string, userId: string) {
+    const conv = await this.prisma.conversation.findFirst({
+      where: { challengeId },
+    });
+    if (!conv) {
+      return this.createChallengeConversation(challengeId, [userId]);
+    }
+    await this.prisma.conversationMember
+      .upsert({
+        where: {
+          conversationId_userId: { conversationId: conv.id, userId },
+        },
+        update: {},
+        create: { conversationId: conv.id, userId },
+      })
+      .catch(() => null);
     return conv;
   }
 

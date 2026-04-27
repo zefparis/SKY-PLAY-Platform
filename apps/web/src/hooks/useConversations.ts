@@ -64,8 +64,16 @@ export function useConversations(socket: Socket | null) {
       })
       if (!res.ok) return
       const data: Conversation[] = await res.json()
+      const challengeConvs = data.filter((c) => c.type === 'CHALLENGE')
+      // eslint-disable-next-line no-console
+      console.log('[useConversations] challenge convs:', challengeConvs.map((c) => ({
+        id: c.id,
+        challengeId: c.challengeId,
+        status: c.challenge?.status,
+        title: c.challenge?.title,
+      })))
       setDms(data.filter((c) => c.type === 'DM'))
-      setChallenges(data.filter((c) => c.type === 'CHALLENGE'))
+      setChallenges(challengeConvs)
     } catch (e) {
       console.error('[useConversations]', e)
     } finally {

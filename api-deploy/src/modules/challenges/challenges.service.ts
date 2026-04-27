@@ -116,6 +116,14 @@ export class ChallengesService {
       data: { potTotal: config.entryFee },
     });
 
+    // Create the challenge chat room immediately so participants can coordinate
+    // before the challenge actually starts (OPEN/FULL statuses).
+    try {
+      await this.chatService.createChallengeConversation(challenge.id, [userId]);
+    } catch (err) {
+      console.error('[ChallengesService] Failed to create challenge conversation on create:', err?.message);
+    }
+
     return this.findOne(challenge.id);
   }
 
@@ -248,6 +256,13 @@ export class ChallengesService {
     await this.prisma.challengeParticipant.create({
       data: { challengeId, userId, hasPaid: true },
     });
+
+    // Add the joiner to the existing challenge chat room (or create it on the fly).
+    try {
+      await this.chatService.addChallengeConversationMember(challengeId, userId);
+    } catch (err) {
+      console.error('[ChallengesService] Failed to add member to challenge conversation:', err?.message);
+    }
 
     const newPot = challenge.potTotal + challenge.entryFee;
     const newCount = challenge.participants.length + 1;
