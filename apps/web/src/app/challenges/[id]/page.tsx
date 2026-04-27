@@ -10,6 +10,7 @@ import { formatSKY, computeNetPot, computePrizes } from '@/lib/currency';
 import ChallengeRules from '@/components/challenges/ChallengeRules';
 import AdSlot from '@/components/ads/AdSlot';
 import { useI18n } from '@/components/i18n/I18nProvider';
+import { useAuthStore } from '@/lib/auth-store';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -40,6 +41,7 @@ export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { t } = useI18n();
+  const currentUser = useAuthStore((s) => s.user);
   const [challenge, setChallenge] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -57,7 +59,8 @@ export default function ChallengePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [disputeReason, setDisputeReason] = useState('');
   const [showRules, setShowRules] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  // Canonical DB user.id (NOT Cognito sub) — matches participants[].userId
+  const currentUserId = currentUser?.id ?? null;
   const [submissionStatus, setSubmissionStatus] = useState<{ submittedCount: number; totalPlayers: number } | null>(null);
   const [spectatorEvents, setSpectatorEvents] = useState<SpectatorEvent[]>([]);
 
@@ -80,13 +83,6 @@ export default function ChallengePage() {
 
   useEffect(() => {
     load();
-    try {
-      const token = getToken();
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setCurrentUserId(payload.sub || payload.id || null);
-      }
-    } catch {}
   }, [load]);
 
   useEffect(() => {
@@ -172,10 +168,22 @@ export default function ChallengePage() {
   };
   const statusColor = STATUS_COLORS[challenge.status] ?? 'text-gray-400 bg-gray-400/10';
   const statusLabel = STATUS_LABELS[challenge.status] ?? challenge.status;
-  const isParticipant = challenge.participants?.some((p: any) => p.userId === currentUserId);
+  const isParticipant = !!currentUserId && challenge.participants?.some((p: any) => p.userId === currentUserId);
   const myParticipant = challenge.participants?.find((p: any) => p.userId === currentUserId);
   const myResult = challenge.results?.find((r: any) => r.userId === currentUserId);
   const sortedResults = challenge.results ? [...challenge.results].sort((a: any, b: any) => a.declaredRank - b.declaredRank) : [];
+
+  // Debug log — helps diagnose visibility issues for the submit-result button
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line no-console
+    console.log('[Challenge debug]', {
+      isParticipant,
+      myResult,
+      status: challenge.status,
+      currentUserId,
+      participants: challenge.participants?.map((p: any) => p.userId),
+    });
+  }
 
   return (
     <div className="min-h-screen dark:bg-[#00165F]/5 bg-gray-50">
@@ -377,6 +385,21 @@ export default function ChallengePage() {
           </div>
         )}
 
+        {/* Fallback submit button — ensures participants on IN_PROGRESS always see the action */}
+        {isParticipant && challenge.status === 'IN_PROGRESS' && !myResult && (
+          <div className="mb-4">
+            <button
+              onClick={() => {
+                const el = document.getElementById('submit-result-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-[#FD2E5F] hover:bg-[#FD2E5F]/90 text-white font-bold rounded-xl py-3 transition"
+            >
+              📸 Soumettre mon résultat
+            </button>
+          </div>
+        )}
+
         {/* Section 4 — Actions */}
         {error && (
           <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-sm mb-4">
@@ -415,7 +438,7 @@ export default function ChallengePage() {
 
         {/* IN_PROGRESS — Déclarer résultat */}
         {(challenge.status === 'IN_PROGRESS' || challenge.status === 'VALIDATING') && isParticipant && !myResult && (
-          <div className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
+          <div id="submit-result-section" className="rounded-2xl dark:bg-white/5 bg-white border dark:border-white/10 border-gray-100 p-4 sm:p-6 mb-4">
             <h2 className="font-bold dark:text-white text-[#00165F] mb-4">{t('challenge.detail.result.title')}</h2>
             <div className="mb-4">
               <label className="text-xs font-semibold dark:text-white/60 text-[#00165F]/60 mb-2 block">{t('challenge.detail.result.rank')}</label>
