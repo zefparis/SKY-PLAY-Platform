@@ -4,6 +4,7 @@ import { memoryStorage } from 'multer';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
+import { IceServersService } from './ice-servers.service';
 import { UsersModule } from '../users/users.module';
 import { ChallengesModule } from '../challenges/challenges.module';
 import { TournamentsModule } from '../tournaments/tournaments.module';
@@ -19,8 +20,8 @@ import { WalletModule } from '../wallet/wallet.module';
     WalletModule,
     MulterModule.register({ storage: memoryStorage() }),
   ],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, ChatService, IceServersService],
   controllers: [ChatController],
-  exports: [ChatService, ChatGateway],
+  exports: [ChatService, ChatGateway, IceServersService],
 })
 export class ChatModule {}

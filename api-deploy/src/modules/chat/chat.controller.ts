@@ -16,6 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import { ChatService } from './chat.service';
+import { IceServersService } from './ice-servers.service';
 import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { Logger } from '@nestjs/common';
 
@@ -24,7 +25,10 @@ import { Logger } from '@nestjs/common';
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
-  constructor(private chatService: ChatService) {
+  constructor(
+    private chatService: ChatService,
+    private iceServersService: IceServersService,
+  ) {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -45,6 +49,12 @@ export class ChatController {
   @Get('conversations')
   getConversations(@Request() req: any) {
     return this.chatService.getUserConversations(req.user.id);
+  }
+
+  @Get('ice-servers')
+  async getIceServers() {
+    const iceServers = await this.iceServersService.getIceServers();
+    return { iceServers };
   }
 
   @Post('conversations/dm/:userId')

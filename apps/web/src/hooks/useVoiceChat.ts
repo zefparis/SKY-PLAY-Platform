@@ -4,14 +4,32 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Socket } from 'socket.io-client'
 import { VoiceUser } from '@/types/voice'
 import { useCallRingtone } from './useCallRingtone'
+import { useAuthStore } from '@/lib/auth-store'
 
-const RTC_CONFIG: RTCConfiguration = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-  ],
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+
+// Fallback ICE servers used when /chat/ice-servers is unreachable.
+// OpenRelay is a public shared TURN — unreliable in prod but fine for dev.
+const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+]
 
 type UseVoiceChatProps = {
   socket: Socket | null
@@ -45,6 +63,36 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
   const retryCountRef = useRef<Map<string, number>>(new Map())
   // Queue ICE candidates received before remoteDescription is set (per peer)
   const pendingIceRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map())
+  // ICE servers fetched from API (Twilio TURN if configured, else openrelay/STUN)
+  const iceServersRef = useRef<RTCIceServer[]>(FALLBACK_ICE_SERVERS)
+  const iceServersFetchedAtRef = useRef<number>(0)
+  const tokens = useAuthStore((s) => s.tokens)
+
+  // Fetch ICE servers from API. Twilio tokens last 24h, so re-fetch every hour.
+  const fetchIceServers = useCallback(async (): Promise<RTCIceServer[]> => {
+    const now = Date.now()
+    const cacheValid = now - iceServersFetchedAtRef.current < 60 * 60 * 1000
+    if (cacheValid && iceServersRef.current !== FALLBACK_ICE_SERVERS) {
+      return iceServersRef.current
+    }
+    const token = tokens?.idToken || tokens?.accessToken
+    if (!token || !API_URL) return FALLBACK_ICE_SERVERS
+    try {
+      const res = await fetch(`${API_URL}/chat/ice-servers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      if (Array.isArray(data?.iceServers) && data.iceServers.length > 0) {
+        iceServersRef.current = data.iceServers
+        iceServersFetchedAtRef.current = now
+        return data.iceServers
+      }
+    } catch (err) {
+      console.warn('Failed to fetch ICE servers, using fallback:', err)
+    }
+    return FALLBACK_ICE_SERVERS
+  }, [tokens?.idToken, tokens?.accessToken])
 
   // Voice Activity Detection
   const startVAD = useCallback(() => {
@@ -101,7 +149,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
   // Create peer connection
   const createPeerConnection = useCallback(
     (socketId: string): RTCPeerConnection => {
-      const pc = new RTCPeerConnection(RTC_CONFIG)
+      const pc = new RTCPeerConnection({ iceServers: iceServersRef.current })
 
       pc.onicecandidate = (event) => {
         if (event.candidate && socket) {
@@ -173,6 +221,10 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
       }
 
       try {
+        // Fetch ICE servers BEFORE getUserMedia so peer connections are created
+        // with the freshest TURN credentials available.
+        await fetchIceServers()
+
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -200,7 +252,7 @@ export function useVoiceChat({ socket, isConnected }: UseVoiceChatProps) {
         }
       }
     },
-    [socket, isConnected, startVAD],
+    [socket, isConnected, startVAD, fetchIceServers],
   )
 
   // Leave voice room
