@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Clock, ArrowLeft, Play, Radio, Trophy, Users, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
 import StreamPlayer from '@/components/tournaments/StreamPlayer'
+import Avatar from '@/components/ui/Avatar'
 import { getSocket } from '@/lib/socket'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
@@ -267,22 +268,12 @@ function MatchCard({
       {/* Players row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <img
-            src={match.player1.avatar || '/default-avatar.png'}
-            alt={match.player1.username}
-            className="w-8 h-8 rounded-full shrink-0"
-            onError={(e) => { (e.target as HTMLImageElement).src = '/default-avatar.png' }}
-          />
+          <Avatar src={match.player1.avatar} username={match.player1.username} size={32} />
           <span className="text-white font-semibold text-sm truncate">{match.player1.username}</span>
         </div>
         <span className="text-white/40 text-xs font-bold mx-2 shrink-0">VS</span>
         <div className="flex items-center gap-2 min-w-0 flex-row-reverse">
-          <img
-            src={match.player2.avatar || '/default-avatar.png'}
-            alt={match.player2.username}
-            className="w-8 h-8 rounded-full shrink-0"
-            onError={(e) => { (e.target as HTMLImageElement).src = '/default-avatar.png' }}
-          />
+          <Avatar src={match.player2.avatar} username={match.player2.username} size={32} />
           <span className="text-white font-semibold text-sm truncate text-right">{match.player2.username}</span>
         </div>
       </div>

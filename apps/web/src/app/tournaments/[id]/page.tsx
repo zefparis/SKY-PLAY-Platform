@@ -7,6 +7,7 @@ import { Trophy, Users, Calendar, ArrowLeft, Play, Radio } from 'lucide-react'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { useAuthStore } from '@/lib/auth-store'
 import StreamPlayer from '@/components/tournaments/StreamPlayer'
+import Avatar from '@/components/ui/Avatar'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -230,11 +231,7 @@ export default function TournamentPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {tournament.participants.map((p) => (
                 <div key={p.user.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-3">
-                  <img
-                    src={p.user.avatar || '/default-avatar.png'}
-                    alt={p.user.username}
-                    className="w-8 h-8 rounded-full"
-                  />
+                  <Avatar src={p.user.avatar} username={p.user.username} size={32} />
                   <span className="text-white text-sm font-medium">{p.user.username}</span>
                 </div>
               ))}
