@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { ChallengesService } from '../challenges/challenges.service';
 import { JwtDualGuard } from '../auth/guards/jwt-dual.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
@@ -23,7 +24,10 @@ import {
 @UseGuards(JwtDualGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly challengesService: ChallengesService,
+  ) {}
 
   @Get('stats')
   async getStats() {
@@ -73,6 +77,13 @@ export class AdminController {
     @Query('limit') limit?: number,
   ) {
     return this.adminService.getChallenges(status, type, page, limit);
+  }
+
+  // NOTE: must be declared BEFORE `challenges/:id` so the literal segments
+  // don't get captured by the dynamic `:id` route.
+  @Get('challenges/winnings/pending')
+  async getPendingWinnings() {
+    return this.challengesService.getWinningsPending();
   }
 
   @Get('challenges/:id')

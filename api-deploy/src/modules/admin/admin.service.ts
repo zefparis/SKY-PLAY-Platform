@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ChallengesService } from '../challenges/challenges.service';
 import { UserRole, TransactionType, TransactionStatus, ChallengeStatus } from '@prisma/client';
 import { 
   GetUsersQueryDto, 
@@ -20,7 +21,10 @@ import {
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private challengesService: ChallengesService,
+  ) {}
 
   private async createAdminLog(adminId: string, action: string, targetId?: string, targetType?: string, details?: any) {
     // Best-effort logging — never let an audit log failure break the admin action itself
@@ -363,11 +367,23 @@ export class AdminService {
 
     if (!challenge) throw new NotFoundException('Challenge not found');
 
+    // 1) Persist admin-decided ranks both on ChallengeParticipant and as
+    //    ChallengeResult rows — the latter is what `distributeWinnings`
+    //    reads to compute the prize split.
     await this.prisma.$transaction(async (tx) => {
       for (const result of dto.results) {
         await tx.challengeParticipant.update({
           where: { challengeId_userId: { challengeId: id, userId: result.userId } },
           data: { rank: result.rank },
+        });
+        await tx.challengeResult.upsert({
+          where: { challengeId_userId: { challengeId: id, userId: result.userId } },
+          create: {
+            challengeId: id,
+            userId: result.userId,
+            declaredRank: result.rank,
+          },
+          update: { declaredRank: result.rank },
         });
       }
 
@@ -376,6 +392,15 @@ export class AdminService {
         data: { status: ChallengeStatus.COMPLETED },
       });
     });
+
+    // 2) Distribute pot, commission, XP, notifications — using the same
+    //    proven path as the regular flow (handles PENDING_REVIEW / AUTO_APPROVED).
+    try {
+      await this.challengesService.distributeWinnings(id);
+    } catch (e: any) {
+      this.logger.error(`distributeWinnings failed after forceResult on ${id}: ${e?.message ?? e}`);
+      throw e;
+    }
 
     await this.createAdminLog(adminId, 'FORCE_RESULT', id, 'CHALLENGE', { results: dto.results });
     return { success: true };
@@ -421,22 +446,11 @@ export class AdminService {
 
     if (!dispute) throw new NotFoundException('Dispute not found');
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.challengeDispute.update({
-        where: { id },
-        data: {
-          status: 'RESOLVED',
-          adminNote: dto.adminNote,
-          resolvedBy: adminId,
-          resolvedAt: new Date(),
-        },
-      });
-
-      await tx.challenge.update({
-        where: { id: dispute.challengeId },
-        data: { status: ChallengeStatus.COMPLETED },
-      });
-    });
+    // Delegate to the canonical implementation in ChallengesService which
+    // upserts ChallengeResult rows for every participant (winner=rank 1,
+    // others=2..N), updates the dispute, distributes the pot via
+    // `distributeWinnings`, and notifies all participants.
+    await this.challengesService.resolveDispute(id, dto.winnerId, dto.adminNote, adminId);
 
     await this.createAdminLog(adminId, 'RESOLVE_DISPUTE', id, 'DISPUTE', { winnerId: dto.winnerId, adminNote: dto.adminNote });
     return { success: true };
