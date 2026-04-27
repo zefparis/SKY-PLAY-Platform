@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/auth-store'
 import StreamPlayer from '@/components/tournaments/StreamPlayer'
 import Avatar from '@/components/ui/Avatar'
 import { getSocket } from '@/lib/socket'
+import GoLiveButton from '@/components/streaming/GoLiveButton'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -301,6 +302,19 @@ function MatchCard({
       {hasStream && match.streamType && !editing && (
         <div>
           <StreamPlayer streamUrl={match.streamUrl!} streamType={match.streamType} />
+        </div>
+      )}
+
+      {/* Native Go Live — only for IN_PROGRESS matches the user plays in */}
+      {match.status === 'IN_PROGRESS' && userIsPlayer && !hasStream && (
+        <div className="flex justify-center">
+          <GoLiveButton
+            matchId={match.id}
+            matchTitle={`${match.player1.username} vs ${match.player2.username}`}
+            onStarted={() => onStreamStarted()}
+            onStopped={() => onStreamStarted()}
+            compact
+          />
         </div>
       )}
 

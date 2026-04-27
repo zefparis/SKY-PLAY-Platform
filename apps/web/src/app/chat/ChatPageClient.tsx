@@ -19,6 +19,7 @@ import VoiceChannelList from '@/components/voice/VoiceChannelList'
 import VoiceRoom from '@/components/voice/VoiceRoom'
 import IncomingCallModal from '@/components/voice/IncomingCallModal'
 import PersistentVoicePanel from '@/components/voice/PersistentVoicePanel'
+import ChatGoLive from '@/components/streaming/ChatGoLive'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -691,6 +692,13 @@ export default function ChatPageClient() {
                       <span className="text-sm leading-none">📸</span>
                       <span className="hidden sm:inline text-xs">Résultat</span>
                     </button>
+                    {/* Native screen-capture broadcast — only matters while
+                        the challenge is IN_PROGRESS, so we mount it next to
+                        the result-submission button. */}
+                    <ChatGoLive
+                      challengeId={activeConv.conv.challengeId}
+                      challengeTitle={activeConv.conv.challenge?.title}
+                    />
                   </>
                 )}
               </>
