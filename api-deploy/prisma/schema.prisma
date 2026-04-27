@@ -252,6 +252,14 @@ model ChallengeResult {
   externalMatchId String?
   submittedAt     DateTime     @default(now())
 
+  // ─── AWS Rekognition analysis ────────────────────────────────
+  rekognitionData Json?
+  verifiedRank    Int?
+  verifiedScore   Int?
+  confidence      Float?
+  analyzedAt      DateTime?
+  analysisStatus  AnalysisStatus @default(PENDING)
+
   @@unique([challengeId, userId])
   @@index([challengeId])
   @@map("challenge_results")
@@ -301,6 +309,15 @@ enum ResultSource {
   SCREENSHOT
   STEAM_API
   EPIC_API
+  AUTO_VERIFIED
+}
+
+enum AnalysisStatus {
+  PENDING
+  ANALYZING
+  ANALYZED
+  FAILED
+  LOW_CONFIDENCE
 }
 
 // ─── BYOG — LINKED GAMING ACCOUNTS ──────────────────────────────────────────
