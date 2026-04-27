@@ -56,7 +56,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
 
   const username = user?.username || 'Player'
-  const email = user?.email || ''
   const token = tokens?.idToken || tokens?.accessToken
 
   const loadData = useCallback(async () => {
@@ -229,7 +228,6 @@ export default function ProfilePage() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                     <div>
                       <h1 className="title-tech dark:text-white text-[#00165F] text-3xl font-extrabold">{username}</h1>
-                      <p className="dark:text-white/60 text-[#00165F]/60 mt-1">{email}</p>
                     </div>
                     <Badge variant="danger">{rankName}</Badge>
                   </div>

@@ -166,6 +166,31 @@ export class FriendshipsService {
     return updated;
   }
 
+  /**
+   * Sender cancels their own PENDING outgoing friend request.
+   * userId  = the sender (current authenticated user)
+   * targetUserId = the user they originally sent the request to
+   */
+  async cancelFriendRequest(userId: string, targetUserId: string) {
+    const friendship = await this.prisma.friendship.findFirst({
+      where: {
+        senderId: userId,
+        receiverId: targetUserId,
+        status: FriendshipStatus.PENDING,
+      },
+    });
+
+    if (!friendship) {
+      throw new NotFoundException('No pending friend request to cancel');
+    }
+
+    await this.prisma.friendship.delete({
+      where: { id: friendship.id },
+    });
+
+    return { message: 'Friend request cancelled' };
+  }
+
   async declineFriendRequest(userId: string, senderId: string) {
     const friendship = await this.prisma.friendship.findFirst({
       where: {

@@ -33,6 +33,11 @@ export class FriendshipsController {
     return this.friendshipsService.declineFriendRequest(req.user.id, userId);
   }
 
+  @Delete('request/:userId')
+  async cancelRequest(@Request() req, @Param('userId') userId: string) {
+    return this.friendshipsService.cancelFriendRequest(req.user.id, userId);
+  }
+
   @Delete(':userId')
   async removeFriend(@Request() req, @Param('userId') userId: string) {
     return this.friendshipsService.removeFriend(req.user.id, userId);

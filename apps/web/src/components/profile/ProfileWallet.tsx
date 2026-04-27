@@ -68,7 +68,7 @@ export default function ProfileWallet({
       <div className="bg-gradient-to-br from-secondary/20 to-danger/20 rounded-xl p-6 mb-6 border border-secondary/30 shadow-glow-blue">
         <p className="text-primary/70 dark:text-white/60 text-sm mb-2">{t('profileWallet.balance')}</p>
         <p className="text-primary dark:text-white text-4xl font-extrabold tabular-nums">
-          {balance.toLocaleString('fr-FR')} <span className="text-2xl text-secondary">CFA</span>
+          {balance.toLocaleString('fr-FR')} <span className="text-2xl text-secondary">SKY</span>
         </p>
         
         <div className="flex gap-3 mt-6">
@@ -114,7 +114,7 @@ export default function ProfileWallet({
                 </div>
                 <p className={`font-semibold tabular-nums ${getTransactionColor(tx.type)}`}>
                   {tx.type === 'deposit' || tx.type === 'win' ? '+' : '-'}
-                  {tx.amount.toLocaleString('fr-FR')} CFA
+                  {tx.amount.toLocaleString('fr-FR')} SKY
                 </p>
               </div>
             ))}

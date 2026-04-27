@@ -48,7 +48,7 @@ export function useFriendships() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch friends list
+  // Fetch friends list — API returns a flat array of friends (mapped on backend)
   const fetchFriends = useCallback(async () => {
     if (!tokens?.idToken) return
 
@@ -59,14 +59,15 @@ export function useFriendships() {
 
       if (res.ok) {
         const data = await res.json()
-        setFriends(data.friends || [])
+        const arr = Array.isArray(data) ? data : (data.friends || [])
+        setFriends(arr)
       }
     } catch (err) {
       console.error('Failed to fetch friends:', err)
     }
   }, [tokens?.idToken])
 
-  // Fetch pending requests
+  // Fetch pending requests — API returns a flat array with sender fields + requestId/requestedAt
   const fetchPendingRequests = useCallback(async () => {
     if (!tokens?.idToken) return
 
@@ -77,14 +78,23 @@ export function useFriendships() {
 
       if (res.ok) {
         const data = await res.json()
-        setPendingRequests(data.requests || [])
+        const arr: any[] = Array.isArray(data) ? data : (data.requests || [])
+        // Normalize backend shape `{id, username, avatar, requestId, requestedAt, ...}`
+        // into the UI-facing shape `{id, senderId, sender, createdAt}`
+        const normalized: FriendRequest[] = arr.map((r) => ({
+          id: r.requestId ?? r.id,
+          senderId: r.id,
+          sender: { id: r.id, username: r.username, avatar: r.avatar },
+          createdAt: r.requestedAt ?? r.createdAt ?? new Date().toISOString(),
+        }))
+        setPendingRequests(normalized)
       }
     } catch (err) {
       console.error('Failed to fetch pending requests:', err)
     }
   }, [tokens?.idToken])
 
-  // Fetch friend suggestions
+  // Fetch friend suggestions — API returns a flat array
   const fetchSuggestions = useCallback(async () => {
     if (!tokens?.idToken) return
 
@@ -95,7 +105,8 @@ export function useFriendships() {
 
       if (res.ok) {
         const data = await res.json()
-        setSuggestions(data.suggestions?.slice(0, 5) || [])
+        const arr = Array.isArray(data) ? data : (data.suggestions || [])
+        setSuggestions(arr.slice(0, 5))
       }
     } catch (err) {
       console.error('Failed to fetch suggestions:', err)
@@ -163,6 +174,27 @@ export function useFriendships() {
       return { success: false, error: 'Erreur réseau' }
     }
   }, [tokens?.idToken, fetchFriends, fetchPendingRequests])
+
+  // Cancel a friend request the current user previously sent
+  const cancelRequest = useCallback(async (userId: string): Promise<{ success: boolean; error?: string }> => {
+    if (!tokens?.idToken) return { success: false, error: 'Non authentifié' }
+
+    try {
+      const res = await fetch(`${API}/friendships/request/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${tokens.idToken}` },
+      })
+
+      if (res.ok) {
+        return { success: true }
+      } else {
+        const data = await res.json().catch(() => ({}))
+        return { success: false, error: data.message || 'Erreur lors de l\'annulation' }
+      }
+    } catch (err) {
+      return { success: false, error: 'Erreur réseau' }
+    }
+  }, [tokens?.idToken])
 
   // Decline friend request
   const decline = useCallback(async (userId: string): Promise<{ success: boolean; error?: string }> => {
@@ -317,6 +349,7 @@ export function useFriendships() {
     sendRequest,
     accept,
     decline,
+    cancelRequest,
     removeFriend,
     getFriendshipStatus,
     refresh: () => Promise.all([fetchFriends(), fetchPendingRequests(), fetchSuggestions()]),

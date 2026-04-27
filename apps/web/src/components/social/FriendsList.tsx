@@ -27,6 +27,7 @@ export default function FriendsList() {
   const [searchResults, setSearchResults] = useState<SearchUser[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set())
+  const [tab, setTab] = useState<'friends' | 'requests'>('friends')
   const router = useRouter()
 
   const {
@@ -38,6 +39,7 @@ export default function FriendsList() {
     loading,
     accept,
     decline,
+    cancelRequest,
     sendRequest,
   } = useFriendships()
 
@@ -86,6 +88,19 @@ export default function FriendsList() {
   const handleSendRequest = async (userId: string) => {
     setActionLoading(userId)
     await sendRequest(userId)
+    setActionLoading(null)
+  }
+
+  const handleCancelRequest = async (userId: string) => {
+    setActionLoading(userId)
+    const result = await cancelRequest(userId)
+    if (result.success) {
+      setSentRequests((prev) => {
+        const next = new Set(prev)
+        next.delete(userId)
+        return next
+      })
+    }
     setActionLoading(null)
   }
 
@@ -164,26 +179,59 @@ export default function FriendsList() {
               <div className="w-10 h-1 rounded-full bg-white/20" />
             </div>
             {/* Header */}
-            <div className="sticky top-0 bg-[#0a0f1e] p-4 border-b border-white/10 z-10 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Amis ({friends.length})
-                </h3>
-                <p className="text-xs text-white/60 mt-1">
-                  {onlineFriends.length} en ligne
-                </p>
+            <div className="sticky top-0 bg-[#0a0f1e] border-b border-white/10 z-10">
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Amis ({friends.length})
+                  </h3>
+                  <p className="text-xs text-white/60 mt-1">
+                    {onlineFriends.length} en ligne
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
+
+              {/* Tabs */}
+              {!showSearch && (
+                <div className="flex border-t border-white/5">
+                  <button
+                    onClick={() => setTab('friends')}
+                    className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wide transition-colors border-b-2 ${
+                      tab === 'friends'
+                        ? 'text-[#0097FC] border-[#0097FC]'
+                        : 'text-white/50 border-transparent hover:text-white/80'
+                    }`}
+                  >
+                    Mes amis
+                  </button>
+                  <button
+                    onClick={() => setTab('requests')}
+                    className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wide transition-colors border-b-2 inline-flex items-center justify-center gap-1.5 ${
+                      tab === 'requests'
+                        ? 'text-[#FD2E5F] border-[#FD2E5F]'
+                        : 'text-white/50 border-transparent hover:text-white/80'
+                    }`}
+                  >
+                    Demandes
+                    {pendingCount > 0 && (
+                      <span className="min-w-[18px] h-4 px-1 rounded-full bg-[#FD2E5F] text-white text-[10px] font-bold flex items-center justify-center">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Pending Requests */}
-            {pendingRequests.length > 0 && (
+            {/* Pending Requests — only on 'requests' tab */}
+            {!showSearch && tab === 'requests' && pendingRequests.length > 0 && (
               <div className="p-3 border-b border-white/10">
                 <h4 className="text-xs font-bold text-white/70 uppercase tracking-wide mb-2">
                   Demandes en attente ({pendingRequests.length})
@@ -237,8 +285,16 @@ export default function FriendsList() {
               </div>
             )}
 
-            {/* Online Friends */}
-            {onlineFriends.length > 0 && (
+            {/* Empty state for requests tab */}
+            {!showSearch && tab === 'requests' && pendingRequests.length === 0 && (
+              <div className="p-8 text-center">
+                <UserPlus className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                <p className="text-sm text-white/50">Aucune demande en attente</p>
+              </div>
+            )}
+
+            {/* Online Friends — only on 'friends' tab */}
+            {!showSearch && tab === 'friends' && onlineFriends.length > 0 && (
               <div className="p-3 border-b border-white/10">
                 <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide mb-2">
                   En ligne ({onlineFriends.length})
@@ -291,8 +347,8 @@ export default function FriendsList() {
               </div>
             )}
 
-            {/* All Friends */}
-            {friends.length > 0 && (
+            {/* All Friends — only on 'friends' tab */}
+            {!showSearch && tab === 'friends' && friends.length > 0 && (
               <div className="p-3 border-b border-white/10">
                 <h4 className="text-xs font-bold text-white/70 uppercase tracking-wide mb-2">
                   Tous les amis
@@ -340,8 +396,8 @@ export default function FriendsList() {
               </div>
             )}
 
-            {/* Suggestions */}
-            {suggestions.length > 0 && (
+            {/* Suggestions — only on 'friends' tab */}
+            {!showSearch && tab === 'friends' && suggestions.length > 0 && (
               <div className="p-3 border-b border-white/10">
                 <h4 className="text-xs font-bold text-white/70 uppercase tracking-wide mb-2">
                   Suggestions
@@ -437,7 +493,17 @@ export default function FriendsList() {
                           {alreadyFriend ? (
                             <span className="text-xs text-emerald-400 font-semibold">Ami ✓</span>
                           ) : alreadySent ? (
-                            <span className="text-xs text-white/40">Envoyé ✓</span>
+                            <button
+                              onClick={() => handleCancelRequest(user.id)}
+                              disabled={actionLoading === user.id}
+                              className="text-xs px-2 py-1 rounded-lg bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-white/50 transition disabled:opacity-50 inline-flex items-center gap-1"
+                              title="Annuler la demande"
+                            >
+                              {actionLoading === user.id
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <X className="w-3 h-3" />}
+                              Annuler
+                            </button>
                           ) : (
                             <button
                               onClick={() => handleAddFromSearch(user.id)}
@@ -458,8 +524,8 @@ export default function FriendsList() {
               </div>
             )}
 
-            {/* Empty State */}
-            {!showSearch && friends.length === 0 && pendingRequests.length === 0 && (
+            {/* Empty State — friends tab with no friends */}
+            {!showSearch && tab === 'friends' && friends.length === 0 && (
               <div className="p-8 text-center">
                 <Users className="w-12 h-12 text-white/20 mx-auto mb-3" />
                 <p className="text-sm text-white/50 mb-4">
