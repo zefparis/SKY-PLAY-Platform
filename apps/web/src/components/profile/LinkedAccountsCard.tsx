@@ -22,6 +22,14 @@ function EpicLogo() {
   )
 }
 
+function YoutubeLogo() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  )
+}
+
 function ConfirmModal({
   message,
   onConfirm,
@@ -54,11 +62,13 @@ function ConfirmModal({
   )
 }
 
+type Provider = 'STEAM' | 'EPIC' | 'YOUTUBE'
+
 interface ProviderRowProps {
-  provider: 'STEAM' | 'EPIC'
+  provider: Provider
   account: LinkedAccount | null
-  onConnect: (provider: 'STEAM' | 'EPIC') => Promise<void>
-  onUnlink: (provider: 'STEAM' | 'EPIC') => Promise<void>
+  onConnect: (provider: Provider) => Promise<void>
+  onUnlink: (provider: Provider) => Promise<void>
   isConnecting: boolean
   isUnlinking: boolean
 }
@@ -72,8 +82,14 @@ function ProviderRow({
   isUnlinking,
 }: ProviderRowProps) {
   const [showConfirm, setShowConfirm] = useState(false)
-  const label = provider === 'STEAM' ? 'Steam' : 'Epic Games'
-  const Logo = provider === 'STEAM' ? SteamLogo : EpicLogo
+
+  const meta: Record<Provider, { label: string; Logo: () => JSX.Element; color: string }> = {
+    STEAM:   { label: 'Steam',       Logo: SteamLogo,   color: '#0097FC' },
+    EPIC:    { label: 'Epic Games',  Logo: EpicLogo,    color: '#0097FC' },
+    YOUTUBE: { label: 'YouTube',     Logo: YoutubeLogo, color: '#FF0000' },
+  }
+
+  const { label, Logo, color } = meta[provider]
 
   return (
     <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-[#0d1020] border border-[#2a2d3e]">
@@ -128,7 +144,8 @@ function ProviderRow({
           <button
             onClick={() => onConnect(provider)}
             disabled={isConnecting}
-            className="px-4 py-2 rounded-lg bg-[#0097FC]/10 text-[#0097FC] border border-[#0097FC]/20 text-sm font-semibold hover:bg-[#0097FC]/20 transition disabled:opacity-50"
+            style={{ color, borderColor: `${color}33`, backgroundColor: `${color}1a` }}
+            className="px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-80 transition disabled:opacity-50 border"
           >
             {isConnecting ? '…' : 'Connecter'}
           </button>
@@ -142,18 +159,23 @@ export default function LinkedAccountsCard() {
   const tokens = useAuthStore((s) => s.tokens)
   const token = tokens?.idToken || tokens?.accessToken
   const { accounts, isLoading, refetch } = useLinkedAccounts()
-  const [connectingProvider, setConnectingProvider] = useState<'STEAM' | 'EPIC' | null>(null)
-  const [unlinkingProvider, setUnlinkingProvider] = useState<'STEAM' | 'EPIC' | null>(null)
+  const [connectingProvider, setConnectingProvider] = useState<Provider | null>(null)
+  const [unlinkingProvider, setUnlinkingProvider] = useState<Provider | null>(null)
 
-  const steamAccount = accounts.find((a) => a.provider === 'STEAM') ?? null
-  const epicAccount = accounts.find((a) => a.provider === 'EPIC') ?? null
+  const steamAccount   = accounts.find((a) => a.provider === 'STEAM')   ?? null
+  const epicAccount    = accounts.find((a) => a.provider === 'EPIC')    ?? null
+  const youtubeAccount = accounts.find((a) => a.provider === 'YOUTUBE') ?? null
 
-  const handleConnect = async (provider: 'STEAM' | 'EPIC') => {
+  const handleConnect = async (provider: Provider) => {
     if (!token) return
     setConnectingProvider(provider)
     try {
-      const route = provider === 'STEAM' ? 'steam' : 'epic'
-      const res = await fetch(`${API}/auth/${route}/connect`, {
+      const routeMap: Record<Provider, string> = {
+        STEAM:   'steam',
+        EPIC:    'epic',
+        YOUTUBE: 'youtube',
+      }
+      const res = await fetch(`${API}/auth/${routeMap[provider]}/connect`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to get connect URL')
@@ -165,7 +187,7 @@ export default function LinkedAccountsCard() {
     }
   }
 
-  const handleUnlink = async (provider: 'STEAM' | 'EPIC') => {
+  const handleUnlink = async (provider: Provider) => {
     if (!token) return
     setUnlinkingProvider(provider)
     try {
@@ -209,6 +231,14 @@ export default function LinkedAccountsCard() {
             onUnlink={handleUnlink}
             isConnecting={connectingProvider === 'EPIC'}
             isUnlinking={unlinkingProvider === 'EPIC'}
+          />
+          <ProviderRow
+            provider="YOUTUBE"
+            account={youtubeAccount}
+            onConnect={handleConnect}
+            onUnlink={handleUnlink}
+            isConnecting={connectingProvider === 'YOUTUBE'}
+            isUnlinking={unlinkingProvider === 'YOUTUBE'}
           />
         </div>
       )}

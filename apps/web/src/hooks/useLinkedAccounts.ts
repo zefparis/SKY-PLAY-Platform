@@ -5,7 +5,7 @@ import { useAuthStore } from '@/lib/auth-store'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
-export type GameProvider = 'STEAM' | 'EPIC' | 'DISCORD' | 'TWITCH'
+export type GameProvider = 'STEAM' | 'EPIC' | 'DISCORD' | 'TWITCH' | 'YOUTUBE'
 
 export interface LinkedAccount {
   id: string
