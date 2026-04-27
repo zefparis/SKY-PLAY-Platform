@@ -83,22 +83,13 @@ const Navbar = () => {
     { href: '/wallet', label: 'Sky Credits', icon: Wallet },
   ]
 
-  const megaLeft = [
-    { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-    { href: '/challenges', label: 'Défis', icon: Swords },
-    { href: '/live', label: 'Live', icon: Eye },
-    { href: '/leaderboard', label: 'Classement', icon: Trophy },
-    { href: '/chat', label: 'Chat', icon: MessageCircle },
-    { href: '/wallet', label: 'Sky Credits', icon: Wallet },
-  ]
-
-  const megaRight = [
+  // Mega menu "Plus" — only entries that are NOT already in the main navbar.
+  const megaDiscover = [
     { href: '/how-it-works', label: 'Comment ça marche', icon: Lightbulb },
-    { href: '/profile', label: 'Mon profil', icon: User },
-    { href: '/challenges', label: 'Tournois', icon: Trophy },
+    { href: '/tournaments', label: 'Tournois', icon: Trophy },
     { href: '/notifications', label: 'Notifications', icon: Bell },
-    { href: '/profile/responsabilite', label: 'Paramètres', icon: Settings },
-    { href: '/advertise', label: '📢 Annonceurs', icon: Megaphone },
+    { href: '/settings', label: 'Paramètres', icon: Settings },
+    { href: '/advertise', label: 'Annonceurs', icon: Megaphone },
   ]
 
   const bottomTabs = [
@@ -189,56 +180,27 @@ const Navbar = () => {
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.18, ease: 'easeOut' }}
                       onMouseLeave={closeMega}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-[#0d0f1a] border border-[#2a2d3e] rounded-xl shadow-2xl z-50 overflow-hidden"
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-[#0d0f1a] border border-[#2a2d3e] rounded-xl shadow-2xl z-50 overflow-hidden"
                     >
-                      <div className="p-4 grid grid-cols-2 gap-1">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-2 pb-2">Navigation</p>
-                          {megaLeft.map(item => {
-                            const Icon = item.icon
-                            const isActive = pathname === item.href
-                            return (
-                              <Link key={item.href + item.label} href={item.href}
-                                onClick={closeMega}
-                                className={cn(
-                                  'flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition duration-150 group',
-                                  isActive
-                                    ? 'text-[#0097FC] bg-[#0097FC]/10'
-                                    : 'text-white/70 hover:text-[#0097FC] hover:bg-white/5'
-                                )}>
-                                {item.href === '/live' ? (
-                                  <span className="relative flex h-4 w-4 items-center justify-center">
-                                    <Icon className="w-4 h-4" />
-                                    {hasLive && <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FD2E5F] opacity-75" /><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#FD2E5F]" /></span>}
-                                  </span>
-                                ) : (
-                                  <Icon className="w-4 h-4" />
-                                )}
-                                <span>{item.label}</span>
-                              </Link>
-                            )
-                          })}
-                        </div>
-                        <div className="border-l border-[#2a2d3e] pl-3">
-                          <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-2 pb-2">Découvrir</p>
-                          {megaRight.map(item => {
-                            const Icon = item.icon
-                            const isActive = pathname === item.href
-                            return (
-                              <Link key={item.href + item.label} href={item.href}
-                                onClick={closeMega}
-                                className={cn(
-                                  'flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition duration-150',
-                                  isActive
-                                    ? 'text-[#0097FC] bg-[#0097FC]/10'
-                                    : 'text-white/70 hover:text-[#0097FC] hover:bg-white/5'
-                                )}>
-                                <Icon className="w-4 h-4" />
-                                <span>{item.label}</span>
-                              </Link>
-                            )
-                          })}
-                        </div>
+                      <div className="p-3">
+                        <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-2 pb-2">Découvrir</p>
+                        {megaDiscover.map(item => {
+                          const Icon = item.icon
+                          const isActive = pathname === item.href
+                          return (
+                            <Link key={item.href} href={item.href}
+                              onClick={closeMega}
+                              className={cn(
+                                'flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition duration-150',
+                                isActive
+                                  ? 'text-[#0097FC] bg-[#0097FC]/10'
+                                  : 'text-white/70 hover:text-[#0097FC] hover:bg-white/5'
+                              )}>
+                              <Icon className="w-4 h-4" />
+                              <span>{item.label}</span>
+                            </Link>
+                          )
+                        })}
                       </div>
                     </motion.div>
                   )}
