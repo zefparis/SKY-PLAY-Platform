@@ -10,12 +10,13 @@ workflows:
     environment:
       groups:
         - default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: cloud.skyplay.app
       vars:
-        XCODE_PROJECT: "apps/web/ios/App/App.xcodeproj"
         XCODE_WORKSPACE: "apps/web/ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
         CAPACITOR_PLATFORM: "ios"
-        BUNDLE_ID: "cloud.skyplay.app"
       node: 20
       xcode: latest
       cocoapods: default
@@ -74,20 +75,6 @@ workflows:
 
       - name: Build & sign IPA
         script: |
-          keychain initialize
-
-          # Decode and import the .p12 certificate from the CM_CERTIFICATE secret
-          echo "$CM_CERTIFICATE" | base64 --decode > /tmp/certificate.p12
-          keychain add-certificates \
-            --certificate /tmp/certificate.p12 \
-            --certificate-password "$CM_CERTIFICATE_PASSWORD"
-
-          # Decode and install the provisioning profile
-          echo "$CM_PROVISIONING_PROFILE" | base64 --decode > /tmp/profile.mobileprovision
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          cp /tmp/profile.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/"
-
-          xcode-project use-profiles
           xcode-project build-ipa \
             --workspace "$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
