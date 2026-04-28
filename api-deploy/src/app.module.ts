@@ -25,6 +25,7 @@ import { AdsModule } from './modules/ads/ads.module';
 import { LinkedAccountsModule } from './modules/linked-accounts/linked-accounts.module';
 import { RekognitionModule } from './modules/rekognition/rekognition.module';
 import { StreamingModule } from './modules/streaming/streaming.module';
+import { DisputesModule } from './modules/disputes/disputes.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { StreamingModule } from './modules/streaming/streaming.module';
     LinkedAccountsModule,
     StreamingModule,
     RekognitionModule,
+    DisputesModule,
   ],
   providers: [
     // Active la limitation de débit globalement (les routes peuvent surcharger via @Throttle/@SkipThrottle)
