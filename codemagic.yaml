@@ -5,8 +5,8 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      integrations:
-        app_store_connect: Codemagic
+      # integrations:
+      #   app_store_connect: Codemagic  # re-enable when ASC account is active
       ios_signing:
         distribution_type: app_store
         bundle_identifier: cloud.skyplay.app
