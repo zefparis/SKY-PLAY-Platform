@@ -47,6 +47,22 @@ workflows:
           cd apps/web
           CAPACITOR_PLATFORM=ios npx cap sync ios
 
+      - name: Bump iOS deployment target to 14.0
+        script: |
+          cd apps/web/ios/App
+          # Podfile: platform :ios, '...'  →  '14.0'
+          if [ -f Podfile ]; then
+            sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '14.0'/g" Podfile || true
+          fi
+          # pbxproj: IPHONEOS_DEPLOYMENT_TARGET = ...;
+          if [ -f App.xcodeproj/project.pbxproj ]; then
+            sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g' App.xcodeproj/project.pbxproj || true
+          fi
+          echo "--- Podfile platform line ---"
+          grep -n "platform :ios" Podfile || true
+          echo "--- pbxproj deployment targets ---"
+          grep -n "IPHONEOS_DEPLOYMENT_TARGET" App.xcodeproj/project.pbxproj | head -5 || true
+
       - name: Install CocoaPods
         script: |
           cd apps/web/ios/App
