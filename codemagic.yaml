@@ -5,6 +5,8 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
+      integrations:
+        app_store_connect: Codemagic
       ios_signing:
         distribution_type: app_store
         bundle_identifier: cloud.skyplay.app
@@ -74,8 +76,14 @@ workflows:
       - /tmp/xcodebuild_logs/*.log
 
     publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-        beta_groups:
-          - Internal Testers
+      email:
+        recipients:
+          - contact@ia-solution.fr
+        notify:
+          success: true
+          failure: true
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
+      #   beta_groups:
+      #     - Internal Testers
