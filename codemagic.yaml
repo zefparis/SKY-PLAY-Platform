@@ -5,12 +5,11 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      # integrations:
-      #   app_store_connect: Codemagic  # re-enable when ASC account is active
-      # ios_signing désactivé — en attente activation Apple Developer
-      # ios_signing:
-      #   distribution_type: app_store
-      #   bundle_identifier: cloud.skyplay.app
+      integrations:
+        app_store_connect: Codemagic
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: cloud.skyplay.app
       vars:
         XCODE_PROJECT: "apps/web/ios/App/App.xcodeproj"
         XCODE_WORKSPACE: "apps/web/ios/App/App.xcworkspace"
@@ -72,28 +71,32 @@ workflows:
           cd apps/web/ios/App
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier cloud.skyplay.app" App/Info.plist || true
 
-      - name: Build iOS (no signing)
+      - name: Apply automatic signing (Codemagic-managed)
         script: |
-          xcodebuild \
-            -workspace "$XCODE_WORKSPACE" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Debug \
-            -destination generic/platform=iOS \
-            CODE_SIGNING_ALLOWED=NO \
-            build
+          keychain initialize
+          app-store-connect fetch-signing-files "cloud.skyplay.app" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build & sign IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
 
     artifacts:
+      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
 
     publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
       email:
         recipients:
           - contact@ia-solution.fr
         notify:
           success: true
           failure: true
-      # app_store_connect:
-      #   auth: integration
-      #   submit_to_testflight: true
-      #   beta_groups:
-      #     - Internal Testers
