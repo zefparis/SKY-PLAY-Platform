@@ -8,9 +8,6 @@ workflows:
       app_store_connect: Codemagic
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: cloud.skyplay.app
       vars:
         XCODE_PROJECT: "apps/web/ios/App/App.xcodeproj"
         XCODE_WORKSPACE: "apps/web/ios/App/App.xcworkspace"
@@ -67,21 +64,15 @@ workflows:
           cd apps/web/ios/App
           pod install --repo-update
 
-      - name: Fetch signing files
-        script: |
-          app-store-connect fetch-signing-files cloud.skyplay.app \
-            --type IOS_APP_STORE \
-            --create
-
       - name: Set bundle identifier
         script: |
           cd apps/web/ios/App
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier cloud.skyplay.app" App/Info.plist || true
 
-      - name: Apply automatic signing (Codemagic-managed)
+      - name: Apply signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "cloud.skyplay.app" \
+          app-store-connect fetch-signing-files cloud.skyplay.app \
             --type IOS_APP_STORE \
             --create
           keychain add-certificates
