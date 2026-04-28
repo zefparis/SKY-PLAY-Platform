@@ -51,11 +51,12 @@ workflows:
         script: |
           PODFILE="apps/web/ios/App/Podfile"
           PBXPROJ="apps/web/ios/App/App.xcodeproj/project.pbxproj"
+          # Capacitor 8 requires iOS 15.0 minimum (Capacitor.podspec).
           # macOS sed uses `-i ''`, GNU sed uses `-i` — try both.
-          sed -i '' "s/platform :ios, '[0-9.]*/platform :ios, '14.0/" "$PODFILE" 2>/dev/null || \
-          sed -i "s/platform :ios, '[0-9.]*/platform :ios, '14.0/" "$PODFILE"
-          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g" "$PBXPROJ" 2>/dev/null || \
-          sed -i "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g" "$PBXPROJ"
+          sed -i '' "s/platform :ios, '[0-9.]*/platform :ios, '15.0/" "$PODFILE" 2>/dev/null || \
+          sed -i "s/platform :ios, '[0-9.]*/platform :ios, '15.0/" "$PODFILE"
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" "$PBXPROJ" 2>/dev/null || \
+          sed -i "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" "$PBXPROJ"
           echo "=== Podfile platform line ==="
           grep "platform :ios" "$PODFILE"
           echo "=== pbxproj deployment targets ==="
