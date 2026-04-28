@@ -38,14 +38,14 @@ workflows:
         script: |
           cd apps/web
           if [ ! -d "ios" ]; then
-            cross-env CAPACITOR_PLATFORM=ios npx cap add ios
+            CAPACITOR_PLATFORM=ios npx cap add ios
           fi
 
       - name: Copy web assets to iOS
         script: |
           cd apps/web
           # cap copy uniquement — pas de pod install (séparé ci-dessous)
-          cross-env CAPACITOR_PLATFORM=ios npx cap copy ios
+          CAPACITOR_PLATFORM=ios npx cap copy ios
 
       - name: Patch iOS deployment target
         script: |
