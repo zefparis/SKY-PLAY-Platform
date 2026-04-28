@@ -85,17 +85,41 @@ export default function ProfilePage() {
   // ── Query-param toast (OAuth callbacks) ───────────────────────────────────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const steam = params.get('steam')
-    const epic  = params.get('epic')
+    const steam   = params.get('steam')
+    const epic    = params.get('epic')
+    const youtube = params.get('youtube')
+    const reason  = params.get('reason')
+
+    let handled = false
+
     if (steam === 'linked') {
       setToast({ message: 'Compte Steam lié !', type: 'success' })
-      router.replace('/profile')
+      handled = true
     } else if (steam === 'error') {
       setToast({ message: 'Erreur Steam, réessaie', type: 'error' })
-      router.replace('/profile')
+      handled = true
     } else if (epic === 'linked') {
       setToast({ message: 'Compte Epic Games lié !', type: 'success' })
-      router.replace('/profile')
+      handled = true
+    } else if (youtube === 'linked') {
+      setToast({ message: 'Compte YouTube connecté avec succès !', type: 'success' })
+      handled = true
+    } else if (youtube === 'error') {
+      const messages: Record<string, string> = {
+        no_channel: "Ce compte Google n'a pas de chaîne YouTube. Crée une chaîne sur youtube.com puis réessaie.",
+        exchange_failed: 'Échec de connexion YouTube. Réessaie ou contacte le support.',
+        access_denied: 'Connexion YouTube annulée.',
+        missing_params: 'Paramètres OAuth manquants. Réessaie.',
+      }
+      setToast({
+        message: messages[reason ?? ''] ?? 'Erreur inconnue lors de la connexion YouTube.',
+        type: 'error',
+      })
+      handled = true
+    }
+
+    if (handled) {
+      router.replace('/profile', { scroll: false })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

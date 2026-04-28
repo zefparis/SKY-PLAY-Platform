@@ -1,0 +1,81 @@
+workflows:
+  skyplay-ios:
+    name: SKY PLAY iOS
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: cloud.skyplay.app
+      vars:
+        XCODE_PROJECT: "apps/web/ios/App/App.xcodeproj"
+        XCODE_WORKSPACE: "apps/web/ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        CAPACITOR_PLATFORM: "ios"
+      node: 20
+      xcode: latest
+      cocoapods: default
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+      - name: Install workspace dependencies
+        script: |
+          npm install --no-audit --no-fund
+          cd apps/web && npm install --no-audit --no-fund
+
+      - name: Ensure iOS platform exists
+        script: |
+          cd apps/web
+          if [ ! -d "ios" ]; then
+            npm install --save @capacitor/ios
+            CAPACITOR_PLATFORM=ios npx cap add ios
+          fi
+
+      - name: Capacitor sync iOS
+        script: |
+          cd apps/web
+          CAPACITOR_PLATFORM=ios npx cap sync ios
+
+      - name: Install CocoaPods
+        script: |
+          cd apps/web/ios/App
+          pod install
+
+      - name: Set bundle identifier
+        script: |
+          cd apps/web/ios/App
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier cloud.skyplay.app" App/Info.plist || true
+
+      - name: Apply automatic signing (Codemagic-managed)
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "cloud.skyplay.app" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build & sign IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers

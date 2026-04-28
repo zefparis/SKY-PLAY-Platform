@@ -8,3 +8,22 @@ coverage
 pnpm-lock.yaml
 *.log
 .DS_Store
+
+# Next.js static export placeholder — keep index.html only
+apps/web/out/*
+!apps/web/out/index.html
+
+# Capacitor iOS — generated artifacts (Pods, user state)
+apps/web/ios/App/Pods/
+apps/web/ios/App/Podfile.lock
+apps/web/ios/App/App.xcworkspace/xcuserdata/
+apps/web/ios/App/App.xcodeproj/xcuserdata/
+apps/web/ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+apps/web/ios/DerivedData/
+*.xcuserstate
+
+# Capacitor Android — build outputs
+apps/web/android/.gradle/
+apps/web/android/build/
+apps/web/android/app/build/
+apps/web/android/local.properties

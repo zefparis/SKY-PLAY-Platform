@@ -23,8 +23,12 @@ async function bootstrap() {
 
   const staticOrigins = [
     'https://sky-play-platform.vercel.app',
+    'https://skyplay.cloud',
+    'https://www.skyplay.cloud',
     'http://localhost:3000',
     'http://localhost:3001',
+    'capacitor://localhost',
+    'ionic://localhost',
     ...extraOrigins,
   ];
 

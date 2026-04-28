@@ -5,13 +5,18 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "build:android": "next build && npx cap sync android",
-    "open:android": "npx cap open android"
+    "build:android": "next build && cross-env CAPACITOR_PLATFORM=android npx cap sync android",
+    "open:android": "cross-env CAPACITOR_PLATFORM=android npx cap open android",
+    "add:ios": "cross-env CAPACITOR_PLATFORM=ios npx cap add ios",
+    "sync:ios": "cross-env CAPACITOR_PLATFORM=ios npx cap sync ios",
+    "build:ios": "next build && cross-env CAPACITOR_PLATFORM=ios npx cap sync ios",
+    "open:ios": "cross-env CAPACITOR_PLATFORM=ios npx cap open ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
     "@capacitor/cli": "^7.6.1",
     "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
     "@fingerprintjs/fingerprintjs": "^5.1.0",
     "@tanstack/react-query": "^5.28.0",
     "amazon-cognito-identity-js": "^6.3.16",
@@ -34,6 +39,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.37",
+    "cross-env": "^7.0.3",
     "@types/react": "18.3.28",
     "@types/react-dom": "^18.2.0",
     "@types/react-window": "^1.8.8"

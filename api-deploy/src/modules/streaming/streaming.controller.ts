@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
   Post,
@@ -98,8 +97,9 @@ export class StreamingController {
       const channelTitle = channel?.snippet?.title ?? undefined;
 
       if (!channelId) {
-        throw new InternalServerErrorException(
-          'YouTube did not return a channel — the account may not have one.',
+        this.logger.warn(`YouTube OAuth: no channel found for user ${state}`);
+        return res.redirect(
+          `${frontendUrl}/profile?youtube=error&reason=no_channel`,
         );
       }
 
