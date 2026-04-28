@@ -67,6 +67,12 @@ workflows:
           cd apps/web/ios/App
           pod install --repo-update
 
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files cloud.skyplay.app \
+            --type IOS_APP_STORE \
+            --create
+
       - name: Set bundle identifier
         script: |
           cd apps/web/ios/App
