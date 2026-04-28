@@ -38,35 +38,33 @@ workflows:
         script: |
           cd apps/web
           if [ ! -d "ios" ]; then
-            npm install --save @capacitor/ios
-            CAPACITOR_PLATFORM=ios npx cap add ios
+            cross-env CAPACITOR_PLATFORM=ios npx cap add ios
           fi
 
-      - name: Capacitor sync iOS
+      - name: Copy web assets to iOS
         script: |
           cd apps/web
-          CAPACITOR_PLATFORM=ios npx cap sync ios
+          # cap copy uniquement — pas de pod install (séparé ci-dessous)
+          cross-env CAPACITOR_PLATFORM=ios npx cap copy ios
 
-      - name: Bump iOS deployment target to 14.0
+      - name: Patch iOS deployment target
         script: |
-          cd apps/web/ios/App
-          # Podfile: platform :ios, '...'  →  '14.0'
-          if [ -f Podfile ]; then
-            sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '14.0'/g" Podfile || true
-          fi
-          # pbxproj: IPHONEOS_DEPLOYMENT_TARGET = ...;
-          if [ -f App.xcodeproj/project.pbxproj ]; then
-            sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g' App.xcodeproj/project.pbxproj || true
-          fi
-          echo "--- Podfile platform line ---"
-          grep -n "platform :ios" Podfile || true
-          echo "--- pbxproj deployment targets ---"
-          grep -n "IPHONEOS_DEPLOYMENT_TARGET" App.xcodeproj/project.pbxproj | head -5 || true
+          PODFILE="apps/web/ios/App/Podfile"
+          PBXPROJ="apps/web/ios/App/App.xcodeproj/project.pbxproj"
+          # macOS sed uses `-i ''`, GNU sed uses `-i` — try both.
+          sed -i '' "s/platform :ios, '[0-9.]*/platform :ios, '14.0/" "$PODFILE" 2>/dev/null || \
+          sed -i "s/platform :ios, '[0-9.]*/platform :ios, '14.0/" "$PODFILE"
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g" "$PBXPROJ" 2>/dev/null || \
+          sed -i "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g" "$PBXPROJ"
+          echo "=== Podfile platform line ==="
+          grep "platform :ios" "$PODFILE"
+          echo "=== pbxproj deployment targets ==="
+          grep "IPHONEOS_DEPLOYMENT_TARGET" "$PBXPROJ" | head -5
 
       - name: Install CocoaPods
         script: |
           cd apps/web/ios/App
-          pod install
+          pod install --repo-update
 
       - name: Set bundle identifier
         script: |
