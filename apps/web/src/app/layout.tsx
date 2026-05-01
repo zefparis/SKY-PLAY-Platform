@@ -9,14 +9,14 @@ import SocketProvider from '@/components/providers/SocketProvider'
 import UsernameSetupModal from '@/components/auth/UsernameSetupModal'
 
 export const metadata: Metadata = {
-  title: 'SKY PLAY ENTERTAINMENT — Compétitions e-sport fondées sur l\'habileté | Cameroun',
-  description: "SKY PLAY ENTERTAINMENT — Plateforme de compétitions e-sport fondées sur l'habileté au Cameroun. Accédez à des duels, ligues et tournois via des pass de participation. FIFA, COD, Free Fire.",
-  keywords: 'e-sport, compétitions, habileté, Cameroun, Mobile Money, FIFA, COD, Free Fire, SKY PLAY, tournoi, pass de participation',
+  title: 'SKYPLAY AFRICA — Compétitions e-sport fondées sur l\'habileté | Cameroun',
+  description: "SKYPLAY AFRICA — Plateforme de compétitions e-sport fondées sur l'habileté au Cameroun. Accédez à des duels, ligues et tournois via des pass de participation. FIFA, COD, Free Fire.",
+  keywords: 'e-sport, compétitions, habileté, Cameroun, Mobile Money, FIFA, COD, Free Fire, SKYPLAY AFRICA, tournoi, pass de participation',
   openGraph: {
-    title: 'SKY PLAY ENTERTAINMENT — Compétitions e-sport | Cameroun',
+    title: 'SKYPLAY AFRICA — Compétitions e-sport | Cameroun',
     description: "Compétitions e-sport fondées sur l'habileté au Cameroun. Pass de participation dès 2 000 CFA.",
-    url: 'https://sky-play-platform.vercel.app',
-    siteName: 'SKY PLAY',
+    url: 'https://skyplay.cloud',
+    siteName: 'SKYPLAY AFRICA',
     type: 'website',
   },
 }
@@ -33,7 +33,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="SKY PLAY" />
+        <meta name="apple-mobile-web-app-title" content="SKYPLAY AFRICA" />
         <meta name="theme-color" content="#0097FC" />
         <link rel="icon" href="/logo.png" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
