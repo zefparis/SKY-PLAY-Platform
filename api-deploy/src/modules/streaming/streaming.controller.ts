@@ -11,13 +11,11 @@ import {
   Post,
   Query,
   Req,
-  Res,
   UseGuards,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { GameProvider } from '@prisma/client';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { google } from 'googleapis';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LinkedAccountsService } from '../linked-accounts/linked-accounts.service';
@@ -38,10 +36,10 @@ interface StopStreamingBody {
  * lifecycle. OAuth routes live under `/auth/youtube/*` to mirror the rest
  * of the BYOG providers; broadcast controls live under `/streaming/*`.
  *
- * The callback route is intentionally guard-less because Google redirects
- * the user agent back without our session cookies. Authenticity is
- * re-established by validating the `state` parameter (a user id we minted
- * and echoed through Google).
+ * The callback route is JWT-guarded — the frontend page at
+ * `/auth/youtube/callback` receives Google's redirect, then calls
+ * this endpoint with the user's Bearer token from localStorage.
+ * HMAC-signed state is still verified for CSRF protection.
  */
 @Controller()
 export class StreamingController {
@@ -51,7 +49,6 @@ export class StreamingController {
     private readonly youtube: YoutubeService,
     private readonly linkedAccounts: LinkedAccountsService,
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
   ) {}
 
   // ─── OAuth ─────────────────────────────────────────────────────────────
@@ -65,38 +62,40 @@ export class StreamingController {
   }
 
   @Get('auth/youtube/callback')
+  @UseGuards(JwtAuthGuard)
   async callback(
     @Query('code') code: string | undefined,
     @Query('state') state: string | undefined,
     @Query('error') error: string | undefined,
-    @Res() res: Response,
-  ): Promise<void> {
-    const frontendUrl =
-      this.config.get<string>('FRONTEND_URL') ??
-      'https://skyplay.cloud';
+    @Req() req: Request,
+  ) {
+    const jwtUserId = (req as any).user?.id;
+    if (!jwtUserId) throw new BadRequestException('Missing user id');
 
     if (error) {
       this.logger.warn(`YouTube OAuth denied: ${error}`);
-      return res.redirect(
-        `${frontendUrl}/profile?youtube=error&reason=${encodeURIComponent(error)}`,
-      );
+      throw new BadRequestException({ reason: 'access_denied', message: `OAuth denied: ${error}` });
     }
     if (!code || !state) {
-      return res.redirect(`${frontendUrl}/profile?youtube=error&reason=missing_params`);
+      throw new BadRequestException({ reason: 'missing_params', message: 'Missing code or state' });
+    }
+
+    // Verify HMAC-signed state for CSRF protection
+    let stateUserId: string;
+    try {
+      stateUserId = this.youtube.verifyOAuthState(state);
+    } catch {
+      this.logger.warn('YouTube OAuth: invalid state signature');
+      throw new ForbiddenException({ reason: 'invalid_state', message: 'Invalid OAuth state' });
+    }
+
+    // Cross-check: JWT user must match the user who initiated the OAuth flow
+    if (stateUserId !== jwtUserId) {
+      this.logger.warn(`YouTube OAuth: state userId ${stateUserId} ≠ JWT userId ${jwtUserId}`);
+      throw new ForbiddenException({ reason: 'user_mismatch', message: 'OAuth state does not match authenticated user' });
     }
 
     try {
-      // Verify the HMAC-signed state to prevent CSRF attacks
-      let userId: string;
-      try {
-        userId = this.youtube.verifyOAuthState(state);
-      } catch {
-        this.logger.warn('YouTube OAuth: invalid state signature');
-        return res.redirect(
-          `${frontendUrl}/profile?youtube=error&reason=invalid_state`,
-        );
-      }
-
       const { accessToken, refreshToken } = await this.youtube.exchangeCode(code);
 
       // Fetch the channel id/title so we can key LinkedAccount by externalId
@@ -110,27 +109,27 @@ export class StreamingController {
       const channelTitle = channel?.snippet?.title ?? undefined;
 
       if (!channelId) {
-        this.logger.warn(`YouTube OAuth: no channel found for user ${userId}`);
-        return res.redirect(
-          `${frontendUrl}/profile?youtube=error&reason=no_channel`,
-        );
+        this.logger.warn(`YouTube OAuth: no channel found for user ${jwtUserId}`);
+        throw new BadRequestException({ reason: 'no_channel', message: 'No YouTube channel found' });
       }
 
       await this.linkedAccounts.linkYoutube(
-        userId,
+        jwtUserId,
         channelId,
         accessToken,
         refreshToken,
         channelTitle,
       );
 
-      return res.redirect(`${frontendUrl}/profile?youtube=linked`);
+      return { success: true, channelId, channelName: channelTitle ?? null };
     } catch (err) {
+      // Re-throw NestJS HTTP exceptions as-is
+      if (err instanceof BadRequestException || err instanceof ForbiddenException) throw err;
       this.logger.error(
         `YouTube OAuth callback failed: ${(err as Error).message}`,
         (err as Error).stack,
       );
-      return res.redirect(`${frontendUrl}/profile?youtube=error&reason=exchange_failed`);
+      throw new BadRequestException({ reason: 'exchange_failed', message: 'YouTube token exchange failed' });
     }
   }
 

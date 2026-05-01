@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuthStore } from '@/lib/auth-store'
 import { Loader2 } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
@@ -9,6 +10,7 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 function YouTubeCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const token = useAuthStore((s) => s.tokens?.idToken)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -26,8 +28,34 @@ function YouTubeCallbackContent() {
       return
     }
 
-    window.location.href = `${API}/auth/youtube/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
-  }, [searchParams, router])
+    if (!token) {
+      // Session not available — try restoring from localStorage
+      useAuthStore.getState().restoreSession()
+      setError('Session expirée. Reconnecte-toi et réessaie.')
+      setTimeout(() => router.replace('/login'), 3000)
+      return
+    }
+
+    ;(async () => {
+      try {
+        const url = `${API}/auth/youtube/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          const reason = (body as { reason?: string }).reason ?? 'exchange_failed'
+          router.replace(`/profile?youtube=error&reason=${reason}`)
+          return
+        }
+
+        router.replace('/profile?youtube=linked')
+      } catch {
+        router.replace('/profile?youtube=error&reason=exchange_failed')
+      }
+    })()
+  }, [searchParams, router, token])
 
   if (error) {
     return (
