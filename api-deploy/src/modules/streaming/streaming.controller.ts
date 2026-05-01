@@ -73,7 +73,7 @@ export class StreamingController {
   ): Promise<void> {
     const frontendUrl =
       this.config.get<string>('FRONTEND_URL') ??
-      'https://sky-play-platform.vercel.app';
+      'https://skyplay.cloud';
 
     if (error) {
       this.logger.warn(`YouTube OAuth denied: ${error}`);
