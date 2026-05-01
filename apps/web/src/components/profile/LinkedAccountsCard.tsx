@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuthStore } from '@/lib/auth-store'
 import { useLinkedAccounts, LinkedAccount } from '@/hooks/useLinkedAccounts'
+import YouTubeLivePanel from '@/components/streaming/YouTubeLivePanel'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -240,6 +241,7 @@ export default function LinkedAccountsCard() {
             isConnecting={connectingProvider === 'YOUTUBE'}
             isUnlinking={unlinkingProvider === 'YOUTUBE'}
           />
+          {youtubeAccount && <YouTubeLivePanel />}
         </div>
       )}
     </div>

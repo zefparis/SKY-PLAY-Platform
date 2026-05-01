@@ -161,24 +161,65 @@ export class YoutubeService {
   }
 
   /**
+   * Transitions a broadcast to the given status ('testing' | 'live' | 'complete').
+   * YouTube will reject invalid transitions with a 400 which we surface.
+   */
+  async transitionBroadcast(
+    accessToken: string,
+    broadcastId: string,
+    status: 'testing' | 'live' | 'complete',
+  ): Promise<void> {
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: this.buildOAuthClient(accessToken),
+    });
+    await youtube.liveBroadcasts.transition({
+      part: ['status'],
+      broadcastStatus: status,
+      id: broadcastId,
+    });
+  }
+
+  /**
    * Transitions a broadcast to `complete`. Idempotent from our point of view:
    * YouTube will reject redundant transitions with a 400 which we swallow.
    */
   async endBroadcast(accessToken: string, broadcastId: string): Promise<void> {
+    try {
+      await this.transitionBroadcast(accessToken, broadcastId, 'complete');
+    } catch (err) {
+      this.logger.warn(
+        `endBroadcast(${broadcastId}) failed: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Returns the current lifecycle status of a broadcast.
+   */
+  async getBroadcastStatus(
+    accessToken: string,
+    broadcastId: string,
+  ): Promise<{ lifeCycleStatus: string; actualStartTime?: string; actualEndTime?: string } | null> {
     const youtube = google.youtube({
       version: 'v3',
       auth: this.buildOAuthClient(accessToken),
     });
     try {
-      await youtube.liveBroadcasts.transition({
-        part: ['status'],
-        broadcastStatus: 'complete',
-        id: broadcastId,
+      const res = await youtube.liveBroadcasts.list({
+        part: ['status', 'snippet'],
+        id: [broadcastId],
       });
+      const item = res.data.items?.[0];
+      if (!item) return null;
+      return {
+        lifeCycleStatus: item.status?.lifeCycleStatus ?? 'unknown',
+        actualStartTime: item.snippet?.actualStartTime ?? undefined,
+        actualEndTime: item.snippet?.actualEndTime ?? undefined,
+      };
     } catch (err) {
-      this.logger.warn(
-        `endBroadcast(${broadcastId}) failed: ${(err as Error).message}`,
-      );
+      this.logger.warn(`getBroadcastStatus(${broadcastId}) failed: ${(err as Error).message}`);
+      return null;
     }
   }
 

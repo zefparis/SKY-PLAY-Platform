@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Logger,
   NotFoundException,
+  Param,
   Post,
   Query,
   Req,
@@ -29,6 +30,18 @@ interface StartStreamingBody {
 
 interface StopStreamingBody {
   matchId: string;
+}
+
+interface CreateLiveBody {
+  title?: string;
+}
+
+interface CreateLiveResponse {
+  broadcastId: string;
+  streamId: string;
+  rtmpUrl: string;
+  streamKey: string;
+  watchUrl: string;
 }
 
 /**
@@ -225,6 +238,117 @@ export class StreamingController {
     await this.clearBroadcast(match.kind, match.id);
 
     return { ended: true };
+  }
+
+  // ─── Standalone YouTube live (no match required) ──────────────────────
+
+  @Post('streaming/youtube/live/create')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  async createLive(
+    @Req() req: Request,
+    @Body() body: CreateLiveBody,
+  ): Promise<CreateLiveResponse> {
+    const userId = (req as any).user?.id;
+    const username = (req as any).user?.username ?? 'Joueur';
+    if (!userId) throw new BadRequestException('Missing user id');
+
+    const accessToken = await this.getValidYoutubeToken(userId);
+
+    const title =
+      body.title?.trim() ||
+      `🎮 ${username} joue sur SKYPLAY AFRICA`;
+
+    const broadcast = await this.youtube.createLiveBroadcast(accessToken, title);
+
+    const rtmpUrl = broadcast.streamUrl.replace(`/${broadcast.streamKey}`, '');
+
+    return {
+      broadcastId: broadcast.broadcastId,
+      streamId: broadcast.broadcastId,
+      rtmpUrl,
+      streamKey: broadcast.streamKey,
+      watchUrl: broadcast.watchUrl,
+    };
+  }
+
+  @Post('streaming/youtube/live/:broadcastId/start')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  async goLive(
+    @Req() req: Request,
+    @Param('broadcastId') broadcastId: string,
+  ): Promise<{ started: boolean }> {
+    const userId = (req as any).user?.id;
+    if (!userId) throw new BadRequestException('Missing user id');
+    if (!broadcastId) throw new BadRequestException('broadcastId is required');
+
+    const accessToken = await this.getValidYoutubeToken(userId);
+
+    try {
+      await this.youtube.transitionBroadcast(accessToken, broadcastId, 'live');
+    } catch (err) {
+      const msg = (err as Error).message ?? '';
+      if (msg.includes('redundantTransition')) {
+        return { started: true };
+      }
+      if (msg.includes('liveStreamNotActive')) {
+        throw new BadRequestException(
+          'Le flux RTMP n\'est pas encore actif — assurez-vous d\'envoyer des données via OBS avant de démarrer.',
+        );
+      }
+      throw new BadRequestException(`Impossible de démarrer le live : ${msg}`);
+    }
+
+    return { started: true };
+  }
+
+  @Post('streaming/youtube/live/:broadcastId/stop')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  async stopLive(
+    @Req() req: Request,
+    @Param('broadcastId') broadcastId: string,
+  ): Promise<{ ended: boolean }> {
+    const userId = (req as any).user?.id;
+    if (!userId) throw new BadRequestException('Missing user id');
+    if (!broadcastId) throw new BadRequestException('broadcastId is required');
+
+    const accessToken = await this.getValidYoutubeToken(userId);
+
+    await this.youtube.endBroadcast(accessToken, broadcastId);
+
+    return { ended: true };
+  }
+
+  @Get('streaming/youtube/live/status')
+  @UseGuards(JwtAuthGuard)
+  async liveStatus(
+    @Req() req: Request,
+    @Query('broadcastId') broadcastId: string | undefined,
+  ) {
+    const userId = (req as any).user?.id;
+    if (!userId) throw new BadRequestException('Missing user id');
+    if (!broadcastId) throw new BadRequestException('broadcastId query param is required');
+
+    const accessToken = await this.getValidYoutubeToken(userId);
+
+    const status = await this.youtube.getBroadcastStatus(accessToken, broadcastId);
+    if (!status) {
+      throw new NotFoundException(`Broadcast ${broadcastId} introuvable`);
+    }
+
+    return {
+      broadcastId,
+      lifeCycleStatus: status.lifeCycleStatus,
+      actualStartTime: status.actualStartTime ?? null,
+      actualEndTime: status.actualEndTime ?? null,
+      isLive: status.lifeCycleStatus === 'live',
+      watchUrl: `https://youtube.com/watch?v=${broadcastId}`,
+    };
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────
