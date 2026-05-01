@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { google, youtube_v3 } from 'googleapis';
 import type { OAuth2Client } from 'google-auth-library';
+import * as crypto from 'crypto';
 
 export interface YoutubeBroadcast {
   broadcastId: string;
@@ -66,7 +67,7 @@ export class YoutubeService {
         'https://www.googleapis.com/auth/youtube',
         'https://www.googleapis.com/auth/youtube.upload',
       ],
-      state: userId,
+      state: this.signOAuthState(userId),
     });
   }
 
@@ -178,6 +179,79 @@ export class YoutubeService {
       this.logger.warn(
         `endBroadcast(${broadcastId}) failed: ${(err as Error).message}`,
       );
+    }
+  }
+
+  // ── OAuth state CSRF protection ────────────────────────────────────────
+
+  /**
+   * Signs a userId into an HMAC-protected state string for the OAuth2 flow.
+   * Prevents CSRF attacks where an attacker could forge the state parameter
+   * to link their YouTube account to a victim's Skyplay account.
+   */
+  signOAuthState(userId: string): string {
+    const secret = this.clientSecret || 'skyplay-oauth-hmac-fallback';
+    const hmac = crypto
+      .createHmac('sha256', secret)
+      .update(userId)
+      .digest('hex');
+    return `${userId}.${hmac}`;
+  }
+
+  /**
+   * Verifies and extracts the userId from an HMAC-signed state string.
+   * Throws if the signature is invalid or the format is wrong.
+   */
+  verifyOAuthState(state: string): string {
+    const dotIdx = state.lastIndexOf('.');
+    if (dotIdx < 1) throw new Error('Invalid OAuth state format');
+    const userId = state.substring(0, dotIdx);
+    const providedHmac = state.substring(dotIdx + 1);
+    const secret = this.clientSecret || 'skyplay-oauth-hmac-fallback';
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(userId)
+      .digest('hex');
+    if (
+      providedHmac.length !== expected.length ||
+      !crypto.timingSafeEqual(
+        Buffer.from(providedHmac, 'hex'),
+        Buffer.from(expected, 'hex'),
+      )
+    ) {
+      throw new Error('Invalid OAuth state signature');
+    }
+    return userId;
+  }
+
+  // ── Token refresh ──────────────────────────────────────────────────────
+
+  /**
+   * Ensures the access token is still valid by attempting a refresh via the
+   * OAuth2 client. Returns the (possibly new) access token and whether a
+   * refresh occurred so callers can persist the updated token.
+   */
+  async ensureValidAccessToken(
+    accessToken: string,
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshed: boolean }> {
+    if (!refreshToken) {
+      return { accessToken, refreshed: false };
+    }
+    const client = this.buildOAuthClient();
+    client.setCredentials({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    try {
+      const { token } = await client.getAccessToken();
+      if (!token) return { accessToken, refreshed: false };
+      return { accessToken: token, refreshed: token !== accessToken };
+    } catch (err) {
+      this.logger.warn(
+        `Token refresh attempt failed: ${(err as Error).message}`,
+      );
+      return { accessToken, refreshed: false };
     }
   }
 }

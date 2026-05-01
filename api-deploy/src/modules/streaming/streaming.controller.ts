@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,6 +15,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import { GameProvider } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { google } from 'googleapis';
@@ -84,6 +86,17 @@ export class StreamingController {
     }
 
     try {
+      // Verify the HMAC-signed state to prevent CSRF attacks
+      let userId: string;
+      try {
+        userId = this.youtube.verifyOAuthState(state);
+      } catch {
+        this.logger.warn('YouTube OAuth: invalid state signature');
+        return res.redirect(
+          `${frontendUrl}/profile?youtube=error&reason=invalid_state`,
+        );
+      }
+
       const { accessToken, refreshToken } = await this.youtube.exchangeCode(code);
 
       // Fetch the channel id/title so we can key LinkedAccount by externalId
@@ -97,14 +110,14 @@ export class StreamingController {
       const channelTitle = channel?.snippet?.title ?? undefined;
 
       if (!channelId) {
-        this.logger.warn(`YouTube OAuth: no channel found for user ${state}`);
+        this.logger.warn(`YouTube OAuth: no channel found for user ${userId}`);
         return res.redirect(
           `${frontendUrl}/profile?youtube=error&reason=no_channel`,
         );
       }
 
       await this.linkedAccounts.linkYoutube(
-        state,
+        userId,
         channelId,
         accessToken,
         refreshToken,
@@ -125,6 +138,7 @@ export class StreamingController {
 
   @Post('streaming/start')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async start(
     @Req() req: Request,
@@ -140,19 +154,19 @@ export class StreamingController {
     if (!userId) throw new BadRequestException('Missing user id');
     if (!body?.matchId) throw new BadRequestException('matchId is required');
 
-    const tokens = await this.linkedAccounts.getDecryptedTokens(
-      userId,
-      GameProvider.YOUTUBE,
-    );
-    if (!tokens?.accessToken) {
-      throw new NotFoundException(
-        'Aucun compte YouTube lié — connectez-vous via /auth/youtube/connect',
-      );
-    }
+    const accessToken = await this.getValidYoutubeToken(userId);
 
     const match = await this.findStreamableMatch(body.matchId);
     if (!match) {
       throw new NotFoundException(`Match ${body.matchId} introuvable`);
+    }
+
+    this.assertOwnership(match, userId);
+
+    if (match.broadcastId) {
+      throw new BadRequestException(
+        'Une diffusion est déjà en cours pour ce match — arrêtez-la avant d\'en démarrer une nouvelle',
+      );
     }
 
     const title =
@@ -160,7 +174,7 @@ export class StreamingController {
       `SkyPlay — Match ${body.matchId.slice(0, 8)}`;
 
     const broadcast = await this.youtube.createLiveBroadcast(
-      tokens.accessToken,
+      accessToken,
       title,
     );
 
@@ -184,6 +198,7 @@ export class StreamingController {
 
   @Post('streaming/stop')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async stop(
     @Req() req: Request,
@@ -193,23 +208,19 @@ export class StreamingController {
     if (!userId) throw new BadRequestException('Missing user id');
     if (!body?.matchId) throw new BadRequestException('matchId is required');
 
-    const tokens = await this.linkedAccounts.getDecryptedTokens(
-      userId,
-      GameProvider.YOUTUBE,
-    );
-    if (!tokens?.accessToken) {
-      throw new NotFoundException('Aucun compte YouTube lié');
-    }
+    const accessToken = await this.getValidYoutubeToken(userId);
 
     const match = await this.findStreamableMatch(body.matchId);
     if (!match) {
       throw new NotFoundException(`Match ${body.matchId} introuvable`);
     }
+    this.assertOwnership(match, userId);
+
     if (!match.broadcastId) {
       throw new BadRequestException('Aucune diffusion en cours pour ce match');
     }
 
-    await this.youtube.endBroadcast(tokens.accessToken, match.broadcastId);
+    await this.youtube.endBroadcast(accessToken, match.broadcastId);
 
     // Clear ephemeral stream state so a fresh start creates a new broadcast.
     await this.clearBroadcast(match.kind, match.id);
@@ -227,23 +238,33 @@ export class StreamingController {
   private async findStreamableMatch(
     matchId: string,
   ): Promise<
-    | { kind: 'match' | 'tournamentMatch'; id: string; broadcastId: string | null }
+    | { kind: 'match' | 'tournamentMatch'; id: string; broadcastId: string | null; playerIds: string[] }
     | null
   > {
     const tournamentMatch = await this.prisma.tournamentMatch.findUnique({
       where: { id: matchId },
-      select: { id: true, broadcastId: true },
+      select: { id: true, broadcastId: true, player1Id: true, player2Id: true },
     });
     if (tournamentMatch) {
-      return { kind: 'tournamentMatch', ...tournamentMatch };
+      return {
+        kind: 'tournamentMatch',
+        id: tournamentMatch.id,
+        broadcastId: tournamentMatch.broadcastId,
+        playerIds: [tournamentMatch.player1Id, tournamentMatch.player2Id],
+      };
     }
 
     const match = await this.prisma.match.findUnique({
       where: { id: matchId },
-      select: { id: true, broadcastId: true },
+      select: { id: true, broadcastId: true, results: { select: { userId: true } } },
     });
     if (match) {
-      return { kind: 'match', ...match };
+      return {
+        kind: 'match',
+        id: match.id,
+        broadcastId: match.broadcastId,
+        playerIds: match.results.map((r) => r.userId),
+      };
     }
 
     return null;
@@ -270,6 +291,8 @@ export class StreamingController {
         data: {
           broadcastId: broadcast.broadcastId,
           streamKey: broadcast.streamKey,
+          streamUrl: broadcast.watchUrl,
+          streamType: 'YOUTUBE',
         },
       });
     }
@@ -279,16 +302,66 @@ export class StreamingController {
     kind: 'match' | 'tournamentMatch',
     id: string,
   ): Promise<void> {
+    const resetData = { broadcastId: null, streamKey: null, streamUrl: null, streamType: null };
     if (kind === 'tournamentMatch') {
       await this.prisma.tournamentMatch.update({
         where: { id },
-        data: { broadcastId: null, streamKey: null },
+        data: resetData,
       });
     } else {
       await this.prisma.match.update({
         where: { id },
-        data: { broadcastId: null, streamKey: null },
+        data: resetData,
       });
+    }
+  }
+
+  // ── Token & ownership helpers ───────────────────────────────────────────
+
+  /**
+   * Retrieves a valid YouTube access token for the user, refreshing it via
+   * OAuth2 if it has expired. Persists the refreshed token back to the DB.
+   */
+  private async getValidYoutubeToken(userId: string): Promise<string> {
+    const tokens = await this.linkedAccounts.getDecryptedTokens(
+      userId,
+      GameProvider.YOUTUBE,
+    );
+    if (!tokens?.accessToken) {
+      throw new NotFoundException(
+        'Aucun compte YouTube lié — connectez-vous via /auth/youtube/connect',
+      );
+    }
+
+    const { accessToken, refreshed } = await this.youtube.ensureValidAccessToken(
+      tokens.accessToken,
+      tokens.refreshToken,
+    );
+    if (refreshed) {
+      await this.linkedAccounts.updateEncryptedAccessToken(
+        userId,
+        GameProvider.YOUTUBE,
+        accessToken,
+      );
+      this.logger.log(`Refreshed YouTube token for user ${userId.slice(0, 8)}…`);
+    }
+    return accessToken;
+  }
+
+  /**
+   * Verifies that the authenticated user is a participant in the match.
+   * Legacy `Match` records without participant data are allowed through
+   * to preserve backwards compatibility.
+   */
+  private assertOwnership(
+    match: { playerIds: string[] },
+    userId: string,
+  ): void {
+    if (match.playerIds.length === 0) return;
+    if (!match.playerIds.includes(userId)) {
+      throw new ForbiddenException(
+        'Vous ne participez pas à ce match',
+      );
     }
   }
 }

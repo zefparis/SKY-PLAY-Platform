@@ -12,7 +12,7 @@ interface StreamPlayerProps {
 function extractYouTubeId(url: string): string | null {
   const regexps = [
     /youtu\.be\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?(?:[^#]*&)?v=([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
   ]
@@ -76,6 +76,14 @@ export default function StreamPlayer({ streamUrl, streamType }: StreamPlayerProp
         className="w-full h-full"
         frameBorder="0"
         title={`${streamType} stream`}
+        onError={(e) => {
+          const target = e.currentTarget;
+          target.style.display = 'none';
+          target.insertAdjacentHTML(
+            'afterend',
+            '<div class="w-full h-full flex items-center justify-center text-white/50 text-sm">Impossible de charger le stream</div>',
+          );
+        }}
       />
     </div>
   )

@@ -205,6 +205,22 @@ export class LinkedAccountsService {
   }
 
   /**
+   * Updates only the encrypted access token for a linked account.
+   * Used after an automatic OAuth token refresh to persist the new token.
+   */
+  async updateEncryptedAccessToken(
+    userId: string,
+    provider: GameProvider,
+    newAccessToken: string,
+  ): Promise<void> {
+    const encrypted = this.crypto.encrypt(newAccessToken);
+    await this.prisma.linkedAccount.update({
+      where: { userId_provider: { userId, provider } },
+      data: { accessToken: encrypted },
+    });
+  }
+
+  /**
    * Returns decrypted tokens — INTERNAL USE ONLY, never expose via REST.
    */
   async getDecryptedTokens(

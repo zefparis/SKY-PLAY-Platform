@@ -63,7 +63,10 @@ export default function GoLiveButton({
       return
     }
     let cancelled = false
-    ;(async () => {
+    const MAX_RETRIES = 2
+    const RETRY_DELAY = 2000
+
+    const probe = async (attempt: number) => {
       try {
         const res = await fetch(`${API}/users/me/linked-accounts`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -77,9 +80,17 @@ export default function GoLiveButton({
           setHasYoutube(accounts.some((a) => a.provider === 'YOUTUBE'))
         }
       } catch {
-        if (!cancelled) setHasYoutube(false)
+        if (cancelled) return
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY))
+          if (!cancelled) await probe(attempt + 1)
+        } else {
+          setHasYoutube(false)
+        }
       }
-    })()
+    }
+
+    probe(0)
     return () => {
       cancelled = true
     }

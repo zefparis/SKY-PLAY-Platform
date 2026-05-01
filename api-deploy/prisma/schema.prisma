@@ -400,6 +400,8 @@ model Match {
   results     MatchResult[]
   broadcastId String?
   streamKey   String?
+  streamUrl   String?
+  streamType  StreamType?
 
   @@map("matches")
 }

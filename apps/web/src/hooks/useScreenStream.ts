@@ -168,6 +168,7 @@ export function useScreenStream(): UseScreenStreamResult {
         const recorder = new MediaRecorder(stream, {
           mimeType,
           videoBitsPerSecond: 2_500_000,
+          audioBitsPerSecond: 128_000,
         })
 
         recorder.ondataavailable = async (event) => {
