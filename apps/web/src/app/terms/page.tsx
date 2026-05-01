@@ -4,7 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: "Conditions d'Utilisation — SKY PLAY",
   description:
-    "Conditions générales d'utilisation de SKY PLAY Entertainment. Règles de la plateforme, compétitions, paiements et responsabilités.",
+    "Conditions générales d'utilisation de SKYPLAY AFRICA. Règles de la plateforme, compétitions, paiements et responsabilités.",
 }
 
 const CONTACT_EMAIL = 'contact@ia-solution.fr'
@@ -13,7 +13,7 @@ const SECTIONS: { title: string; paragraphs: string[] }[] = [
   {
     title: '1. Description du service',
     paragraphs: [
-      "SKY PLAY Entertainment (\"SKY PLAY\", \"nous\", \"la plateforme\") est une plateforme de compétitions gaming en ligne accessible à l'adresse skyplay.cloud et via ses applications mobiles.",
+      "SKYPLAY AFRICA (\"SKY PLAY\", \"nous\", \"la plateforme\") est une plateforme de compétitions gaming en ligne accessible à l'adresse skyplay.cloud et via ses applications mobiles.",
       "Le service permet aux utilisateurs de : participer à des défis (challenges) 1v1 ou multijoueurs avec mise en jeu de Sky Credits, s'inscrire à des tournois organisés par SKY PLAY ou par d'autres utilisateurs, diffuser en direct leurs matchs via l'intégration YouTube, rejoindre des ligues compétitives avec classements et saisons, gérer un portefeuille numérique (Sky Credits) avec dépôts et retraits.",
       "SKY PLAY est un service de divertissement compétitif basé sur l'habileté des joueurs. Il ne s'agit en aucun cas d'un service de jeux de hasard ou de paris en ligne.",
     ],
@@ -80,7 +80,7 @@ const SECTIONS: { title: string; paragraphs: string[] }[] = [
   {
     title: '8. Propriété intellectuelle',
     paragraphs: [
-      "L'ensemble des éléments constituant la plateforme SKY PLAY (design, code source, logo, marques, textes, images) sont la propriété exclusive de SKY PLAY Entertainment ou de ses concédants de licence.",
+      "L'ensemble des éléments constituant la plateforme SKY PLAY (design, code source, logo, marques, textes, images) sont la propriété exclusive de SKYPLAY AFRICA ou de ses concédants de licence.",
       "Toute reproduction, modification, distribution ou utilisation non autorisée de ces éléments est interdite.",
       "Les marques et logos des jeux tiers (Steam, Epic Games, YouTube, etc.) sont la propriété de leurs détenteurs respectifs et sont utilisés dans le cadre d'accords de licence ou d'utilisation autorisée.",
     ],
@@ -131,7 +131,7 @@ export default function TermsPage() {
             Conditions d&apos;Utilisation
           </h1>
           <p className="text-white/40 text-sm">
-            SKY PLAY Entertainment — Dernière mise à jour : mai 2026
+            SKYPLAY AFRICA — Dernière mise à jour : mai 2026
           </p>
         </div>
 
@@ -181,7 +181,7 @@ export default function TermsPage() {
               contactez-nous :
             </p>
             <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
-              <p className="text-white/80 text-sm font-semibold">SKY PLAY Entertainment</p>
+              <p className="text-white/80 text-sm font-semibold">SKYPLAY AFRICA</p>
               <p className="text-white/60 text-sm mt-1">
                 E-mail :{' '}
                 <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#0097FC] font-semibold hover:underline">

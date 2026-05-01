@@ -4,7 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Politique de Confidentialité — SKY PLAY',
   description:
-    'Politique de confidentialité de SKY PLAY Entertainment. Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.',
+    'Politique de confidentialité de SKYPLAY AFRICA. Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.',
 }
 
 const CONTACT_EMAIL = 'contact@ia-solution.fr'
@@ -115,14 +115,14 @@ export default function PrivacyPage() {
             Politique de Confidentialité
           </h1>
           <p className="text-white/40 text-sm">
-            SKY PLAY Entertainment — Dernière mise à jour : mai 2026
+            SKYPLAY AFRICA — Dernière mise à jour : mai 2026
           </p>
         </div>
 
         {/* Intro */}
         <div className="bg-[#111630] rounded-2xl border border-white/10 p-6 mb-6">
           <p className="text-white/70 text-sm leading-relaxed">
-            SKY PLAY Entertainment (&quot;SKY PLAY&quot;, &quot;nous&quot;, &quot;notre&quot;) s&apos;engage à
+            SKYPLAY AFRICA (&quot;SKY PLAY&quot;, &quot;nous&quot;, &quot;notre&quot;) s&apos;engage à
             protéger vos données personnelles. La présente politique décrit
             quelles informations nous collectons, comment nous les utilisons,
             avec qui nous les partageons et quels sont vos droits. En utilisant
@@ -165,7 +165,7 @@ export default function PrivacyPage() {
               contactez notre Délégué à la Protection des Données :
             </p>
             <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
-              <p className="text-white/80 text-sm font-semibold">SKY PLAY Entertainment</p>
+              <p className="text-white/80 text-sm font-semibold">SKYPLAY AFRICA</p>
               <p className="text-white/60 text-sm mt-1">
                 E-mail :{' '}
                 <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#0097FC] font-semibold hover:underline">
