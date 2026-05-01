@@ -28,7 +28,7 @@ function YouTubeCallbackContent() {
 
     ;(async () => {
       try {
-        const url = `${API}/streaming/youtube/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+        const url = `${API}/auth/youtube/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
         const res = await fetch(url, { credentials: 'include' })
 
         if (!res.ok) {
