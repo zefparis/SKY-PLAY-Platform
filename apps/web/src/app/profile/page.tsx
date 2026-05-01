@@ -102,6 +102,7 @@ export default function ProfilePage() {
       setToast({ message: 'Compte Epic Games lié !', type: 'success' })
       handled = true
     } else if (youtube === 'linked') {
+      useAuthStore.getState().restoreSession()
       setToast({ message: 'Compte YouTube connecté avec succès !', type: 'success' })
       handled = true
     } else if (youtube === 'error') {
@@ -109,6 +110,7 @@ export default function ProfilePage() {
         no_channel: "Ce compte Google n'a pas de chaîne YouTube. Crée une chaîne sur youtube.com puis réessaie.",
         exchange_failed: 'Échec de connexion YouTube. Réessaie ou contacte le support.',
         access_denied: 'Connexion YouTube annulée.',
+        invalid_state: 'Session OAuth invalide. Réessaie la connexion.',
         missing_params: 'Paramètres OAuth manquants. Réessaie.',
       }
       setToast({

@@ -88,7 +88,7 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 const COGNITO_CONFIG = {
   domain: 'https://eu-west-1sznqqakay.auth.eu-west-1.amazoncognito.com',
   clientId: '5f29473pmgndvnqlavstf8abnu',
-  redirectSignIn: 'https://sky-play-platform.vercel.app/auth/callback',
+  redirectSignIn: 'https://skyplay.cloud/auth/callback',
   userPoolId: 'eu-west-1_szNqQAkay',
   apiUrl: 'https://skyplayapi-production.up.railway.app',
 } as const
@@ -425,7 +425,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
   loginWithDiscord: () => {
     const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1487774336126554273'
-    const redirectUri = process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || 'https://sky-play-platform.vercel.app/auth/discord/callback'
+    const redirectUri = process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || 'https://skyplay.cloud/auth/discord/callback'
 
     const url = new URL('https://discord.com/oauth2/authorize')
     url.searchParams.set('client_id', clientId)
