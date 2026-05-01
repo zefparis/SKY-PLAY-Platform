@@ -109,11 +109,11 @@ const Navbar = () => {
               <div className="leading-none">
                 <div className="font-black text-xl uppercase tracking-widest"
                   style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif", letterSpacing: '3px' }}>
-                  SKY PLAY
+                  SKYPLAY
                 </div>
                 <div className="text-white/70 uppercase mt-0.5"
                   style={{ fontSize: '9px', fontFamily: 'Montserrat, sans-serif', letterSpacing: '4px' }}>
-                  ENTERTAINMENT
+                  AFRICA
                 </div>
               </div>
             </Link>
@@ -342,7 +342,7 @@ const Navbar = () => {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-black dark:text-white text-[#00165F] text-base truncate">{user.username}</p>
-                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.role === 'ADMIN' ? '⚙️ Administrateur' : '🎮 Joueur SKY PLAY'}</p>
+                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.role === 'ADMIN' ? '⚙️ Administrateur' : '🎮 Joueur SKYPLAY'}</p>
                     </div>
                     <Link href="/profile" onClick={() => setSuperMenuOpen(false)}
                       className="p-2 rounded-xl dark:bg-white/8 bg-[#00165F]/6 transition hover:bg-[#0097FC]/10">
