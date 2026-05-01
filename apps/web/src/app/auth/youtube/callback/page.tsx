@@ -26,23 +26,7 @@ function YouTubeCallbackContent() {
       return
     }
 
-    ;(async () => {
-      try {
-        const url = `${API}/auth/youtube/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
-        const res = await fetch(url, { credentials: 'include' })
-
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}))
-          const reason = (body as { reason?: string }).reason ?? 'exchange_failed'
-          router.replace(`/profile?youtube=error&reason=${reason}`)
-          return
-        }
-
-        router.replace('/profile?youtube=linked')
-      } catch {
-        router.replace('/profile?youtube=error&reason=exchange_failed')
-      }
-    })()
+    window.location.href = `${API}/auth/youtube/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
   }, [searchParams, router])
 
   if (error) {
