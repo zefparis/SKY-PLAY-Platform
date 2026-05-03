@@ -166,7 +166,7 @@ export class StreamingController {
     if (!userId) throw new BadRequestException('Missing user id');
     if (!body?.matchId) throw new BadRequestException('matchId is required');
 
-    const accessToken = await this.getValidYoutubeToken(userId);
+    const { accessToken, refreshToken } = await this.getValidYoutubeToken(userId);
 
     const match = await this.findStreamableMatch(body.matchId);
     if (!match) {
@@ -188,6 +188,7 @@ export class StreamingController {
     const broadcast = await this.youtube.createLiveBroadcast(
       accessToken,
       title,
+      refreshToken,
     );
 
     await this.persistBroadcast(match.kind, match.id, broadcast);
@@ -220,7 +221,7 @@ export class StreamingController {
     if (!userId) throw new BadRequestException('Missing user id');
     if (!body?.matchId) throw new BadRequestException('matchId is required');
 
-    const accessToken = await this.getValidYoutubeToken(userId);
+    const { accessToken } = await this.getValidYoutubeToken(userId);
 
     const match = await this.findStreamableMatch(body.matchId);
     if (!match) {
@@ -254,13 +255,13 @@ export class StreamingController {
     const username = (req as any).user?.username ?? 'Joueur';
     if (!userId) throw new BadRequestException('Missing user id');
 
-    const accessToken = await this.getValidYoutubeToken(userId);
+    const { accessToken, refreshToken } = await this.getValidYoutubeToken(userId);
 
     const title =
       body.title?.trim() ||
       `🎮 ${username} joue sur SKYPLAY AFRICA`;
 
-    const broadcast = await this.youtube.createLiveBroadcast(accessToken, title);
+    const broadcast = await this.youtube.createLiveBroadcast(accessToken, title, refreshToken);
 
     const rtmpUrl = broadcast.streamUrl.replace(`/${broadcast.streamKey}`, '');
 
@@ -285,7 +286,7 @@ export class StreamingController {
     if (!userId) throw new BadRequestException('Missing user id');
     if (!broadcastId) throw new BadRequestException('broadcastId is required');
 
-    const accessToken = await this.getValidYoutubeToken(userId);
+    const { accessToken } = await this.getValidYoutubeToken(userId);
 
     try {
       await this.youtube.transitionBroadcast(accessToken, broadcastId, 'live');
@@ -317,7 +318,7 @@ export class StreamingController {
     if (!userId) throw new BadRequestException('Missing user id');
     if (!broadcastId) throw new BadRequestException('broadcastId is required');
 
-    const accessToken = await this.getValidYoutubeToken(userId);
+    const { accessToken } = await this.getValidYoutubeToken(userId);
 
     await this.youtube.endBroadcast(accessToken, broadcastId);
 
@@ -334,7 +335,7 @@ export class StreamingController {
     if (!userId) throw new BadRequestException('Missing user id');
     if (!broadcastId) throw new BadRequestException('broadcastId query param is required');
 
-    const accessToken = await this.getValidYoutubeToken(userId);
+    const { accessToken } = await this.getValidYoutubeToken(userId);
 
     const status = await this.youtube.getBroadcastStatus(accessToken, broadcastId);
     if (!status) {
@@ -444,8 +445,11 @@ export class StreamingController {
   /**
    * Retrieves a valid YouTube access token for the user, refreshing it via
    * OAuth2 if it has expired. Persists the refreshed token back to the DB.
+   * Returns both tokens so callers can seed the OAuth client with refresh_token.
    */
-  private async getValidYoutubeToken(userId: string): Promise<string> {
+  private async getValidYoutubeToken(
+    userId: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const tokens = await this.linkedAccounts.getDecryptedTokens(
       userId,
       GameProvider.YOUTUBE,
@@ -468,7 +472,7 @@ export class StreamingController {
       );
       this.logger.log(`Refreshed YouTube token for user ${userId.slice(0, 8)}…`);
     }
-    return accessToken;
+    return { accessToken, refreshToken: tokens.refreshToken };
   }
 
   /**

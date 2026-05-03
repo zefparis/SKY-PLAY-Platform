@@ -43,14 +43,20 @@ export class YoutubeService {
    * Builds a fresh OAuth2 client. Keeping it per-call avoids credential
    * cross-contamination between concurrent requests.
    */
-  private buildOAuthClient(accessToken?: string): OAuth2Client {
+  private buildOAuthClient(
+    accessToken?: string,
+    refreshToken?: string,
+  ): OAuth2Client {
     const client = new google.auth.OAuth2(
       this.clientId,
       this.clientSecret,
       this.redirectUri,
     );
     if (accessToken) {
-      client.setCredentials({ access_token: accessToken });
+      client.setCredentials({
+        access_token: accessToken,
+        ...(refreshToken ? { refresh_token: refreshToken } : {}),
+      });
     }
     return client;
   }
@@ -100,10 +106,16 @@ export class YoutubeService {
   async createLiveBroadcast(
     accessToken: string,
     title: string,
+    refreshToken?: string,
   ): Promise<YoutubeBroadcast> {
+    if (!accessToken) {
+      throw new Error('YouTube accessToken is missing — cannot create broadcast');
+    }
+    this.logger.log(`createLiveBroadcast: token present=${!!accessToken}, length=${accessToken.length}`);
+
     const youtube = google.youtube({
       version: 'v3',
-      auth: this.buildOAuthClient(accessToken),
+      auth: this.buildOAuthClient(accessToken, refreshToken),
     });
 
     const broadcast = await youtube.liveBroadcasts.insert({
@@ -277,22 +289,39 @@ export class YoutubeService {
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshed: boolean }> {
     if (!refreshToken) {
+      this.logger.warn('ensureValidAccessToken: no refreshToken available, returning current token');
       return { accessToken, refreshed: false };
     }
+
     const client = this.buildOAuthClient();
     client.setCredentials({
       access_token: accessToken,
       refresh_token: refreshToken,
+      // Force googleapis to consider the token expired so it triggers a
+      // refresh. Without expiry_date the library assumes the token is valid
+      // and returns it as-is — even if it is actually expired on Google's end.
+      expiry_date: 1,
     });
+
     try {
       const { token } = await client.getAccessToken();
-      if (!token) return { accessToken, refreshed: false };
-      return { accessToken: token, refreshed: token !== accessToken };
+      if (!token) {
+        this.logger.error('ensureValidAccessToken: getAccessToken returned null after refresh attempt');
+        throw new Error('YouTube token refresh returned null — re-link your YouTube account');
+      }
+      const refreshed = token !== accessToken;
+      if (refreshed) {
+        this.logger.log('ensureValidAccessToken: token was refreshed successfully');
+      }
+      return { accessToken: token, refreshed };
     } catch (err) {
-      this.logger.warn(
-        `Token refresh attempt failed: ${(err as Error).message}`,
+      this.logger.error(
+        `ensureValidAccessToken: refresh failed — ${(err as Error).message}`,
       );
-      return { accessToken, refreshed: false };
+      throw new Error(
+        `YouTube token refresh failed: ${(err as Error).message}. ` +
+        'The user may need to re-link their YouTube account.',
+      );
     }
   }
 }
