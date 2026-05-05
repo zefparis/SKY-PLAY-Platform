@@ -185,11 +185,11 @@ export default function YouTubeLivePanel() {
 
   if (!live) {
     return (
-      <div className="mt-4 p-4 rounded-xl bg-[#0d1020] border border-[#2a2d3e]">
+      <div className="mt-4 p-4 rounded-xl bg-[#0d1020] border border-[#2a2d3e] space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white font-semibold text-sm">YouTube Live</p>
-            <p className="text-white/40 text-xs mt-0.5">Démarre un live depuis ton profil</p>
+            <p className="text-white/40 text-xs mt-0.5">Streame en direct via OBS</p>
           </div>
           <button
             onClick={createLive}
@@ -204,8 +204,45 @@ export default function YouTubeLivePanel() {
             Démarrer un live
           </button>
         </div>
+
+        {/* OBS 3-step guide */}
+        <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-2">
+          <p className="text-white/70 text-xs font-semibold mb-2">Comment streamer avec OBS :</p>
+          <div className="flex items-start gap-2">
+            <span className="shrink-0 w-5 h-5 rounded-full bg-[#0097FC]/20 text-[#0097FC] text-xs font-bold flex items-center justify-center">1</span>
+            <p className="text-white/60 text-xs">
+              Télécharge{' '}
+              <a href="https://obsproject.com/download" target="_blank" rel="noopener noreferrer" className="text-[#0097FC] underline hover:text-[#0097FC]/80">
+                OBS Studio
+              </a>{' '}
+              (gratuit, Windows/Mac/Linux)
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="shrink-0 w-5 h-5 rounded-full bg-[#0097FC]/20 text-[#0097FC] text-xs font-bold flex items-center justify-center">2</span>
+            <p className="text-white/60 text-xs">Clique &quot;Démarrer un live&quot; ci-dessus, puis copie l&apos;URL RTMP + la clé de stream</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="shrink-0 w-5 h-5 rounded-full bg-[#0097FC]/20 text-[#0097FC] text-xs font-bold flex items-center justify-center">3</span>
+            <p className="text-white/60 text-xs">Dans OBS : Paramètres → Stream → Colle l&apos;URL et la clé → Démarrer le streaming</p>
+          </div>
+        </div>
+
+        {/* Disabled screen-share button */}
+        <div className="relative group">
+          <button
+            disabled
+            className="w-full px-4 py-2 rounded-lg bg-white/5 text-white/30 text-xs font-semibold border border-white/10 cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            🖥️ Screen Share (navigateur)
+          </button>
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg bg-[#1a1d2e] border border-[#2a2d3e] text-white/70 text-[11px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none shadow-lg">
+            Streaming navigateur temporairement indisponible — Utilisez OBS
+          </div>
+        </div>
+
         {error && (
-          <p className="mt-3 text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">{error}</p>
         )}
       </div>
     )

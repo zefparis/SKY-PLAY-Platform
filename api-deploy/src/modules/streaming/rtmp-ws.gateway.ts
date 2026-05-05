@@ -18,6 +18,14 @@ import { CognitoJwtPayload } from '../../common/types/cognito-jwt-payload';
 
 const WS_PATH = '/rtmp-ws';
 
+/**
+ * Kill-switch: when true the WebSocket relay rejects all new connections.
+ * Re-enable by setting to `false` once a low-latency relay region is deployed.
+ */
+const RELAY_DISABLED = true;
+const RELAY_DISABLED_MESSAGE =
+  'Screen share relay temporarily disabled — use OBS with the RTMP key from your profile';
+
 interface RtmpSession {
   id: string;
   ffmpeg: ChildProcess;
@@ -101,6 +109,12 @@ export class RtmpWsGateway implements OnModuleInit, OnApplicationShutdown {
       // bubble through the existing listeners untouched.
       const url = new URL(req.url ?? '', 'http://localhost');
       if (url.pathname !== WS_PATH) return;
+
+      if (RELAY_DISABLED) {
+        this.logger.log('Rejecting RTMP-WS upgrade: relay is disabled');
+        this.rejectUpgrade(socket, RELAY_DISABLED_MESSAGE);
+        return;
+      }
 
       const token = url.searchParams.get('token');
       if (!token) {

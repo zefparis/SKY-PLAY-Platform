@@ -276,22 +276,20 @@ export default function GoLiveButton({
     )
   }
 
-  // ── 5. Idle → "Go Live" button ───────────────────────────────────────────
+  // ── 5. Idle → screen-share relay disabled, redirect to OBS mode ─────────
   return (
     <div className="flex flex-col items-stretch gap-1">
       <button
-        onClick={startBroadcast}
-        disabled={loading}
-        className={`inline-flex items-center justify-center rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold shadow-md shadow-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed ${sizing}`}
+        disabled
+        title="Streaming navigateur temporairement indisponible — Utilisez OBS depuis votre profil"
+        className={`inline-flex items-center justify-center rounded-lg bg-white/10 text-white/40 border border-white/15 cursor-not-allowed ${sizing}`}
       >
         <Radio className="w-4 h-4" />
-        <span>{loading ? 'Démarrage…' : 'Go Live'}</span>
+        <span>Go Live (OBS)</span>
       </button>
-      {(actionError || streamError) && (
-        <span className="text-[11px] text-red-300/90 max-w-[14rem] text-center">
-          {actionError ?? streamError}
-        </span>
-      )}
+      <span className="text-[11px] text-white/40 max-w-[14rem] text-center">
+        Streaming navigateur indisponible — Utilise OBS via ton profil
+      </span>
     </div>
   )
 }
