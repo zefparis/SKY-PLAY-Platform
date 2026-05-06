@@ -106,7 +106,7 @@ const Navbar = () => {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Link href="/" className="flex items-center leading-none">
+            <Link href="/" className="flex items-center leading-none flex-shrink-0">
               <Image src="/skyplay_africa_400.png" alt="SkyPlay Africa" width={40} height={40} className="rounded-lg" />
             </Link>
 
