@@ -9,6 +9,7 @@ import Link from 'next/link'
 import StreamPlayer from '@/components/tournaments/StreamPlayer'
 import Avatar from '@/components/ui/Avatar'
 import { getSocket } from '@/lib/socket'
+import { StreamSetupCard } from '@/components/streaming/StreamSetupCard'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -264,22 +265,31 @@ function MatchCard({
       {/* Start stream input (player only, no stream yet, IN_PROGRESS) */}
       {isInProgress && !hasStream && userIsPlayer && (
         <div className="mb-4 space-y-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={streamInput}
-              onChange={(e) => setStreamInput(e.target.value)}
-              placeholder="Colle ton lien YouTube Live, Twitch ou Facebook Live"
-              className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#0097FC]"
-            />
-            <button
-              onClick={handleStartStream}
-              disabled={streamSubmitting || !streamInput.trim()}
-              className="px-3 py-2 bg-[#0097FC] hover:bg-[#0097FC]/80 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
-            >
-              {streamSubmitting ? '...' : 'Démarrer'}
-            </button>
-          </div>
+          <StreamSetupCard
+            matchId={match.id}
+            initialUrl={match.streamUrl}
+            initialType={match.streamType as 'YOUTUBE' | 'TWITCH' | null}
+            onSubmit={async (streamUrl) => {
+              const tokens = localStorage.getItem('skyplay-auth')
+              const parsed = tokens ? JSON.parse(tokens) : null
+              const token = (parsed as { tokens?: { idToken?: string; accessToken?: string } })?.tokens?.idToken
+                || (parsed as { tokens?: { idToken?: string; accessToken?: string } })?.tokens?.accessToken
+                || ''
+              const res = await fetch(`${API}/tournaments/matches/${match.id}/stream`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ streamUrl }),
+              })
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}))
+                throw new Error((err as { message?: string }).message || 'Erreur')
+              }
+              onStreamStarted()
+            }}
+          />
         </div>
       )}
 

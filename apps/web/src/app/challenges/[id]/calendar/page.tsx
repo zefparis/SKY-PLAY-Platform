@@ -8,6 +8,7 @@ import StreamPlayer from '@/components/tournaments/StreamPlayer'
 import Avatar from '@/components/ui/Avatar'
 import { getSocket } from '@/lib/socket'
 import GoLiveButton from '@/components/streaming/GoLiveButton'
+import { StreamSetupCard } from '@/components/streaming/StreamSetupCard'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -321,23 +322,38 @@ function MatchCard({
       {/* Stream input — visible to players on PENDING or IN_PROGRESS matches */}
       {showStreamInput && (
         <div className="space-y-1.5">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={streamInput}
-              onChange={(e) => { setStreamInput(e.target.value); setStreamError('') }}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmitStream()}
-              placeholder="🎥 Colle ton lien YouTube Live / Twitch"
-              className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white text-xs placeholder:text-white/40 focus:outline-none focus:border-[#0097FC] min-w-0"
-            />
-            <button
-              onClick={handleSubmitStream}
-              disabled={streamSubmitting || !streamInput.trim()}
-              className="px-3 py-2 bg-[#0097FC] hover:bg-[#0097FC]/80 disabled:opacity-40 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap shrink-0"
-            >
-              {streamSubmitting ? '…' : '📡 Démarrer'}
-            </button>
-          </div>
+          <StreamSetupCard
+            matchId={match.id}
+            initialUrl={match.streamUrl}
+            initialType={match.streamType as 'YOUTUBE' | 'TWITCH' | null}
+            onSubmit={async (streamUrl) => {
+              setStreamSubmitting(true)
+              setStreamError('')
+              try {
+                const token = getAuthToken()
+                const res = await fetch(`${API}/challenges/matches/${match.id}/stream`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ streamUrl }),
+                })
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}))
+                  throw new Error((err as { message?: string }).message || 'Erreur')
+                }
+                setStreamInput('')
+                setEditing(false)
+                onStreamStarted()
+              } catch (err) {
+                setStreamError(err instanceof Error ? err.message : 'Erreur')
+                throw err
+              } finally {
+                setStreamSubmitting(false)
+              }
+            }}
+          />
           {streamError && <p className="text-xs text-red-400">{streamError}</p>}
           {editing && (
             <button onClick={() => { setEditing(false); setStreamInput('') }} className="text-xs text-white/40 hover:text-white/70 transition-colors">

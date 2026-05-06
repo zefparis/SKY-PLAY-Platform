@@ -635,6 +635,33 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Auth extras
     'auth.strength.label': 'Strength',
+
+    // Streaming setup
+    'streaming.setup.helpLink': 'How do I get my link?',
+    'streaming.setup.placeholderYoutube': 'https://youtube.com/...',
+    'streaming.setup.placeholderTwitch': 'https://twitch.tv/your_channel',
+    'streaming.setup.invalidYoutube': 'This URL does not look like a valid YouTube link',
+    'streaming.setup.invalidTwitch': 'This URL does not look like a valid Twitch link',
+    'streaming.setup.startButton': 'Start',
+    // Streaming guide
+    'streaming.guide.title': 'How to get your stream link?',
+    'streaming.guide.chooseDevice': 'Which device are you using?',
+    'streaming.guide.devices.ps5': 'PlayStation 5',
+    'streaming.guide.devices.xbox': 'Xbox Series X/S',
+    'streaming.guide.devices.ios': 'iPhone / iPad',
+    'streaming.guide.devices.android': 'Android Mobile',
+    'streaming.guide.devices.pc': 'PC',
+    'streaming.guide.gotIt': 'Got it',
+    'streaming.guide.instructions.ps5.youtube': 'Press the Create button on your controller \u2192 Broadcast \u2192 YouTube. Connect your Google account if asked. Start the live. Once live, go to youtube.com/live and copy the URL.',
+    'streaming.guide.instructions.ps5.twitch': 'Press Create \u2192 Broadcast \u2192 Twitch. Connect your Twitch account. Start the live. Your URL: https://twitch.tv/your_username',
+    'streaming.guide.instructions.xbox.youtube': 'Xbox does not support YouTube natively. Use a capture card (Elgato) with OBS Studio on PC, or install the Xbox Mobile app to stream from your phone.',
+    'streaming.guide.instructions.xbox.twitch': 'Install the Twitch app on Xbox from the Store. Sign in. Start the stream from Game DVR. Your URL: https://twitch.tv/your_username',
+    'streaming.guide.instructions.ios.youtube': 'Open the YouTube app \u2192 Create button \u2192 Go live. \u26a0\ufe0f YouTube limit: minimum 1000 subscribers required. Otherwise, use Twitch.',
+    'streaming.guide.instructions.ios.twitch': 'Install the Twitch app. Create your account. Broadcast tab \u2192 Start a broadcast. Your URL: https://twitch.tv/your_username',
+    'streaming.guide.instructions.android.youtube': 'Open the YouTube app \u2192 Create \u2192 Go live. \u26a0\ufe0f Minimum 1000 subscribers required. Otherwise use Twitch.',
+    'streaming.guide.instructions.android.twitch': 'Install the Twitch app. Create your account. Broadcast tab \u2192 Start. Your URL: https://twitch.tv/your_username',
+    'streaming.guide.instructions.pc.youtube': 'Go to youtube.com/livestreaming. Open OBS Studio. Configure the stream key provided by YouTube. Once live, copy the URL from YouTube Studio.',
+    'streaming.guide.instructions.pc.twitch': 'Go to twitch.tv/dashboard \u2192 Stream Key. Open OBS Studio. Configure the Twitch stream key. Your URL: https://twitch.tv/your_username',
   },
 
 
@@ -1266,5 +1293,32 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Auth extras
     'auth.strength.label': 'Force',
+
+    // Streaming setup
+    'streaming.setup.helpLink': 'Comment obtenir mon lien ?',
+    'streaming.setup.placeholderYoutube': 'https://youtube.com/...',
+    'streaming.setup.placeholderTwitch': 'https://twitch.tv/votre_chaine',
+    'streaming.setup.invalidYoutube': 'Cette URL ne ressemble pas \u00e0 un lien YouTube valide',
+    'streaming.setup.invalidTwitch': 'Cette URL ne ressemble pas \u00e0 un lien Twitch valide',
+    'streaming.setup.startButton': 'D\u00e9marrer',
+    // Streaming guide
+    'streaming.guide.title': 'Comment obtenir ton lien de stream ?',
+    'streaming.guide.chooseDevice': 'Sur quel appareil tu joues ?',
+    'streaming.guide.devices.ps5': 'PlayStation 5',
+    'streaming.guide.devices.xbox': 'Xbox Series X/S',
+    'streaming.guide.devices.ios': 'iPhone / iPad',
+    'streaming.guide.devices.android': 'Mobile Android',
+    'streaming.guide.devices.pc': 'PC',
+    'streaming.guide.gotIt': "J'ai compris",
+    'streaming.guide.instructions.ps5.youtube': "Appuie sur le bouton Create de ta manette \u2192 Broadcast \u2192 YouTube. Connecte ton compte Google si demand\u00e9. Lance le live. Une fois en direct, va sur youtube.com/live et copie l'URL.",
+    'streaming.guide.instructions.ps5.twitch': 'Appuie sur Create \u2192 Broadcast \u2192 Twitch. Connecte ton compte Twitch. Lance le live. Ton URL : https://twitch.tv/ton_pseudo',
+    'streaming.guide.instructions.xbox.youtube': "Xbox ne supporte pas YouTube nativement. Utilise une carte de capture (Elgato) avec OBS Studio sur PC, ou installe l'app Xbox Mobile pour streamer depuis ton t\u00e9l\u00e9phone.",
+    'streaming.guide.instructions.xbox.twitch': "Installe l'app Twitch sur Xbox depuis le Store. Connecte-toi. Lance le stream depuis Game DVR. Ton URL : https://twitch.tv/ton_pseudo",
+    'streaming.guide.instructions.ios.youtube': "Ouvre l'app YouTube \u2192 bouton Cr\u00e9er \u2192 Diffuser en direct. \u26a0\ufe0f Limite YouTube : minimum 1000 abonn\u00e9s requis. Sinon, utilise Twitch.",
+    'streaming.guide.instructions.ios.twitch': "Installe l'app Twitch. Cr\u00e9e ton compte. Onglet Diffuser \u2192 D\u00e9marrer une diffusion. Ton URL : https://twitch.tv/ton_pseudo",
+    'streaming.guide.instructions.android.youtube': "Ouvre l'app YouTube \u2192 Cr\u00e9er \u2192 Diffuser en direct. \u26a0\ufe0f Minimum 1000 abonn\u00e9s requis. Sinon utilise Twitch.",
+    'streaming.guide.instructions.android.twitch': "Installe l'app Twitch. Cr\u00e9e ton compte. Onglet Diffuser \u2192 D\u00e9marrer. Ton URL : https://twitch.tv/ton_pseudo",
+    'streaming.guide.instructions.pc.youtube': "Va sur youtube.com/livestreaming. Lance OBS Studio. Configure le stream key fourni par YouTube. Une fois en live, copie l'URL depuis YouTube Studio.",
+    'streaming.guide.instructions.pc.twitch': 'Va sur twitch.tv/dashboard \u2192 Stream Key. Lance OBS Studio. Configure le stream key Twitch. Ton URL : https://twitch.tv/ton_pseudo',
   },
 }
