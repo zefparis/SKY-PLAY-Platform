@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/lib/auth-store'
 import OBSWebSocket from 'obs-websocket-js'
+import OBSTutorial from './OBSTutorial'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -82,6 +83,10 @@ export default function YouTubeLivePanel() {
   const [obsError, setObsError] = useState<string | null>(null)
   const [obsStats, setObsStats] = useState<ObsStreamStats | null>(null)
   const [manualMode, setManualMode] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return localStorage.getItem('obs-tutorial-collapsed') !== 'true'
+  })
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const obsStatsPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -564,6 +569,15 @@ export default function YouTubeLivePanel() {
     )
   }
 
+  // ── Toggle tutorial ─────────────────────────────────────────────────────
+  const toggleTutorial = useCallback(() => {
+    setTutorialOpen((prev) => {
+      const next = !prev
+      localStorage.setItem('obs-tutorial-collapsed', next ? 'false' : 'true')
+      return next
+    })
+  }, [])
+
   // ═══════════════════════════════════════════════════════════════════════════
   // STEP 0 — CONNECT OBS OR USE MANUAL MODE
   // ═══════════════════════════════════════════════════════════════════════════
@@ -574,22 +588,31 @@ export default function YouTubeLivePanel() {
       {/* Header */}
       <div>
         <p className="text-white font-bold text-sm">YouTube Live</p>
-        <p className="text-white/40 text-xs mt-0.5">Streame tes matchs en direct via OBS Studio</p>
+        <p className="text-white/40 text-xs mt-0.5">Avant de continuer</p>
       </div>
 
-      {/* OBS Connection block */}
-      <div className="rounded-xl bg-white/[0.03] border border-white/10 p-4 space-y-3">
-        <p className="text-white/80 text-xs font-bold flex items-center gap-2">
-          🎬 Connecter OBS Studio
-        </p>
-        <div className="rounded-lg bg-[#0097FC]/5 border border-[#0097FC]/15 p-3">
-          <p className="text-white/50 text-xs leading-relaxed">
-            Dans OBS : <span className="text-white/80 font-semibold">Outils → Paramètres du serveur WebSocket</span>
-            <br />→ Activer le serveur WebSocket · port <span className="text-white/80 font-mono">4455</span>
-          </p>
-        </div>
+      {/* Collapsible OBS Tutorial */}
+      <div className="rounded-xl bg-white/[0.03] border border-white/10 overflow-hidden">
+        <button
+          onClick={toggleTutorial}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition"
+        >
+          <span className="text-white/70 text-xs font-bold flex items-center gap-2">
+            🎬 Voir comment activer WebSocket dans OBS
+          </span>
+          <span className="text-white/30 text-xs transition-transform duration-200" style={{ transform: tutorialOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+            ▶
+          </span>
+        </button>
+        {tutorialOpen && (
+          <div className="px-4 pb-4">
+            <OBSTutorial />
+          </div>
+        )}
+      </div>
 
-        {/* Password input */}
+      {/* Password + Connect */}
+      <div className="rounded-xl bg-white/[0.03] border border-white/10 p-4 space-y-3">
         <div className="space-y-1">
           <label className="text-white/50 text-xs font-medium">
             Mot de passe WebSocket <span className="text-white/30">(optionnel)</span>
@@ -603,7 +626,6 @@ export default function YouTubeLivePanel() {
           />
         </div>
 
-        {/* Connect button */}
         <button
           onClick={connectObs}
           disabled={obsConnecting}
@@ -623,9 +645,9 @@ export default function YouTubeLivePanel() {
         <button
           onClick={() => { setManualMode(true); createLive() }}
           disabled={loading}
-          className="text-white/40 text-xs hover:text-white/60 transition underline underline-offset-2"
+          className="text-white/40 text-xs hover:text-white/60 transition"
         >
-          {loading ? 'Chargement...' : 'Mode manuel (sans WebSocket)'}
+          → {loading ? 'Chargement...' : 'Mode manuel (sans OBS)'}
         </button>
       </div>
 
