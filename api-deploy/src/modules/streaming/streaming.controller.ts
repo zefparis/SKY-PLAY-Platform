@@ -281,7 +281,7 @@ export class StreamingController {
   async goLive(
     @Req() req: Request,
     @Param('broadcastId') broadcastId: string,
-  ): Promise<{ started: boolean }> {
+  ): Promise<{ started: boolean; alreadyLive?: boolean; status?: string }> {
     const userId = (req as any).user?.id;
     if (!userId) throw new BadRequestException('Missing user id');
     if (!broadcastId) throw new BadRequestException('broadcastId is required');
@@ -289,21 +289,29 @@ export class StreamingController {
     const { accessToken } = await this.getValidYoutubeToken(userId);
 
     try {
-      await this.youtube.transitionBroadcast(accessToken, broadcastId, 'live');
+      const result = await this.youtube.transitionBroadcast(accessToken, broadcastId, 'live');
+
+      if (!result.transitioned) {
+        // Already live or testing — no transition needed
+        return { started: true, alreadyLive: true, status: result.currentStatus };
+      }
+
+      return { started: true };
     } catch (err) {
       const msg = (err as Error).message ?? '';
       if (msg.includes('redundantTransition')) {
-        return { started: true };
+        return { started: true, alreadyLive: true, status: 'live' };
       }
       if (msg.includes('liveStreamNotActive')) {
         throw new BadRequestException(
           'Le flux RTMP n\'est pas encore actif — assurez-vous d\'envoyer des données via OBS avant de démarrer.',
         );
       }
+      if (msg.includes('terminé')) {
+        throw new BadRequestException(msg);
+      }
       throw new BadRequestException(`Impossible de démarrer le live : ${msg}`);
     }
-
-    return { started: true };
   }
 
   @Post('streaming/youtube/live/:broadcastId/stop')

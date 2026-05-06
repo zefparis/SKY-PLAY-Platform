@@ -174,22 +174,45 @@ export class YoutubeService {
 
   /**
    * Transitions a broadcast to the given status ('testing' | 'live' | 'complete').
-   * YouTube will reject invalid transitions with a 400 which we surface.
+   * Checks current status first to avoid redundant transition errors.
+   * Returns the current lifecycle status and whether a transition was needed.
    */
   async transitionBroadcast(
     accessToken: string,
     broadcastId: string,
     status: 'testing' | 'live' | 'complete',
-  ): Promise<void> {
-    const youtube = google.youtube({
-      version: 'v3',
-      auth: this.buildOAuthClient(accessToken),
+  ): Promise<{ transitioned: boolean; currentStatus: string }> {
+    const auth = this.buildOAuthClient(accessToken);
+    const youtube = google.youtube({ version: 'v3', auth });
+
+    // Check current status before transitioning
+    const broadcast = await youtube.liveBroadcasts.list({
+      part: ['status'],
+      id: [broadcastId],
     });
+
+    const currentStatus = broadcast.data.items?.[0]?.status?.lifeCycleStatus ?? 'unknown';
+
+    // Already in the requested state (or equivalent) → no-op
+    if (currentStatus === status || (status === 'live' && currentStatus === 'testing')) {
+      this.logger.log(`transitionBroadcast(${broadcastId}): already ${currentStatus}, skipping`);
+      return { transitioned: false, currentStatus };
+    }
+
+    // Broadcast is terminated → cannot transition
+    if (currentStatus === 'complete' || currentStatus === 'revoked') {
+      throw new Error(
+        `Ce broadcast est terminé (${currentStatus}). Crée un nouveau live.`,
+      );
+    }
+
     await youtube.liveBroadcasts.transition({
       part: ['status'],
       broadcastStatus: status,
       id: broadcastId,
     });
+
+    return { transitioned: true, currentStatus: status };
   }
 
   /**

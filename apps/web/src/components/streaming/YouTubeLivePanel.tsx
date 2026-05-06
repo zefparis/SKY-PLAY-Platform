@@ -298,7 +298,8 @@ export default function YouTubeLivePanel() {
             { method: 'POST', headers: headers() },
           )
           if (startRes.ok) {
-            setLive((prev) => prev ? { ...prev, lifeCycleStatus: 'live' } : prev)
+            const startData = await startRes.json()
+            setLive((prev) => prev ? { ...prev, lifeCycleStatus: startData.status ?? 'live' } : prev)
           }
         } catch { /* polling will pick it up */ }
       }, 8_000)
@@ -327,14 +328,16 @@ export default function YouTubeLivePanel() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         const msg = (body as any).message ?? ''
-        if (msg.toLowerCase().includes('not ready') || msg.toLowerCase().includes('redundant')) {
+        if (msg.toLowerCase().includes('rtmp') || msg.toLowerCase().includes('actif')) {
           setError('En attente de connexion OBS... Démarre le stream dans OBS d\'abord.')
         } else {
           throw new Error(msg || `Erreur ${res.status}`)
         }
         return
       }
-      setLive((prev) => (prev ? { ...prev, lifeCycleStatus: 'live' } : prev))
+      const data = await res.json()
+      // alreadyLive or just started — go to live state
+      setLive((prev) => (prev ? { ...prev, lifeCycleStatus: data.status ?? 'live' } : prev))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
