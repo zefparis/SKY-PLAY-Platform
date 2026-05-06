@@ -635,6 +635,38 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Auth extras
     'auth.strength.label': 'Strength',
+
+    // Streaming setup
+    'streaming.setup.platformLabel': 'Streaming platform',
+    'streaming.setup.helpLink': 'How do I get my link?',
+    'streaming.setup.placeholderYoutube': 'https://youtube.com/watch?v=... or https://youtu.be/...',
+    'streaming.setup.placeholderTwitch': 'https://twitch.tv/your_channel',
+    'streaming.setup.invalidYoutube': 'This URL does not look like a valid YouTube link',
+    'streaming.setup.invalidTwitch': 'This URL does not look like a valid Twitch link',
+    'streaming.setup.startButton': 'Start',
+    'streaming.setup.submitting': 'Sending...',
+    'streaming.setup.editUrl': 'Edit stream URL',
+    'streaming.setup.cancelEdit': 'Cancel',
+    // Streaming guide
+    'streaming.guide.title': 'How to get your stream link?',
+    'streaming.guide.chooseDevice': 'Which device are you playing on?',
+    'streaming.guide.device.ps5': 'PlayStation 5',
+    'streaming.guide.device.xbox': 'Xbox Series X/S',
+    'streaming.guide.device.ios': 'iOS Mobile (iPhone/iPad)',
+    'streaming.guide.device.android': 'Android Mobile',
+    'streaming.guide.device.pc': 'PC',
+    'streaming.guide.gotIt': 'Got it',
+    'streaming.guide.back': 'Back',
+    'streaming.guide.ps5.youtube': 'Press the Create button on your controller → Broadcast → YouTube. Sign in with your Google account if prompted. Start the live. Once live, go to youtube.com/live → copy the URL of your live stream.',
+    'streaming.guide.ps5.twitch': 'Press Create → Broadcast → Twitch. Sign in with your Twitch account. Start the live. Your URL is: https://twitch.tv/your_username',
+    'streaming.guide.xbox.youtube': 'Xbox does not natively support YouTube streaming. Use a capture card (Elgato) with OBS Studio on PC, or install the Xbox Mobile app to stream from your phone.',
+    'streaming.guide.xbox.twitch': 'Install the Twitch app on Xbox from the Store. Sign in. Start the stream from Game DVR. Your URL: https://twitch.tv/your_username',
+    'streaming.guide.ios.youtube': 'Open the YouTube app → Create button → Go Live. ⚠️ YouTube requirement: minimum 1,000 subscribers needed. Otherwise, use Twitch.',
+    'streaming.guide.ios.twitch': 'Install the Twitch app. Create your account. Broadcast tab → Start a broadcast. Your URL: https://twitch.tv/your_username',
+    'streaming.guide.android.youtube': 'Open the YouTube app → Create → Go Live. ⚠️ Minimum 1,000 subscribers required. Otherwise, use Twitch.',
+    'streaming.guide.android.twitch': 'Install the Twitch app. Create your account. Broadcast tab → Start. Your URL: https://twitch.tv/your_username',
+    'streaming.guide.pc.youtube': 'Go to youtube.com/livestreaming. Launch OBS Studio. Configure the stream key provided by YouTube. Once live, copy the URL from YouTube Studio.',
+    'streaming.guide.pc.twitch': 'Go to twitch.tv/dashboard → Stream Key. Launch OBS Studio. Configure the Twitch stream key. Once live, your URL is https://twitch.tv/your_username',
   },
 
 
@@ -1266,5 +1298,37 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Auth extras
     'auth.strength.label': 'Force',
+
+    // Streaming setup
+    'streaming.setup.platformLabel': 'Plateforme de streaming',
+    'streaming.setup.helpLink': 'Comment obtenir mon lien ?',
+    'streaming.setup.placeholderYoutube': 'https://youtube.com/watch?v=... ou https://youtu.be/...',
+    'streaming.setup.placeholderTwitch': 'https://twitch.tv/votre_chaine',
+    'streaming.setup.invalidYoutube': 'Cette URL ne ressemble pas à un lien YouTube valide',
+    'streaming.setup.invalidTwitch': 'Cette URL ne ressemble pas à un lien Twitch valide',
+    'streaming.setup.startButton': 'Démarrer',
+    'streaming.setup.submitting': 'Envoi...',
+    'streaming.setup.editUrl': 'Modifier l\'URL du stream',
+    'streaming.setup.cancelEdit': 'Annuler',
+    // Streaming guide
+    'streaming.guide.title': 'Comment obtenir ton lien de stream ?',
+    'streaming.guide.chooseDevice': 'Sur quel appareil tu joues ?',
+    'streaming.guide.device.ps5': 'PlayStation 5',
+    'streaming.guide.device.xbox': 'Xbox Series X/S',
+    'streaming.guide.device.ios': 'Mobile iOS (iPhone/iPad)',
+    'streaming.guide.device.android': 'Mobile Android',
+    'streaming.guide.device.pc': 'PC',
+    'streaming.guide.gotIt': 'J\'ai compris',
+    'streaming.guide.back': 'Retour',
+    'streaming.guide.ps5.youtube': 'Appuie sur le bouton Create de ta manette → Broadcast → YouTube. Connecte ton compte Google si demandé. Lance le live. Une fois en direct, va sur youtube.com/live → copie l\'URL de ton live.',
+    'streaming.guide.ps5.twitch': 'Appuie sur Create → Broadcast → Twitch. Connecte ton compte Twitch. Lance le live. Ton URL est : https://twitch.tv/ton_pseudo',
+    'streaming.guide.xbox.youtube': 'Xbox ne supporte pas YouTube nativement. Utilise une carte de capture (Elgato) avec OBS Studio sur PC, ou installe l\'app Xbox Mobile pour streamer depuis ton téléphone.',
+    'streaming.guide.xbox.twitch': 'Installe l\'app Twitch sur Xbox depuis le Store. Connecte-toi. Lance le stream depuis Game DVR. Ton URL : https://twitch.tv/ton_pseudo',
+    'streaming.guide.ios.youtube': 'Ouvre l\'app YouTube → bouton Créer → Diffuser en direct. ⚠️ Limite YouTube : minimum 1000 abonnés requis. Sinon, utilise Twitch.',
+    'streaming.guide.ios.twitch': 'Installe l\'app Twitch. Crée ton compte. Onglet Diffuser → Démarrer une diffusion. Ton URL : https://twitch.tv/ton_pseudo',
+    'streaming.guide.android.youtube': 'Ouvre l\'app YouTube → Créer → Diffuser en direct. ⚠️ Minimum 1000 abonnés requis. Sinon utilise Twitch.',
+    'streaming.guide.android.twitch': 'Installe l\'app Twitch. Crée ton compte. Onglet Diffuser → Démarrer. Ton URL : https://twitch.tv/ton_pseudo',
+    'streaming.guide.pc.youtube': 'Va sur youtube.com/livestreaming. Lance OBS Studio. Configure le stream key fourni par YouTube. Une fois en live, copie l\'URL depuis YouTube Studio.',
+    'streaming.guide.pc.twitch': 'Va sur twitch.tv/dashboard → Stream Key. Lance OBS Studio. Configure le stream key Twitch. Une fois en live, ton URL est https://twitch.tv/ton_pseudo',
   },
 }
