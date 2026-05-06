@@ -326,17 +326,20 @@ export default function YouTubeLivePanel() {
         return
       }
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        const msg = (body as any).message ?? ''
-        if (msg.toLowerCase().includes('rtmp') || msg.toLowerCase().includes('actif')) {
-          setError('En attente de connexion OBS... Démarre le stream dans OBS d\'abord.')
+        const body = await res.json().catch(() => ({})) as { message?: string }
+        const msg = body.message ?? ''
+        if (msg.includes('OBS') || msg.toLowerCase().includes('rtmp')) {
+          setError('Lance le streaming dans OBS d\'abord, puis réessaie.')
+        } else if (msg.includes('terminé')) {
+          setError('Ce live est terminé. Crée un nouveau live.')
+          setLive(null)
         } else {
           throw new Error(msg || `Erreur ${res.status}`)
         }
         return
       }
-      const data = await res.json()
-      // alreadyLive or just started — go to live state
+      const data = await res.json() as { started?: boolean; alreadyLive?: boolean; status?: string }
+      // alreadyLive or just started — go to live state directly
       setLive((prev) => (prev ? { ...prev, lifeCycleStatus: data.status ?? 'live' } : prev))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')

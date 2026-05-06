@@ -296,18 +296,24 @@ export class StreamingController {
         return { started: true, alreadyLive: true, status: result.currentStatus };
       }
 
-      return { started: true };
+      return { started: true, status: 'live' };
     } catch (err) {
       const msg = (err as Error).message ?? '';
       if (msg.includes('redundantTransition')) {
         return { started: true, alreadyLive: true, status: 'live' };
       }
-      if (msg.includes('liveStreamNotActive')) {
+      if (msg.includes('introuvable')) {
+        throw new NotFoundException(msg);
+      }
+      if (msg.includes('OBS') || msg.includes('liveStreamNotActive')) {
         throw new BadRequestException(
-          'Le flux RTMP n\'est pas encore actif — assurez-vous d\'envoyer des données via OBS avant de démarrer.',
+          "Lance le streaming dans OBS d'abord, puis réessaie.",
         );
       }
       if (msg.includes('terminé')) {
+        throw new BadRequestException(msg);
+      }
+      if (msg.includes('inattendu')) {
         throw new BadRequestException(msg);
       }
       throw new BadRequestException(`Impossible de démarrer le live : ${msg}`);
