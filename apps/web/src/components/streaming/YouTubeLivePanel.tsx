@@ -83,10 +83,7 @@ export default function YouTubeLivePanel() {
   const [obsError, setObsError] = useState<string | null>(null)
   const [obsStats, setObsStats] = useState<ObsStreamStats | null>(null)
   const [manualMode, setManualMode] = useState(false)
-  const [tutorialOpen, setTutorialOpen] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return localStorage.getItem('obs-tutorial-collapsed') !== 'true'
-  })
+  const [tutorialOpen, setTutorialOpen] = useState(true)
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const obsStatsPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -98,10 +95,12 @@ export default function YouTubeLivePanel() {
 
   const showToast = useCallback((msg: string) => setToast(msg), [])
 
-  // ── Restore OBS password from sessionStorage ───────────────────────────────
+  // ── Restore preferences from storage ────────────────────────────────────────
   useEffect(() => {
     const saved = sessionStorage.getItem('obs_ws_password')
     if (saved) setObsPassword(saved)
+    const collapsed = localStorage.getItem('obs-tutorial-collapsed')
+    if (collapsed === 'true') setTutorialOpen(false)
   }, [])
 
   // ── OBS WebSocket connection ───────────────────────────────────────────────
@@ -127,10 +126,11 @@ export default function YouTubeLivePanel() {
       })
     } catch (err: any) {
       const msg = err?.message || String(err)
-      if (msg.includes('Authentication')) {
-        setObsError('Mot de passe WebSocket incorrect.')
-      } else if (msg.includes('ECONNREFUSED') || msg.includes('WebSocket') || msg.includes('connect')) {
-        setObsError("OBS Studio n'est pas détecté. Ouvre OBS puis réessaie.")
+      const msgLower = msg.toLowerCase()
+      if (msgLower.includes('authentication')) {
+        setObsError('Mot de passe WebSocket requis ou incorrect. Entre le mot de passe configuré dans OBS.')
+      } else if (msgLower.includes('econnrefused') || msgLower.includes('failed') || msgLower.includes('connect')) {
+        setObsError("OBS Studio n'est pas détecté. Ouvre OBS et active le serveur WebSocket (Outils → Paramètres du serveur WebSocket).")
       } else {
         setObsError(msg)
       }

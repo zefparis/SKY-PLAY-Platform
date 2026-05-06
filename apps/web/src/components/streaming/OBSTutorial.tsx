@@ -144,8 +144,8 @@ export default function OBSTutorial() {
           {/* Scene placeholder */}
           <div className="absolute inset-0 flex items-center justify-center">
             {step.showDone ? (
-              <div className="flex flex-col items-center gap-3 animate-[fadeIn_0.4s_ease-out]">
-                <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3 animate-[fadeSlideIn_0.4s_ease-out]">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center animate-pulse">
                   <span className="text-3xl">✓</span>
                 </div>
                 <p className="text-emerald-400 text-sm font-bold">WebSocket activé</p>
@@ -159,7 +159,7 @@ export default function OBSTutorial() {
           {/* Dropdown (step 2) */}
           {step.showDropdown && (
             <div
-              className="absolute z-20 animate-[fadeIn_0.2s_ease-out]"
+              className="absolute z-20 animate-[fadeSlideIn_0.2s_ease-out]"
               style={{ top: 0, left: 60, background: '#222244', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', width: 260, padding: '4px 0' }}
             >
               {[
@@ -186,7 +186,7 @@ export default function OBSTutorial() {
 
           {/* Modal (step 3) */}
           {step.showModal && (
-            <div className="absolute inset-0 z-30 flex items-center justify-center animate-[fadeIn_0.3s_ease-out]" style={{ background: 'rgba(0,0,0,0.6)' }}>
+            <div className="absolute inset-0 z-30 flex items-center justify-center animate-[fadeSlideIn_0.3s_ease-out]" style={{ background: 'rgba(0,0,0,0.6)' }}>
               <div
                 className="rounded-xl border border-white/15 p-5 space-y-4"
                 style={{ background: '#1e1e3a', width: 320 }}
@@ -224,12 +224,11 @@ export default function OBSTutorial() {
 
                 {/* OK button */}
                 <button
-                  className="w-full py-2 rounded-lg text-sm font-bold transition-all duration-300"
+                  className={`w-full py-2 rounded-lg text-sm font-bold transition-all duration-300 ${okPulse ? 'animate-pulse' : ''}`}
                   style={{
                     background: okPulse ? '#6c3baa' : 'rgba(255,255,255,0.08)',
                     color: okPulse ? '#fff' : 'rgba(255,255,255,0.4)',
                     border: `1px solid ${okPulse ? '#8b5cf6' : 'rgba(255,255,255,0.1)'}`,
-                    animation: okPulse ? 'pulse 1.5s infinite' : 'none',
                   }}
                 >
                   OK
@@ -308,17 +307,6 @@ export default function OBSTutorial() {
         </div>
       </div>
 
-      {/* ── Keyframes ─────────────────────────────────────────────────────── */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-      `}</style>
     </div>
   )
 }

@@ -43,6 +43,20 @@ module.exports = {
         md: '0.75rem',
         lg: '1rem',
       },
+      keyframes: {
+        fadeSlideIn: {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeInDown: {
+          from: { opacity: '0', transform: 'translateY(-8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-slide-in': 'fadeSlideIn 0.3s ease-out',
+        'fade-in-down': 'fadeInDown 0.2s ease-out',
+      },
     },
   },
   plugins: [],
