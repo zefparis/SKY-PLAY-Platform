@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/lib/auth-store'
+import OBSWebSocket from 'obs-websocket-js'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
@@ -13,10 +14,18 @@ interface LiveState {
   lifeCycleStatus: string
 }
 
+interface ObsStreamStats {
+  active: boolean
+  timecode: string
+  bytes: number
+  skippedFrames: number
+  kbps: number
+}
+
 // ── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onDone, 2200)
+    const t = setTimeout(onDone, 2500)
     return () => clearTimeout(t)
   }, [onDone])
 
@@ -64,9 +73,18 @@ export default function YouTubeLivePanel() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
-  const [waitingObs, setWaitingObs] = useState(false)
+
+  // OBS WebSocket state
+  const obsRef = useRef<OBSWebSocket | null>(null)
+  const [obsConnected, setObsConnected] = useState(false)
+  const [obsConnecting, setObsConnecting] = useState(false)
+  const [obsPassword, setObsPassword] = useState('')
+  const [obsError, setObsError] = useState<string | null>(null)
+  const [obsStats, setObsStats] = useState<ObsStreamStats | null>(null)
+  const [manualMode, setManualMode] = useState(false)
+
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const readyPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const obsStatsPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const headers = useCallback(
     () => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }),
@@ -75,7 +93,87 @@ export default function YouTubeLivePanel() {
 
   const showToast = useCallback((msg: string) => setToast(msg), [])
 
-  // ── Poll status while live exists ──────────────────────────────────────────
+  // ── Restore OBS password from sessionStorage ───────────────────────────────
+  useEffect(() => {
+    const saved = sessionStorage.getItem('obs_ws_password')
+    if (saved) setObsPassword(saved)
+  }, [])
+
+  // ── OBS WebSocket connection ───────────────────────────────────────────────
+  const connectObs = useCallback(async () => {
+    setObsConnecting(true)
+    setObsError(null)
+
+    const obs = new OBSWebSocket()
+    try {
+      await obs.connect(
+        'ws://localhost:4455',
+        obsPassword || undefined,
+      )
+      obsRef.current = obs
+      setObsConnected(true)
+      if (obsPassword) sessionStorage.setItem('obs_ws_password', obsPassword)
+      showToast('OBS connecté !')
+
+      obs.on('ConnectionClosed', () => {
+        setObsConnected(false)
+        obsRef.current = null
+        setObsStats(null)
+      })
+    } catch (err: any) {
+      const msg = err?.message || String(err)
+      if (msg.includes('Authentication')) {
+        setObsError('Mot de passe WebSocket incorrect.')
+      } else if (msg.includes('ECONNREFUSED') || msg.includes('WebSocket') || msg.includes('connect')) {
+        setObsError("OBS Studio n'est pas détecté. Ouvre OBS puis réessaie.")
+      } else {
+        setObsError(msg)
+      }
+      // Fallback to manual after 3s timeout
+      setTimeout(() => {
+        if (!obsRef.current) setManualMode(true)
+      }, 3000)
+    } finally {
+      setObsConnecting(false)
+    }
+  }, [obsPassword, showToast])
+
+  // ── Disconnect OBS ─────────────────────────────────────────────────────────
+  const disconnectObs = useCallback(() => {
+    if (obsRef.current) {
+      obsRef.current.disconnect()
+      obsRef.current = null
+    }
+    setObsConnected(false)
+    setObsStats(null)
+  }, [])
+
+  // ── Poll OBS stream stats ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!obsConnected || !obsRef.current || !live || live.lifeCycleStatus !== 'live') {
+      if (obsStatsPollRef.current) clearInterval(obsStatsPollRef.current)
+      return
+    }
+
+    const poll = async () => {
+      try {
+        const res = await obsRef.current!.call('GetStreamStatus')
+        setObsStats({
+          active: res.outputActive,
+          timecode: res.outputTimecode || '00:00:00',
+          bytes: res.outputBytes ?? 0,
+          skippedFrames: res.outputSkippedFrames ?? 0,
+          kbps: Math.round(((res.outputBytes ?? 0) * 8) / 1000 / Math.max(1, (res.outputDuration ?? 1000) / 1000)),
+        })
+      } catch { /* ignore */ }
+    }
+
+    poll()
+    obsStatsPollRef.current = setInterval(poll, 5_000)
+    return () => { if (obsStatsPollRef.current) clearInterval(obsStatsPollRef.current) }
+  }, [obsConnected, live?.lifeCycleStatus])
+
+  // ── Poll YouTube status ────────────────────────────────────────────────────
   useEffect(() => {
     if (!live?.broadcastId || !token) return
 
@@ -99,41 +197,12 @@ export default function YouTubeLivePanel() {
             setLive(null)
           }
         }
-      } catch { /* ignore poll errors */ }
+      } catch { /* ignore */ }
     }
 
     pollRef.current = setInterval(poll, 5_000)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [live?.broadcastId, token, headers])
-
-  // ── Poll ready status when waiting for OBS connection ──────────────────────
-  useEffect(() => {
-    if (!waitingObs || !live?.broadcastId || !token) return
-
-    const poll = async () => {
-      try {
-        const res = await fetch(
-          `${API}/streaming/youtube/live/status?broadcastId=${live.broadcastId}`,
-          { headers: headers() },
-        )
-        if (res.ok) {
-          const data = await res.json()
-          if (data.lifeCycleStatus === 'ready' || data.lifeCycleStatus === 'live' || data.lifeCycleStatus === 'testing') {
-            setWaitingObs(false)
-            if (data.lifeCycleStatus !== 'live') {
-              // Auto-transition to live
-              startLiveRequest()
-            } else {
-              setLive((prev) => prev ? { ...prev, lifeCycleStatus: 'live' } : prev)
-            }
-          }
-        }
-      } catch { /* ignore */ }
-    }
-
-    readyPollRef.current = setInterval(poll, 5_000)
-    return () => { if (readyPollRef.current) clearInterval(readyPollRef.current) }
-  }, [waitingObs, live?.broadcastId, token, headers])
 
   // ── Create live ────────────────────────────────────────────────────────────
   const createLive = useCallback(async () => {
@@ -162,15 +231,82 @@ export default function YouTubeLivePanel() {
         watchUrl: data.watchUrl,
         lifeCycleStatus: data.lifeCycleStatus ?? 'created',
       })
+      return data
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
+      return null
     } finally {
       setLoading(false)
     }
   }, [token, headers])
 
-  // ── Start live request ─────────────────────────────────────────────────────
-  const startLiveRequest = useCallback(async () => {
+  // ── Auto-pilot: create + inject + start OBS ────────────────────────────────
+  const startLiveAuto = useCallback(async () => {
+    if (!token || !obsRef.current) return
+    setLoading(true)
+    setError(null)
+
+    try {
+      // 1. Create broadcast
+      const res = await fetch(`${API}/streaming/youtube/live/create`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({}),
+      })
+      if (res.status === 401) {
+        setError('Session YouTube expirée — reconnecte ton compte YouTube depuis le profil.')
+        return
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error((body as any).message ?? `Erreur ${res.status}`)
+      }
+      const data = await res.json()
+      const liveData: LiveState = {
+        broadcastId: data.broadcastId,
+        rtmpUrl: data.rtmpUrl,
+        streamKey: data.streamKey,
+        watchUrl: data.watchUrl,
+        lifeCycleStatus: 'created',
+      }
+      setLive(liveData)
+
+      // 2. Inject RTMP into OBS
+      await obsRef.current!.call('SetStreamServiceSettings', {
+        streamServiceType: 'rtmp_custom',
+        streamServiceSettings: {
+          server: data.rtmpUrl,
+          key: data.streamKey,
+        },
+      })
+      showToast('OBS configuré automatiquement !')
+
+      // 3. Start OBS stream
+      await obsRef.current!.call('StartStream')
+      showToast('Stream OBS démarré !')
+
+      // 4. Wait for YouTube to detect stream, then transition
+      setTimeout(async () => {
+        try {
+          const startRes = await fetch(
+            `${API}/streaming/youtube/live/${data.broadcastId}/start`,
+            { method: 'POST', headers: headers() },
+          )
+          if (startRes.ok) {
+            setLive((prev) => prev ? { ...prev, lifeCycleStatus: 'live' } : prev)
+          }
+        } catch { /* polling will pick it up */ }
+      }, 8_000)
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setLoading(false)
+    }
+  }, [token, headers, showToast])
+
+  // ── Start live (backend only, manual mode) ─────────────────────────────────
+  const startLiveManual = useCallback(async () => {
     if (!token || !live) return
     setLoading(true)
     setError(null)
@@ -187,15 +323,13 @@ export default function YouTubeLivePanel() {
         const body = await res.json().catch(() => ({}))
         const msg = (body as any).message ?? ''
         if (msg.toLowerCase().includes('not ready') || msg.toLowerCase().includes('redundant')) {
-          setWaitingObs(true)
-          setError(null)
+          setError('En attente de connexion OBS... Démarre le stream dans OBS d\'abord.')
         } else {
           throw new Error(msg || `Erreur ${res.status}`)
         }
         return
       }
       setLive((prev) => (prev ? { ...prev, lifeCycleStatus: 'live' } : prev))
-      setWaitingObs(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -203,19 +337,17 @@ export default function YouTubeLivePanel() {
     }
   }, [token, live, headers])
 
-  // ── Go live (user clicks) ──────────────────────────────────────────────────
-  const goLive = useCallback(async () => {
-    if (!live) return
-    setWaitingObs(true)
-    await startLiveRequest()
-  }, [live, startLiveRequest])
-
   // ── Stop live ──────────────────────────────────────────────────────────────
   const stopLive = useCallback(async () => {
     if (!token || !live) return
     setLoading(true)
     setError(null)
     try {
+      // Stop OBS stream if connected
+      if (obsRef.current && obsConnected) {
+        try { await obsRef.current.call('StopStream') } catch { /* may already be stopped */ }
+      }
+      // Stop backend
       const res = await fetch(
         `${API}/streaming/youtube/live/${live.broadcastId}/stop`,
         { method: 'POST', headers: headers() },
@@ -225,13 +357,13 @@ export default function YouTubeLivePanel() {
         throw new Error((body as any).message ?? `Erreur ${res.status}`)
       }
       setLive(null)
-      setWaitingObs(false)
+      setObsStats(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setLoading(false)
     }
-  }, [token, live, headers])
+  }, [token, live, headers, obsConnected])
 
   // ── Elapsed timer ──────────────────────────────────────────────────────────
   const [elapsed, setElapsed] = useState(0)
@@ -267,14 +399,16 @@ export default function YouTubeLivePanel() {
       <div className="mt-4 p-5 rounded-xl bg-[#0d1020] border border-[#FF3B3B]/30 space-y-4">
         {toast && <Toast message={toast} onDone={() => setToast(null)} />}
 
-        {/* Live badge */}
+        {/* Live badge + timer */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold" style={{ background: 'rgba(255,59,59,0.15)', color: '#FF3B3B' }}>
               <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: '#FF3B3B' }} />
               LIVE
             </span>
-            <span className="text-white/70 text-sm font-mono">{fmtTime(elapsed)}</span>
+            <span className="text-white/70 text-sm font-mono">
+              {obsStats?.timecode ? obsStats.timecode.split('.')[0] : fmtTime(elapsed)}
+            </span>
           </div>
           <button
             onClick={stopLive}
@@ -285,6 +419,21 @@ export default function YouTubeLivePanel() {
             ⏹ Arrêter le live
           </button>
         </div>
+
+        {/* OBS stream stats */}
+        {obsConnected && obsStats && (
+          <div className="flex items-center gap-4 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/10 text-xs">
+            <span className="text-white/50">Bitrate</span>
+            <span className="text-white/90 font-mono font-semibold">{obsStats.kbps} kbps</span>
+            {obsStats.skippedFrames > 0 && (
+              <>
+                <span className="text-white/50">Frames perdues</span>
+                <span className="text-yellow-400 font-mono">{obsStats.skippedFrames}</span>
+              </>
+            )}
+            <span className="ml-auto text-emerald-400 text-[10px] font-bold uppercase">OBS connecté</span>
+          </div>
+        )}
 
         {/* Watch link */}
         <a
@@ -302,34 +451,25 @@ export default function YouTubeLivePanel() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 2 — BROADCAST CREATED, CONFIGURE OBS
+  // STEP 2 — BROADCAST CREATED, MANUAL CONFIG (fallback)
   // ═══════════════════════════════════════════════════════════════════════════
-  if (live) {
+  if (live && manualMode) {
     return (
       <div className="mt-4 p-5 rounded-xl bg-[#0d1020] border border-[#2a2d3e] space-y-5">
         {toast && <Toast message={toast} onDone={() => setToast(null)} />}
 
-        {/* Header */}
         <div className="flex items-center gap-2">
           <span className="text-lg">🔴</span>
           <div>
-            <p className="text-white font-bold text-sm">Live créé — Configure OBS</p>
+            <p className="text-white font-bold text-sm">Live créé — Configure OBS manuellement</p>
             <p className="text-white/40 text-xs">Copie les infos ci-dessous dans OBS Studio</p>
           </div>
         </div>
 
         {/* RTMP credentials */}
         <div className="space-y-3 p-4 rounded-xl bg-white/[0.03] border border-white/10">
-          <CopyField
-            label="URL du serveur"
-            value={live.rtmpUrl}
-            onCopy={() => showToast('URL copiée !')}
-          />
-          <CopyField
-            label="Clé de stream"
-            value={live.streamKey}
-            onCopy={() => showToast('Clé copiée !')}
-          />
+          <CopyField label="URL du serveur" value={live.rtmpUrl} onCopy={() => showToast('URL copiée !')} />
+          <CopyField label="Clé de stream" value={live.streamKey} onCopy={() => showToast('Clé copiée !')} />
         </div>
 
         {/* OBS instructions */}
@@ -343,26 +483,15 @@ export default function YouTubeLivePanel() {
           </ol>
         </div>
 
-        {/* Go Live button */}
-        {waitingObs ? (
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-            <Spinner className="border-yellow-400/30 border-t-yellow-400" />
-            <p className="text-yellow-300 text-xs font-medium">
-              En attente de connexion OBS... (démarre le stream dans OBS d&apos;abord)
-            </p>
-          </div>
-        ) : (
-          <button
-            onClick={goLive}
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? <Spinner /> : '✓'}
-            J&apos;ai configuré OBS — Aller en live
-          </button>
-        )}
+        <button
+          onClick={startLiveManual}
+          disabled={loading}
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {loading ? <Spinner /> : '✓'}
+          J&apos;ai configuré OBS — Aller en live
+        </button>
 
-        {/* Cancel */}
         <button
           onClick={stopLive}
           disabled={loading}
@@ -377,61 +506,136 @@ export default function YouTubeLivePanel() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 1 — NO LIVE, SHOW GUIDE + CREATE BUTTON
+  // STEP 1 — OBS CONNECTED, READY TO AUTO-START
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (obsConnected) {
+    return (
+      <div className="mt-4 p-5 rounded-xl bg-[#0d1020] border border-emerald-500/30 space-y-4">
+        {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+
+        {/* Connected badge */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              OBS connecté
+            </span>
+            <span className="text-white/40 text-xs">Configuration automatique activée</span>
+          </div>
+          <button
+            onClick={disconnectObs}
+            className="text-white/30 text-xs hover:text-white/60 transition"
+          >
+            Déconnecter
+          </button>
+        </div>
+
+        {/* Info */}
+        <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-3">
+          <p className="text-emerald-300/80 text-xs">
+            🚀 OBS sera configuré automatiquement. Clique sur le bouton ci-dessous — on s&apos;occupe du reste !
+          </p>
+        </div>
+
+        {/* Start Live button */}
+        <button
+          onClick={startLiveAuto}
+          disabled={loading}
+          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+        >
+          {loading ? <Spinner /> : <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />}
+          Démarrer un live
+        </button>
+
+        <p className="text-white/30 text-[11px] text-center">
+          OBS recevra l&apos;URL RTMP + clé automatiquement et démarrera le stream
+        </p>
+
+        {/* Manual mode fallback */}
+        <button
+          onClick={() => { setManualMode(true); createLive() }}
+          className="w-full py-2 text-white/30 text-xs hover:text-white/50 transition"
+        >
+          Mode manuel (copier/coller)
+        </button>
+
+        {error && <p className="text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
+      </div>
+    )
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STEP 0 — CONNECT OBS OR USE MANUAL MODE
   // ═══════════════════════════════════════════════════════════════════════════
   return (
     <div className="mt-4 p-5 rounded-xl bg-[#0d1020] border border-[#2a2d3e] space-y-4">
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-white font-bold text-sm">YouTube Live</p>
-          <p className="text-white/40 text-xs mt-0.5">Streame tes matchs en direct via OBS</p>
-        </div>
+      <div>
+        <p className="text-white font-bold text-sm">YouTube Live</p>
+        <p className="text-white/40 text-xs mt-0.5">Streame tes matchs en direct via OBS Studio</p>
       </div>
 
-      {/* OBS guide */}
+      {/* OBS Connection block */}
       <div className="rounded-xl bg-white/[0.03] border border-white/10 p-4 space-y-3">
         <p className="text-white/80 text-xs font-bold flex items-center gap-2">
-          🎬 Comment streamer avec OBS
+          🎬 Connecter OBS Studio
         </p>
-
-        <div className="space-y-2.5">
-          <div className="flex items-start gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-full bg-[#0097FC]/20 text-[#0097FC] text-xs font-bold flex items-center justify-center">1</span>
-            <p className="text-white/60 text-sm pt-0.5">
-              Télécharge{' '}
-              <a href="https://obsproject.com" target="_blank" rel="noopener noreferrer" className="text-[#0097FC] underline font-semibold hover:text-[#0097FC]/80">
-                OBS Studio
-              </a>{' '}
-              <span className="text-white/30">(gratuit)</span>
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-full bg-[#0097FC]/20 text-[#0097FC] text-xs font-bold flex items-center justify-center">2</span>
-            <p className="text-white/60 text-sm pt-0.5">
-              Clique <span className="text-white/80 font-semibold">&quot;Démarrer un live&quot;</span> ci-dessous
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-full bg-[#0097FC]/20 text-[#0097FC] text-xs font-bold flex items-center justify-center">3</span>
-            <p className="text-white/60 text-sm pt-0.5">
-              Copie l&apos;URL RTMP + la clé de stream dans OBS
-            </p>
-          </div>
+        <div className="rounded-lg bg-[#0097FC]/5 border border-[#0097FC]/15 p-3">
+          <p className="text-white/50 text-xs leading-relaxed">
+            Dans OBS : <span className="text-white/80 font-semibold">Outils → Paramètres du serveur WebSocket</span>
+            <br />→ Activer le serveur WebSocket · port <span className="text-white/80 font-mono">4455</span>
+          </p>
         </div>
+
+        {/* Password input */}
+        <div className="space-y-1">
+          <label className="text-white/50 text-xs font-medium">
+            Mot de passe WebSocket <span className="text-white/30">(optionnel)</span>
+          </label>
+          <input
+            type="password"
+            value={obsPassword}
+            onChange={(e) => setObsPassword(e.target.value)}
+            placeholder="Laisser vide si pas de mot de passe"
+            className="w-full px-3 py-2.5 rounded-lg bg-black/40 border border-white/10 text-white text-xs placeholder:text-white/20 focus:outline-none focus:border-[#0097FC]/50 transition"
+          />
+        </div>
+
+        {/* Connect button */}
+        <button
+          onClick={connectObs}
+          disabled={obsConnecting}
+          className="w-full py-2.5 rounded-lg bg-[#0097FC]/15 border border-[#0097FC]/30 text-[#0097FC] text-sm font-bold hover:bg-[#0097FC]/25 transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {obsConnecting ? <Spinner className="border-[#0097FC]/30 border-t-[#0097FC]" /> : '🔌'}
+          Connecter OBS
+        </button>
+
+        {obsError && (
+          <p className="text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">{obsError}</p>
+        )}
       </div>
 
-      {/* Create button */}
-      <button
-        onClick={createLive}
-        disabled={loading}
-        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
-      >
-        {loading ? <Spinner /> : <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />}
-        Démarrer un live
-      </button>
+      {/* Manual mode fallback */}
+      <div className="text-center">
+        <button
+          onClick={() => { setManualMode(true); createLive() }}
+          disabled={loading}
+          className="text-white/40 text-xs hover:text-white/60 transition underline underline-offset-2"
+        >
+          {loading ? 'Chargement...' : 'Mode manuel (sans WebSocket)'}
+        </button>
+      </div>
+
+      {/* OBS download hint */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5">
+        <span className="text-white/30 text-xs">Pas encore OBS ?</span>
+        <a href="https://obsproject.com" target="_blank" rel="noopener noreferrer" className="text-[#0097FC] text-xs font-semibold underline hover:text-[#0097FC]/80">
+          Télécharger (gratuit)
+        </a>
+      </div>
 
       {error && <p className="text-red-400 text-xs bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
     </div>
