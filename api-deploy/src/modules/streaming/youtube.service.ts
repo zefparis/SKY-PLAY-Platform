@@ -174,8 +174,8 @@ export class YoutubeService {
 
   /**
    * Transitions a broadcast to the given status ('testing' | 'live' | 'complete').
-   * Checks current lifecycle status first to handle all possible states
-   * and avoid redundant transition errors from YouTube.
+   * Checks current status first to avoid redundant transition errors.
+   * Returns the current lifecycle status and whether a transition was needed.
    */
   async transitionBroadcast(
     accessToken: string,
@@ -185,50 +185,27 @@ export class YoutubeService {
     const auth = this.buildOAuthClient(accessToken);
     const youtube = google.youtube({ version: 'v3', auth });
 
-    // Step 1 — Check current broadcast status
+    // Check current status before transitioning
     const broadcast = await youtube.liveBroadcasts.list({
       part: ['status'],
       id: [broadcastId],
     });
 
-    const item = broadcast.data.items?.[0];
-    if (!item) {
-      throw new Error(`Broadcast ${broadcastId} introuvable`);
+    const currentStatus = broadcast.data.items?.[0]?.status?.lifeCycleStatus ?? 'unknown';
+
+    // Already in the requested state (or equivalent) → no-op
+    if (currentStatus === status || (status === 'live' && currentStatus === 'testing')) {
+      this.logger.log(`transitionBroadcast(${broadcastId}): already ${currentStatus}, skipping`);
+      return { transitioned: false, currentStatus };
     }
 
-    const lifeCycleStatus = item.status?.lifeCycleStatus ?? 'unknown';
-
-    // Step 2 — Handle each lifecycle state
-    switch (lifeCycleStatus) {
-      case 'live':
-      case 'testing':
-        // Already in progress → return success without re-transitioning
-        this.logger.log(
-          `transitionBroadcast(${broadcastId}): already ${lifeCycleStatus}, skipping`,
-        );
-        return { transitioned: false, currentStatus: lifeCycleStatus };
-
-      case 'complete':
-      case 'revoked':
-        throw new Error(
-          `Ce broadcast est terminé (${lifeCycleStatus}). Crée un nouveau live.`,
-        );
-
-      case 'ready':
-        // Nominal state → proceed with transition below
-        break;
-
-      case 'created':
-        // Stream not yet bound / OBS not connected
-        throw new Error(
-          "Le stream OBS n'est pas encore connecté. Lance le streaming dans OBS d'abord, puis réessaie.",
-        );
-
-      default:
-        throw new Error(`État broadcast inattendu : ${lifeCycleStatus}`);
+    // Broadcast is terminated → cannot transition
+    if (currentStatus === 'complete' || currentStatus === 'revoked') {
+      throw new Error(
+        `Ce broadcast est terminé (${currentStatus}). Crée un nouveau live.`,
+      );
     }
 
-    // Step 3 — Transition (only when status === 'ready')
     await youtube.liveBroadcasts.transition({
       part: ['status'],
       broadcastStatus: status,
