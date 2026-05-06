@@ -1,12 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Clock, ArrowLeft, Radio, Trophy, Users, AlertCircle, MessageCircle, FileText } from 'lucide-react'
+import { Clock, ArrowLeft, Play, Radio, Trophy, Users, AlertCircle, MessageCircle, FileText } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth-store'
-import { useI18n } from '@/components/i18n/I18nProvider'
 import StreamPlayer from '@/components/tournaments/StreamPlayer'
-import StreamSetupCard from '@/components/streaming/StreamSetupCard'
 import Avatar from '@/components/ui/Avatar'
 import { getSocket } from '@/lib/socket'
 import GoLiveButton from '@/components/streaming/GoLiveButton'
@@ -217,26 +215,39 @@ function MatchCard({
   const hasStream = !!match.streamUrl
   const userIsPlayer = isParticipant(match, user?.id)
 
-  const { t } = useI18n()
+  const [streamInput, setStreamInput] = useState('')
+  const [streamSubmitting, setStreamSubmitting] = useState(false)
+  const [streamError, setStreamError] = useState('')
   const [editing, setEditing] = useState(false)
 
-  const handleSubmitStream = useCallback(async (streamUrl: string) => {
-    const token = getAuthToken()
-    const res = await fetch(`${API}/challenges/matches/${match.id}/stream`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ streamUrl }),
-    })
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error((err as { message?: string }).message || 'Erreur')
+  const handleSubmitStream = async () => {
+    const url = streamInput.trim()
+    if (!url) return
+    setStreamSubmitting(true)
+    setStreamError('')
+    try {
+      const token = getAuthToken()
+      const res = await fetch(`${API}/challenges/matches/${match.id}/stream`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ streamUrl: url }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.message || 'Erreur')
+      }
+      setStreamInput('')
+      setEditing(false)
+      onStreamStarted()
+    } catch (err) {
+      setStreamError(err instanceof Error ? err.message : 'Erreur')
+    } finally {
+      setStreamSubmitting(false)
     }
-    setEditing(false)
-    onStreamStarted()
-  }, [match.id, onStreamStarted])
+  }
 
   const showStreamInput = isActive && userIsPlayer && (!hasStream || editing)
 
@@ -310,15 +321,27 @@ function MatchCard({
       {/* Stream input — visible to players on PENDING or IN_PROGRESS matches */}
       {showStreamInput && (
         <div className="space-y-1.5">
-          <StreamSetupCard
-            matchId={match.id}
-            initialUrl={editing ? match.streamUrl : undefined}
-            initialType={editing ? match.streamType as 'YOUTUBE' | 'TWITCH' | undefined : undefined}
-            onSubmit={handleSubmitStream}
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={streamInput}
+              onChange={(e) => { setStreamInput(e.target.value); setStreamError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmitStream()}
+              placeholder="🎥 Colle ton lien YouTube Live / Twitch"
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white text-xs placeholder:text-white/40 focus:outline-none focus:border-[#0097FC] min-w-0"
+            />
+            <button
+              onClick={handleSubmitStream}
+              disabled={streamSubmitting || !streamInput.trim()}
+              className="px-3 py-2 bg-[#0097FC] hover:bg-[#0097FC]/80 disabled:opacity-40 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              {streamSubmitting ? '…' : '📡 Démarrer'}
+            </button>
+          </div>
+          {streamError && <p className="text-xs text-red-400">{streamError}</p>}
           {editing && (
-            <button onClick={() => setEditing(false)} className="text-xs text-white/40 hover:text-white/70 transition-colors">
-              {t('streaming.setup.cancelEdit')}
+            <button onClick={() => { setEditing(false); setStreamInput('') }} className="text-xs text-white/40 hover:text-white/70 transition-colors">
+              Annuler
             </button>
           )}
         </div>
@@ -327,10 +350,10 @@ function MatchCard({
       {/* Modifier button — visible to players when stream set and not editing */}
       {hasStream && userIsPlayer && isActive && !editing && (
         <button
-          onClick={() => setEditing(true)}
+          onClick={() => { setEditing(true); setStreamInput(match.streamUrl ?? '') }}
           className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors text-left"
         >
-          ✏️ {t('streaming.setup.editUrl')}
+          ✏️ Modifier l'URL du stream
         </button>
       )}
 
