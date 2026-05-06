@@ -56,7 +56,7 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Leaderboard
     'leaderboard.title': 'Leaderboard',
-    'leaderboard.subtitle': 'Top players on SKY PLAY',
+    'leaderboard.subtitle': 'Top players on SKYPLAY AFRICA',
     'leaderboard.topPlayer': 'Top Player',
     'leaderboard.highestEarnings': 'Highest Earnings',
     'leaderboard.thisMonth': 'This Month',
@@ -105,7 +105,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'wallet.status.cancelled': 'Cancelled',
 
     // Challenges page
-    'challenges.title': 'SKY PLAY Challenges',
+    'challenges.title': 'SKYPLAY AFRICA Challenges',
     'challenges.subtitle': 'Join a challenge, beat your opponents, win CFA',
     'challenges.create': 'Create a challenge',
     'challenges.noChallenge': 'No challenges yet',
@@ -216,7 +216,7 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Chat
     'chat.title': 'Live Chat',
-    'chat.joinDiscord': 'Join SKY PLAY Discord',
+    'chat.joinDiscord': 'Join SKYPLAY AFRICA Discord',
     'chat.reconnecting': 'Reconnecting...',
     'chat.online': 'online',
     'chat.messagePlaceholder': 'Message',
@@ -307,7 +307,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'rules.cancel.title': 'Cancellation conditions',
     'rules.cancel.desc': 'Full refund of entry pass if competition is not completed within 24h.',
     'rules.legal.title': 'Legal notice',
-    'rules.legal.desc': 'Skill-based competition. SKY PLAY ENTERTAINMENT — Cameroon.',
+    'rules.legal.desc': 'Skill-based competition. SKYPLAY AFRICA — Cameroon.',
     'rules.version': 'Version:',
     'rules.refund.title': '💸 Refund Policy',
     'rules.refund.1': 'Full refund if challenge expires without enough participants.',
@@ -441,7 +441,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'withdraw.processing': '24-48h processing',
     'withdraw.processing.desc': 'Your request will be processed within 24-48 business hours.',
     'withdraw.fee': 'No platform fee',
-    'withdraw.fee.desc': 'SKY PLAY takes no commission on withdrawals.',
+    'withdraw.fee.desc': 'SKYPLAY AFRICA takes no commission on withdrawals.',
     'withdraw.confirm': 'I confirm this withdrawal to',
     'withdraw.submit': 'Withdraw',
     'withdraw.submitting': 'Processing...',
@@ -537,7 +537,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'hiw.hero.badge': '💡 How it works',
     'hiw.hero.title1': 'The platform earns',
     'hiw.hero.title2': 'only when you play',
-    'hiw.hero.sub': 'No subscription. No hidden fees. SKY PLAY takes a commission only on the competition pot — and only if you participate.',
+    'hiw.hero.sub': 'No subscription. No hidden fees. SKYPLAY AFRICA takes a commission only on the competition pot — and only if you participate.',
     'hiw.hero.cta.join': 'Join a challenge',
     'hiw.hero.cta.account': 'Create an account',
     'hiw.s1.title': '💰 Financial Model',
@@ -589,7 +589,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'hiw.v2.3.title': 'Spectator Mode',
     'hiw.v2.3.desc': 'Live multi-match streaming — watch any active competition on the platform.',
     'hiw.cta.title': 'Ready to play?',
-    'hiw.cta.sub': 'Join SKY PLAY competitions and win SKY Credits.',
+    'hiw.cta.sub': 'Join SKYPLAY AFRICA competitions and win SKY Credits.',
     'hiw.cta.btn1': 'Create a free account',
     'hiw.cta.btn2': 'See challenges',
     'hiw.dist.1st': '🥇 1st', 'hiw.dist.2nd': '🥈 2nd', 'hiw.dist.3rd': '🥉 3rd', 'hiw.dist.plat': '🏦 Platform',
@@ -687,7 +687,7 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Leaderboard
     'leaderboard.title': 'Classement',
-    'leaderboard.subtitle': 'Meilleurs joueurs sur SKY PLAY',
+    'leaderboard.subtitle': 'Meilleurs joueurs sur SKYPLAY AFRICA',
     'leaderboard.topPlayer': 'Meilleur joueur',
     'leaderboard.highestEarnings': 'Gains max',
     'leaderboard.thisMonth': 'Ce mois-ci',
@@ -736,7 +736,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'wallet.status.cancelled': 'Annulé',
 
     // Challenges page
-    'challenges.title': 'Défis SKY PLAY',
+    'challenges.title': 'Défis SKYPLAY AFRICA',
     'challenges.subtitle': 'Rejoins un défi, bats tes adversaires, remporte des CFA',
     'challenges.create': 'Créer un défi',
     'challenges.noChallenge': 'Aucun défi pour le moment',
@@ -847,7 +847,7 @@ export const translations: Record<SupportedLang, Translations> = {
 
     // Chat
     'chat.title': 'Chat en direct',
-    'chat.joinDiscord': 'Rejoindre le Discord SKY PLAY',
+    'chat.joinDiscord': 'Rejoindre le Discord SKYPLAY AFRICA',
     'chat.reconnecting': 'Reconnexion en cours…',
     'chat.online': 'en ligne',
     'chat.messagePlaceholder': 'Message',
@@ -938,7 +938,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'rules.cancel.title': "Conditions d'annulation",
     'rules.cancel.desc': "Remboursement intégral du pass si la compétition n'est pas complétée sous 24h.",
     'rules.legal.title': 'Mention légale',
-    'rules.legal.desc': "Compétition fondée sur l'habileté. SKY PLAY ENTERTAINMENT — Cameroun.",
+    'rules.legal.desc': "Compétition fondée sur l'habileté. SKYPLAY AFRICA — Cameroun.",
     'rules.version': 'Version :',
     'rules.refund.title': '💸 Politique de remboursement',
     'rules.refund.1': 'Remboursement intégral si le défi expire sans participants suffisants.',
@@ -1072,7 +1072,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'withdraw.processing': 'Traitement 24-48h',
     'withdraw.processing.desc': 'Votre demande de retrait sera traitée dans les 24-48h ouvrables.',
     'withdraw.fee': 'Aucun frais plateforme',
-    'withdraw.fee.desc': 'SKY PLAY ne prend aucune commission sur les retraits.',
+    'withdraw.fee.desc': 'SKYPLAY AFRICA ne prend aucune commission sur les retraits.',
     'withdraw.confirm': 'Je confirme ce retrait vers',
     'withdraw.submit': 'Retirer',
     'withdraw.submitting': 'Traitement...',
@@ -1168,7 +1168,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'hiw.hero.badge': '💡 Comment ça marche',
     'hiw.hero.title1': 'La plateforme gagne',
     'hiw.hero.title2': 'uniquement quand vous jouez',
-    'hiw.hero.sub': "Pas d'abonnement. Pas de frais cachés. SKY PLAY prélève une commission uniquement sur le pot de chaque compétition — et seulement si vous participez.",
+    'hiw.hero.sub': "Pas d'abonnement. Pas de frais cachés. SKYPLAY AFRICA prélève une commission uniquement sur le pot de chaque compétition — et seulement si vous participez.",
     'hiw.hero.cta.join': 'Rejoindre un challenge',
     'hiw.hero.cta.account': 'Créer un compte',
     'hiw.s1.title': '💰 Modèle Financier',
@@ -1220,7 +1220,7 @@ export const translations: Record<SupportedLang, Translations> = {
     'hiw.v2.3.title': 'Mode Spectateur',
     'hiw.v2.3.desc': "Streaming multi-matchs en direct — regardez n'importe quelle compétition active sur la plateforme.",
     'hiw.cta.title': 'Prêt à jouer ?',
-    'hiw.cta.sub': 'Rejoins les compétitions SKY PLAY et gagne des SKY Credits.',
+    'hiw.cta.sub': 'Rejoins les compétitions SKYPLAY AFRICA et gagne des SKY Credits.',
     'hiw.cta.btn1': 'Créer un compte gratuit',
     'hiw.cta.btn2': 'Voir les challenges',
     'hiw.dist.1st': '🥇 1er', 'hiw.dist.2nd': '🥈 2ème', 'hiw.dist.3rd': '🥉 3ème', 'hiw.dist.plat': '🏦 Plateforme',

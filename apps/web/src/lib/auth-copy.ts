@@ -1,7 +1,7 @@
 export const AUTH_COPY = {
   login: {
     title: 'Connexion',
-    subtitle: 'Accède à SKY PLAY avec ton compte.',
+    subtitle: 'Accède à SKYPLAY AFRICA avec ton compte.',
     emailLabel: 'Email',
     passwordLabel: 'Mot de passe',
     submit: 'Se connecter',

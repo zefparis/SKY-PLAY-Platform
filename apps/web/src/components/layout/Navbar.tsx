@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, LayoutDashboard, ChevronRight, ChevronDown, Pause, Shield, Lightbulb, Eye, Settings, Swords, Megaphone } from 'lucide-react'
@@ -105,7 +106,8 @@ const Navbar = () => {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Link href="/" className="flex items-center leading-none">
+            <Link href="/" className="flex items-center gap-2 leading-none">
+              <Image src="/skyplay_africa_400.png" alt="SkyPlay Africa" width={40} height={40} className="rounded-lg" />
               <div className="leading-none">
                 <div className="font-black text-xl uppercase tracking-widest"
                   style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif", letterSpacing: '3px' }}>
@@ -342,7 +344,7 @@ const Navbar = () => {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-black dark:text-white text-[#00165F] text-base truncate">{user.username}</p>
-                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.role === 'ADMIN' ? '⚙️ Administrateur' : '🎮 Joueur SKYPLAY'}</p>
+                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.role === 'ADMIN' ? '⚙️ Administrateur' : '🎮 Joueur SKYPLAY AFRICA'}</p>
                     </div>
                     <Link href="/profile" onClick={() => setSuperMenuOpen(false)}
                       className="p-2 rounded-xl dark:bg-white/8 bg-[#00165F]/6 transition hover:bg-[#0097FC]/10">

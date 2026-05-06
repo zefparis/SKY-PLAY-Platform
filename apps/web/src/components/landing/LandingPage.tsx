@@ -110,10 +110,10 @@ export default function LandingPage() {
         <div className="absolute top-6 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 z-10">
           <Link href="/" className="block">
             <div className="font-black text-2xl uppercase tracking-[3px]" style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif" }}>
-              SKY PLAY
+              SKYPLAY
             </div>
             <div className="text-white/50 uppercase mt-0.5 tracking-[4px]" style={{ fontSize: '9px' }}>
-              ENTERTAINMENT
+              AFRICA
             </div>
           </Link>
         </div>
@@ -423,7 +423,7 @@ export default function LandingPage() {
           <motion.div {...fadeUp()} className="text-center mb-12">
             <p className="text-[#ffd700] text-xs font-bold uppercase tracking-[3px] mb-3">Communauté</p>
             <h2 className="text-3xl md:text-5xl font-black">
-              Rejoins la communauté <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] to-[#FD2E5F]">SKY PLAY</span>
+              Rejoins la communauté <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] to-[#FD2E5F]">SKYPLAY AFRICA</span>
             </h2>
           </motion.div>
 
@@ -457,7 +457,7 @@ export default function LandingPage() {
             Prêt à <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00c8ff] to-[#ffd700]">dominer</span> ?
           </h2>
           <p className="text-lg text-white/70 mb-10">
-            Rejoins SKY PLAY et commence à compétir aujourd&apos;hui.
+            Rejoins SKYPLAY AFRICA et commence à compétir aujourd&apos;hui.
           </p>
           <Link href="/signup"
             className="group inline-flex items-center justify-center gap-2 px-10 py-4 rounded-xl bg-gradient-to-r from-[#00c8ff] to-[#0097FC] text-[#0d0f1a] font-black text-lg shadow-[0_0_60px_rgba(0,200,255,0.5)] hover:shadow-[0_0_80px_rgba(0,200,255,0.7)] hover:scale-[1.03] transition-all">
@@ -477,10 +477,10 @@ export default function LandingPage() {
             {/* Logo + tagline */}
             <div>
               <div className="font-black text-2xl uppercase tracking-[3px] mb-2" style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif" }}>
-                SKY PLAY
+                SKYPLAY
               </div>
               <div className="text-white/40 uppercase mb-4 tracking-[4px]" style={{ fontSize: '9px' }}>
-                ENTERTAINMENT
+                AFRICA
               </div>
               <p className="text-sm text-white/50 leading-relaxed">
                 Compétitions e-sport fondées sur l&apos;habileté.<br />
@@ -524,7 +524,7 @@ export default function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
-            <p>© 2026 SKY PLAY ENTERTAINMENT 🇨🇲 — Tous droits réservés</p>
+            <p>© 2026 SKYPLAY AFRICA 🇨🇲 — Tous droits réservés</p>
             <p className="flex items-center gap-1">
               <Star className="w-3 h-3 text-[#ffd700]" />
               Made with passion for African gamers

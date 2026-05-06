@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         {
           icon: Shield,
           title: "1. Responsable du traitement",
-          content: `**SKY PLAY ENTERTAINMENT**
+          content: `**SKYPLAY AFRICA**
 Cameroun
 
 **Contact :**
@@ -113,7 +113,7 @@ Ces services respectent les normes internationales de sécurité.
         {
           icon: Lock,
           title: "5. Sécurité des données",
-          content: `SKY PLAY met en œuvre des mesures de sécurité avancées pour protéger vos données :
+          content: `SKYPLAY AFRICA met en œuvre des mesures de sécurité avancées pour protéger vos données :
 
 **Chiffrement :**
 • Toutes les communications sont chiffrées en HTTPS/TLS
@@ -219,7 +219,7 @@ Certains prestataires techniques peuvent avoir accès à vos données depuis d'a
         {
           icon: Users,
           title: "10. Mineurs",
-          content: `La plateforme SKY PLAY est strictement interdite aux personnes de moins de 18 ans.
+          content: `La plateforme SKYPLAY AFRICA est strictement interdite aux personnes de moins de 18 ans.
 
 Si nous découvrons qu'un mineur a créé un compte, celui-ci sera immédiatement supprimé et les parents/tuteurs légaux seront contactés.
 
@@ -228,7 +228,7 @@ Si vous êtes parent et découvrez que votre enfant a créé un compte, contacte
         {
           icon: Shield,
           title: "11. Modifications de la politique",
-          content: `SKY PLAY se réserve le droit de modifier cette Politique de Confidentialité à tout moment pour refléter les changements dans nos pratiques ou pour des raisons légales.
+          content: `SKYPLAY AFRICA se réserve le droit de modifier cette Politique de Confidentialité à tout moment pour refléter les changements dans nos pratiques ou pour des raisons légales.
 
 **Notification :**
 Toute modification substantielle vous sera notifiée par email au moins 7 jours avant son entrée en vigueur.
@@ -248,7 +248,7 @@ Les versions précédentes de cette politique sont archivées et disponibles sur
 **Délai de réponse :** 24-48 heures
 
 **Adresse postale :**
-SKY PLAY ENTERTAINMENT
+SKYPLAY AFRICA
 Cameroun
 
 Nous nous engageons à traiter toutes vos demandes avec sérieux et dans les meilleurs délais.`
@@ -263,7 +263,7 @@ Nous nous engageons à traiter toutes vos demandes avec sérieux et dans les mei
         {
           icon: Shield,
           title: "1. Data Controller",
-          content: `**SKY PLAY ENTERTAINMENT**
+          content: `**SKYPLAY AFRICA**
 Cameroon
 
 **Contact:**
@@ -360,7 +360,7 @@ These services comply with international security standards.
         {
           icon: Lock,
           title: "5. Data Security",
-          content: `SKY PLAY implements advanced security measures to protect your data:
+          content: `SKYPLAY AFRICA implements advanced security measures to protect your data:
 
 **Encryption:**
 • All communications are encrypted in HTTPS/TLS
@@ -466,7 +466,7 @@ Some technical providers may access your data from other countries, but only wit
         {
           icon: Users,
           title: "10. Minors",
-          content: `The SKY PLAY platform is strictly prohibited for persons under 18 years of age.
+          content: `The SKYPLAY AFRICA platform is strictly prohibited for persons under 18 years of age.
 
 If we discover that a minor has created an account, it will be immediately deleted and parents/legal guardians will be contacted.
 
@@ -475,7 +475,7 @@ If you are a parent and discover that your child has created an account, contact
         {
           icon: Shield,
           title: "11. Policy Modifications",
-          content: `SKY PLAY reserves the right to modify this Privacy Policy at any time to reflect changes in our practices or for legal reasons.
+          content: `SKYPLAY AFRICA reserves the right to modify this Privacy Policy at any time to reflect changes in our practices or for legal reasons.
 
 **Notification:**
 Any substantial modification will be notified to you by email at least 7 days before it comes into effect.
@@ -495,7 +495,7 @@ Previous versions of this policy are archived and available upon request.`
 **Response time:** 24-48 hours
 
 **Postal address:**
-SKY PLAY ENTERTAINMENT
+SKYPLAY AFRICA
 Cameroon
 
 We are committed to treating all your requests seriously and in a timely manner.`
@@ -561,7 +561,7 @@ We are committed to treating all your requests seriously and in a timely manner.
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-white/60 text-sm">
-          <p>© 2026 SKY PLAY ENTERTAINMENT - Cameroun</p>
+          <p>© 2026 SKYPLAY AFRICA - Cameroun</p>
           <p className="mt-2">support@skyplay.cm</p>
         </div>
       </main>

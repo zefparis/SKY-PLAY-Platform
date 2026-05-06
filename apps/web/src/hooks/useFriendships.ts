@@ -285,7 +285,7 @@ export function useFriendships() {
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         new Notification('Nouvelle demande d\'ami', {
           body: `${data.from.username} vous a envoyé une demande d'ami`,
-          icon: data.from.avatar || '/logo.png',
+          icon: data.from.avatar || '/skyplay_africa_120.png',
         })
       }
       fetchPendingRequests()
@@ -296,7 +296,7 @@ export function useFriendships() {
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         new Notification('Demande d\'ami acceptée', {
           body: `${data.user.username} a accepté votre demande d'ami`,
-          icon: data.user.avatar || '/logo.png',
+          icon: data.user.avatar || '/skyplay_africa_120.png',
         })
       }
       fetchFriends()

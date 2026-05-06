@@ -90,7 +90,7 @@ export default function ChallengeRules({ challenge, prizeFirst, onAccept, onCanc
           {/* Info grid */}
           <div className="rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/8 border-gray-200 divide-y dark:divide-white/8 divide-gray-200">
             {[
-              { label: t('rules.organizer'), value: 'SKY PLAY ENTERTAINMENT' },
+              { label: t('rules.organizer'), value: 'SKYPLAY AFRICA' },
               { label: t('rules.type'), value: `${typeLabel} — ${challenge.game}` },
               { label: t('rules.entryFee'), value: `🪙 ${formatSKY(challenge.entryFee)}`, highlight: true },
               { label: t('rules.format'), value: challenge.maxPlayers === 2 ? t('rules.format.single') : `${challenge.maxPlayers} ${t('rules.format.players')}` },

@@ -69,7 +69,7 @@ export default function AdminDashboard() {
         <h1 className="text-2xl sm:text-3xl font-black dark:text-white text-[#00165F] mb-1" style={{ fontFamily: 'Dena, sans-serif' }}>
           Dashboard
         </h1>
-        <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">Vue d'ensemble de la plateforme SKY PLAY</p>
+        <p className="text-xs sm:text-sm dark:text-white/60 text-[#00165F]/60">Vue d'ensemble de la plateforme SKYPLAY AFRICA</p>
       </div>
 
       {/* KPI Cards */}

@@ -6,7 +6,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 /**
- * SKY PLAY input: dark surface, electric focus ring, structured geometry.
+ * SKYPLAY AFRICA input: dark surface, electric focus ring, structured geometry.
  */
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant = 'default', ...props }, ref) => {
