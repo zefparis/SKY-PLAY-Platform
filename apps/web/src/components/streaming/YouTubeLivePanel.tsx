@@ -389,6 +389,15 @@ export default function YouTubeLivePanel() {
     return () => clearInterval(id)
   }, [live?.lifeCycleStatus])
 
+  // ── Toggle tutorial ─────────────────────────────────────────────────────
+  const toggleTutorial = useCallback(() => {
+    setTutorialOpen((prev) => {
+      const next = !prev
+      localStorage.setItem('obs-tutorial-collapsed', next ? 'false' : 'true')
+      return next
+    })
+  }, [])
+
   const fmtTime = (s: number) => {
     const h = Math.floor(s / 3600)
     const m = Math.floor((s % 3600) / 60)
@@ -568,15 +577,6 @@ export default function YouTubeLivePanel() {
       </div>
     )
   }
-
-  // ── Toggle tutorial ─────────────────────────────────────────────────────
-  const toggleTutorial = useCallback(() => {
-    setTutorialOpen((prev) => {
-      const next = !prev
-      localStorage.setItem('obs-tutorial-collapsed', next ? 'false' : 'true')
-      return next
-    })
-  }, [])
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STEP 0 — CONNECT OBS OR USE MANUAL MODE
