@@ -37,7 +37,7 @@ export default function DepositModal({ onClose, onSuccess }: DepositModalProps) 
 
   const finalAmount = customAmount ? parseInt(customAmount, 10) : amount;
   const email = user?.email || 'user@skyplay.cm';
-  const name = user?.username || user?.firstName || 'SKY PLAY User';
+  const name = user?.username || user?.firstName || 'SKYPLAY AFRICA User';
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 

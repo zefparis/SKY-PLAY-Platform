@@ -97,7 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-black text-white" style={{ fontFamily: 'Dena, sans-serif' }}>
-                SKY PLAY Admin
+                SKYPLAY AFRICA Admin
               </h1>
               <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/60 hover:text-white">
                 <X className="w-5 h-5" />
@@ -169,7 +169,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <Menu className="w-5 h-5 dark:text-white text-[#00165F]" />
               </button>
-              <span className="lg:hidden text-sm font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>SKY PLAY Admin</span>
+              <span className="lg:hidden text-sm font-black dark:text-white text-[#00165F]" style={{ fontFamily: 'Dena, sans-serif' }}>SKYPLAY AFRICA Admin</span>
             </div>
             <div className="flex items-center gap-3">
               {securityCount > 0 && (

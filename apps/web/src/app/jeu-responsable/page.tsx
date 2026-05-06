@@ -16,7 +16,7 @@ export default function ResponsibleGamingPage() {
         {
           icon: Heart,
           title: "1. Notre engagement",
-          content: `SKY PLAY ENTERTAINMENT s'engage à promouvoir une pratique saine et responsable des défis gaming.
+          content: `SKYPLAY AFRICA s'engage à promouvoir une pratique saine et responsable des défis gaming.
 
 Nous croyons que le gaming doit rester un divertissement et une passion, jamais une source de stress ou de problèmes financiers.
 
@@ -25,7 +25,7 @@ Notre plateforme met en place des outils et des ressources pour vous aider à ga
         {
           icon: AlertTriangle,
           title: "2. Rappels importants",
-          content: `⚠️ **Les défis SKY PLAY impliquent de l'argent réel**
+          content: `⚠️ **Les défis SKYPLAY AFRICA impliquent de l'argent réel**
 Ne misez jamais plus que ce que vous pouvez vous permettre de perdre sans affecter votre vie quotidienne.
 
 ⚠️ **Le gaming doit rester un divertissement**
@@ -71,7 +71,7 @@ Ne jouez jamais sous l'influence de l'alcool, de drogues ou lorsque vous êtes �
         {
           icon: Shield,
           title: "4. Outils de contrôle disponibles",
-          content: `SKY PLAY met à votre disposition plusieurs outils pour vous aider à garder le contrôle :
+          content: `SKYPLAY AFRICA met à votre disposition plusieurs outils pour vous aider à garder le contrôle :
 
 **Limites de dépôt :**
 • Définissez une limite quotidienne de dépôt
@@ -115,7 +115,7 @@ Contactez notre équipe support à support@skyplay.cm en précisant l'outil souh
 • Centres de santé mentale disponibles dans les grandes villes (Douala, Yaoundé)
 • Associations camerounaises de santé mentale
 
-**Support SKY PLAY :**
+**Support SKYPLAY AFRICA :**
 Notre équipe est à votre écoute pour :
 • Activer des limites de jeu
 • Mettre en place une auto-exclusion
@@ -162,7 +162,7 @@ Nous traitons toutes les demandes avec confidentialité et bienveillance.`
           icon: Lock,
           title: "7. Protection des mineurs",
           content: `**Tolérance zéro :**
-SKY PLAY applique une politique de tolérance zéro concernant les mineurs.
+SKYPLAY AFRICA applique une politique de tolérance zéro concernant les mineurs.
 
 **Vérification d'âge :**
 • Vérification obligatoire à l'inscription
@@ -208,7 +208,7 @@ Demander de l'aide est un signe de force, pas de faiblesse. N'hésitez pas à no
         {
           icon: Heart,
           title: "9. Notre promesse",
-          content: `SKY PLAY ENTERTAINMENT s'engage à :
+          content: `SKYPLAY AFRICA s'engage à :
 
 ✓ Promouvoir une pratique responsable du gaming
 ✓ Fournir des outils de contrôle efficaces
@@ -235,7 +235,7 @@ Si ce n'est plus le cas, nous sommes là pour vous aider à reprendre le contrô
         {
           icon: Heart,
           title: "1. Our Commitment",
-          content: `SKY PLAY ENTERTAINMENT is committed to promoting healthy and responsible gaming challenge practices.
+          content: `SKYPLAY AFRICA is committed to promoting healthy and responsible gaming challenge practices.
 
 We believe that gaming should remain entertainment and passion, never a source of stress or financial problems.
 
@@ -244,7 +244,7 @@ Our platform implements tools and resources to help you maintain control of your
         {
           icon: AlertTriangle,
           title: "2. Important Reminders",
-          content: `⚠️ **SKY PLAY challenges involve real money**
+          content: `⚠️ **SKYPLAY AFRICA challenges involve real money**
 Never bet more than you can afford to lose without affecting your daily life.
 
 ⚠️ **Gaming should remain entertainment**
@@ -290,7 +290,7 @@ Never play under the influence of alcohol, drugs or when emotionally disturbed.`
         {
           icon: Shield,
           title: "4. Available Control Tools",
-          content: `SKY PLAY provides several tools to help you maintain control:
+          content: `SKYPLAY AFRICA provides several tools to help you maintain control:
 
 **Deposit limits:**
 • Set a daily deposit limit
@@ -334,7 +334,7 @@ Contact our support team at support@skyplay.cm specifying the desired tool. We w
 • Mental health centers available in major cities (Douala, Yaoundé)
 • Cameroonian mental health associations
 
-**SKY PLAY support:**
+**SKYPLAY AFRICA support:**
 Our team is here to listen to:
 • Activate gaming limits
 • Set up self-exclusion
@@ -381,7 +381,7 @@ We handle all requests with confidentiality and kindness.`
           icon: Lock,
           title: "7. Protection of Minors",
           content: `**Zero tolerance:**
-SKY PLAY applies a zero tolerance policy regarding minors.
+SKYPLAY AFRICA applies a zero tolerance policy regarding minors.
 
 **Age verification:**
 • Mandatory verification at registration
@@ -427,7 +427,7 @@ Asking for help is a sign of strength, not weakness. Don't hesitate to contact u
         {
           icon: Heart,
           title: "9. Our Promise",
-          content: `SKY PLAY ENTERTAINMENT commits to:
+          content: `SKYPLAY AFRICA commits to:
 
 ✓ Promote responsible gaming practice
 ✓ Provide effective control tools
@@ -556,7 +556,7 @@ If it's no longer the case, we're here to help you regain control.
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-white/60 text-sm">
-          <p>© 2026 SKY PLAY ENTERTAINMENT - Cameroun</p>
+          <p>© 2026 SKYPLAY AFRICA - Cameroun</p>
           <p className="mt-2">{lang === 'fr' ? 'Jouez responsable' : 'Play responsibly'}</p>
         </div>
       </main>

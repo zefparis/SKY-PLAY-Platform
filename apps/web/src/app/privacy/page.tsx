@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Politique de Confidentialité — SKY PLAY',
+  title: 'Politique de Confidentialité — SKYPLAY AFRICA',
   description:
     'Politique de confidentialité de SKYPLAY AFRICA. Découvrez comment nous collectons, utilisons et protégeons vos données personnelles.',
 }
@@ -35,7 +35,7 @@ const SECTIONS: { title: string; paragraphs: string[] }[] = [
   {
     title: '3. Partage des données',
     paragraphs: [
-      "SKY PLAY ne vend, ne loue et ne cède jamais vos données personnelles à des tiers à des fins commerciales ou publicitaires.",
+      "SKYPLAY AFRICA ne vend, ne loue et ne cède jamais vos données personnelles à des tiers à des fins commerciales ou publicitaires.",
       "Vos données peuvent être partagées uniquement avec des prestataires techniques strictement nécessaires au fonctionnement du service, sous accord de confidentialité : hébergement (Railway, Vercel), paiements (Flutterwave), authentification (AWS Cognito), stockage de médias (Cloudinary, AWS S3).",
       "En cas d'obligation légale, vos données pourront être communiquées aux autorités compétentes conformément au droit applicable.",
     ],
@@ -43,11 +43,11 @@ const SECTIONS: { title: string; paragraphs: string[] }[] = [
   {
     title: '4. Intégrations tierces',
     paragraphs: [
-      "SKY PLAY s'intègre avec des services tiers pour enrichir votre expérience :",
-      "YouTube (Google) — Lorsque vous liez votre compte YouTube, nous accédons à votre chaîne via l'API YouTube Data v3 pour créer et gérer des diffusions en direct de vos matchs. Les scopes demandés sont youtube et youtube.upload. Vous pouvez révoquer cet accès à tout moment depuis votre profil SKY PLAY ou depuis les paramètres de sécurité de votre compte Google (https://myaccount.google.com/permissions). L'utilisation des données YouTube est conforme aux Conditions d'utilisation des services API YouTube (https://developers.google.com/youtube/terms/api-services-terms-of-service) et à la Politique de confidentialité de Google (https://policies.google.com/privacy).",
+      "SKYPLAY AFRICA s'intègre avec des services tiers pour enrichir votre expérience :",
+      "YouTube (Google) — Lorsque vous liez votre compte YouTube, nous accédons à votre chaîne via l'API YouTube Data v3 pour créer et gérer des diffusions en direct de vos matchs. Les scopes demandés sont youtube et youtube.upload. Vous pouvez révoquer cet accès à tout moment depuis votre profil SKYPLAY AFRICA ou depuis les paramètres de sécurité de votre compte Google (https://myaccount.google.com/permissions). L'utilisation des données YouTube est conforme aux Conditions d'utilisation des services API YouTube (https://developers.google.com/youtube/terms/api-services-terms-of-service) et à la Politique de confidentialité de Google (https://policies.google.com/privacy).",
       "Steam — Authentification OpenID pour lier votre compte Steam. Nous récupérons votre SteamID, nom de profil et avatar. Aucun token d'accès n'est stocké.",
       "Epic Games — Liaison OAuth pour accéder à votre identifiant Epic et votre nom d'utilisateur. Les tokens sont stockés chiffrés.",
-      "Flutterwave — Traitement des paiements (dépôts et retraits). Seules les informations nécessaires à la transaction sont transmises. SKY PLAY ne stocke aucune donnée bancaire.",
+      "Flutterwave — Traitement des paiements (dépôts et retraits). Seules les informations nécessaires à la transaction sont transmises. SKYPLAY AFRICA ne stocke aucune donnée bancaire.",
     ],
   },
   {
@@ -73,7 +73,7 @@ const SECTIONS: { title: string; paragraphs: string[] }[] = [
   {
     title: '7. Cookies et tracking',
     paragraphs: [
-      "SKY PLAY utilise uniquement des cookies techniques indispensables au fonctionnement de la plateforme :",
+      "SKYPLAY AFRICA utilise uniquement des cookies techniques indispensables au fonctionnement de la plateforme :",
       "Cookies de session — Maintien de votre authentification et de votre session active.",
       "Cookies de préférences — Mémorisation de vos paramètres d'affichage (thème, langue).",
       "Aucun cookie publicitaire, de profilage ou de traçage tiers n'est utilisé. Nous n'utilisons pas Google Analytics, Facebook Pixel ou tout autre outil de tracking publicitaire.",
@@ -90,7 +90,7 @@ const SECTIONS: { title: string; paragraphs: string[] }[] = [
   {
     title: '9. Mineurs',
     paragraphs: [
-      "SKY PLAY est destiné aux utilisateurs âgés de 18 ans ou plus. Les mineurs de 16 à 18 ans peuvent utiliser la plateforme avec l'autorisation vérifiable de leur représentant légal. Nous ne collectons pas sciemment les données de mineurs de moins de 16 ans.",
+      "SKYPLAY AFRICA est destiné aux utilisateurs âgés de 18 ans ou plus. Les mineurs de 16 à 18 ans peuvent utiliser la plateforme avec l'autorisation vérifiable de leur représentant légal. Nous ne collectons pas sciemment les données de mineurs de moins de 16 ans.",
     ],
   },
   {
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
         {/* Intro */}
         <div className="bg-[#111630] rounded-2xl border border-white/10 p-6 mb-6">
           <p className="text-white/70 text-sm leading-relaxed">
-            SKYPLAY AFRICA (&quot;SKY PLAY&quot;, &quot;nous&quot;, &quot;notre&quot;) s&apos;engage à
+            SKYPLAY AFRICA (&quot;SKYPLAY AFRICA&quot;, &quot;nous&quot;, &quot;notre&quot;) s&apos;engage à
             protéger vos données personnelles. La présente politique décrit
             quelles informations nous collectons, comment nous les utilisons,
             avec qui nous les partageons et quels sont vos droits. En utilisant

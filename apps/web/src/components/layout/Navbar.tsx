@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Gamepad2, Wallet, Trophy, User, X, MessageCircle, Moon, Sun, LogOut, Globe, Bell, LayoutDashboard, ChevronRight, ChevronDown, Pause, Shield, Lightbulb, Eye, Settings, Swords, Megaphone } from 'lucide-react'
@@ -106,16 +107,7 @@ const Navbar = () => {
 
             {/* Logo */}
             <Link href="/" className="flex items-center leading-none">
-              <div className="leading-none">
-                <div className="font-black text-xl uppercase tracking-widest"
-                  style={{ color: '#FD2E5F', fontFamily: "'Arial Black', sans-serif", letterSpacing: '3px' }}>
-                  SKYPLAY
-                </div>
-                <div className="text-white/70 uppercase mt-0.5"
-                  style={{ fontSize: '9px', fontFamily: 'Montserrat, sans-serif', letterSpacing: '4px' }}>
-                  AFRICA
-                </div>
-              </div>
+              <Image src="/skyplay_africa_400.png" alt="SkyPlay Africa" width={40} height={40} className="rounded-lg" />
             </Link>
 
             {/* Desktop nav links */}
@@ -342,7 +334,7 @@ const Navbar = () => {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-black dark:text-white text-[#00165F] text-base truncate">{user.username}</p>
-                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.role === 'ADMIN' ? '⚙️ Administrateur' : '🎮 Joueur SKYPLAY'}</p>
+                      <p className="text-xs dark:text-white/40 text-[#00165F]/40 truncate">{user.role === 'ADMIN' ? '⚙️ Administrateur' : '🎮 Joueur SKYPLAY AFRICA'}</p>
                     </div>
                     <Link href="/profile" onClick={() => setSuperMenuOpen(false)}
                       className="p-2 rounded-xl dark:bg-white/8 bg-[#00165F]/6 transition hover:bg-[#0097FC]/10">

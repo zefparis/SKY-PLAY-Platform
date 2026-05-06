@@ -73,7 +73,7 @@ const Hero = () => {
           </motion.div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 px-4">
-            <span className="text-gradient">SKY PLAY</span>
+            <span className="text-gradient">SKYPLAY AFRICA</span>
           </h1>
           
           <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/75 mb-3 sm:mb-4 max-w-3xl mx-auto px-4">

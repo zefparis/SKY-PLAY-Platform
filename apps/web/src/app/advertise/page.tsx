@@ -45,7 +45,7 @@ const FORMATS = [
     icon: Star,
     color: '#f59e0b',
     title: 'Événement sponsorisé',
-    desc: 'Votre marque associée à un tournoi SKY PLAY',
+    desc: 'Votre marque associée à un tournoi SKYPLAY AFRICA',
     specs: 'Format : sur mesure · branding complet',
   },
 ]
@@ -67,7 +67,7 @@ export default function AdvertisePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const subject = encodeURIComponent(`[SKY PLAY Ads] ${form.type || 'Demande'} — ${form.name}`)
+    const subject = encodeURIComponent(`[SKYPLAY AFRICA Ads] ${form.type || 'Demande'} — ${form.name}`)
     const body = encodeURIComponent(
       `Nom : ${form.name}\nEmail : ${form.email}\nFormat souhaité : ${form.type}\n\n${form.message}`
     )
@@ -91,7 +91,7 @@ export default function AdvertisePage() {
           </motion.div>
           <motion.h1 {...fadeUp(0.1)} className="text-4xl md:text-5xl font-black dark:text-white text-[#00165F] leading-tight mb-5">
             Faites la publicité de votre marque sur{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0097FC] to-[#FD2E5F]">SKY PLAY</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0097FC] to-[#FD2E5F]">SKYPLAY AFRICA</span>
           </motion.h1>
           <motion.p {...fadeUp(0.2)} className="text-lg dark:text-white/60 text-[#00165F]/60 mb-8">
             Touchez des milliers de gamers en Afrique centrale — une audience jeune, engagée et mobile-first.
@@ -215,7 +215,7 @@ export default function AdvertisePage() {
                 </label>
                 <input
                   name="name" required value={form.name} onChange={handleChange}
-                  placeholder="SKY PLAY Corp."
+                  placeholder="SKYPLAY AFRICA Corp."
                   className="w-full px-4 py-2.5 rounded-xl dark:bg-white/5 bg-[#00165F]/5 border dark:border-white/10 border-[#00165F]/15 dark:text-white text-[#00165F] text-sm placeholder:text-white/20 focus:outline-none focus:border-[#0097FC]/50 transition"
                 />
               </div>
@@ -270,7 +270,7 @@ export default function AdvertisePage() {
       {/* ── FOOTER MINI ───────────────────────────────────────── */}
       <section className="py-8 px-4 text-center">
         <p className="text-xs dark:text-white/30 text-[#00165F]/40">
-          SKY PLAY ENTERTAINMENT ·{' '}
+          SKYPLAY AFRICA ·{' '}
           <Link href="/privacy" className="hover:text-[#0097FC] transition">Politique de confidentialité</Link>
           {' '}·{' '}
           <Link href="/terms" className="hover:text-[#0097FC] transition">CGU</Link>

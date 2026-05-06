@@ -1,12 +1,14 @@
 {
-  "name": "SKY PLAY",
-  "short_name": "SKYPLAY",
-  "description": "Défie. Joue. Gagne.",
+  "name": "SkyPlay Africa",
+  "short_name": "SkyPlay",
+  "description": "La plateforme de compétitions gaming en Afrique",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#00165F",
   "theme_color": "#0097FC",
   "icons": [
+    { "src": "/skyplay_africa_400.png", "sizes": "400x400", "type": "image/png" },
+    { "src": "/skyplay_africa_120.png", "sizes": "120x120", "type": "image/png" },
     { "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
   ]

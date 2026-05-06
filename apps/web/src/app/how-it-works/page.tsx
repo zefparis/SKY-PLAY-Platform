@@ -147,13 +147,13 @@ export default function HowItWorksPage() {
       </section>
 
       {/* ═════════════════════════════════════════════════════════════
-          SECTION 1 — HOW SKY PLAY WORKS (3 STEPS)
+          SECTION 1 — HOW SKYPLAY AFRICA WORKS (3 STEPS)
       ═════════════════════════════════════════════════════════════ */}
       <section className="py-16 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div {...fadeUp(0)}>
             <SectionTitle sub="Trois étapes pour passer du gamer occasionnel à la légende.">
-              Comment fonctionne SKY PLAY ?
+              Comment fonctionne SKYPLAY AFRICA ?
             </SectionTitle>
           </motion.div>
 
