@@ -65,6 +65,7 @@ type AuthStoreState = {
 const STORAGE_KEY = 'skyplay-auth'
 const PASSWORD_CACHE_KEY = 'skyplay-auth-confirm-password'
 const PKCE_VERIFIER_KEY = 'skyplay-pkce-verifier'
+const PKCE_STATE_KEY = 'skyplay-pkce-state'
 
 // ── PKCE helpers ──────────────────────────────────────────────────────────────
 function generateCodeVerifier(): string {
@@ -397,16 +398,15 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     const redirectUri = COGNITO_CONFIG.redirectSignIn
 
     if (!domain || !clientId) {
-      console.error('Configuration Cognito manquante pour loginWithGoogle', {
-        domain,
-        clientId,
-      })
+      set({ error: 'Configuration Cognito manquante' })
       return
     }
 
-    // PKCE: generate verifier, store it, compute challenge then redirect
+    // PKCE: generate verifier + state, store in localStorage (survives cross-origin redirects)
     const verifier = generateCodeVerifier()
-    sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier)
+    const state = generateCodeVerifier().slice(0, 32)
+    localStorage.setItem(PKCE_VERIFIER_KEY, verifier)
+    localStorage.setItem(PKCE_STATE_KEY, state)
 
     generateCodeChallenge(verifier).then((challenge) => {
       const url = new URL(`${domain}/oauth2/authorize`)
@@ -417,6 +417,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       url.searchParams.set('identity_provider', 'Google')
       url.searchParams.set('code_challenge', challenge)
       url.searchParams.set('code_challenge_method', 'S256')
+      url.searchParams.set('state', state)
 
       set({ error: null })
       window.location.assign(url.toString())
@@ -490,18 +491,23 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       const clientId = COGNITO_CONFIG.clientId
       const redirectUri = COGNITO_CONFIG.redirectSignIn
 
-      // PKCE: retrieve verifier stored during loginWithGoogle
-      const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY) ?? ''
-      sessionStorage.removeItem(PKCE_VERIFIER_KEY)
+      // PKCE: retrieve verifier stored during loginWithGoogle (localStorage for cross-origin safety)
+      const codeVerifier = localStorage.getItem(PKCE_VERIFIER_KEY)
+      localStorage.removeItem(PKCE_VERIFIER_KEY)
+      localStorage.removeItem(PKCE_STATE_KEY)
+
+      if (!codeVerifier) {
+        throw new Error(
+          'Session PKCE expirée ou absente. Relance la connexion Google.'
+        )
+      }
 
       const params: Record<string, string> = {
         grant_type: 'authorization_code',
         client_id: clientId,
         code,
         redirect_uri: redirectUri,
-      }
-      if (codeVerifier) {
-        params.code_verifier = codeVerifier
+        code_verifier: codeVerifier,
       }
 
       const response = await fetch(`${domain}/oauth2/token`, {
