@@ -16,10 +16,33 @@ export default function AuthCallbackPage() {
     hasCalledRef.current = true
 
     const searchParams = new URLSearchParams(window.location.search)
-    const code = searchParams.get('code')
 
+    // 1. Check if the provider returned an error
+    const oauthError = searchParams.get('error')
+    if (oauthError) {
+      const desc = searchParams.get('error_description')
+      const friendly: Record<string, string> = {
+        access_denied: 'Vous avez refusé l\u2019autorisation Google.',
+        invalid_request: 'Requête invalide — réessayez la connexion.',
+        server_error: 'Erreur côté Google — réessayez dans quelques instants.',
+      }
+      setError(friendly[oauthError] ?? desc ?? `Erreur OAuth : ${oauthError}`)
+      return
+    }
+
+    // 2. Validate state (CSRF protection)
+    const urlState = searchParams.get('state')
+    const storedState = localStorage.getItem('skyplay-pkce-state')
+
+    if (!urlState || !storedState || urlState !== storedState) {
+      setError('Session invalide ou expirée — relance la connexion Google.')
+      return
+    }
+
+    // 3. Check code presence
+    const code = searchParams.get('code')
     if (!code) {
-      setError('Code OAuth manquant dans l\'URL')
+      setError('Session expirée — relance la connexion.')
       return
     }
 
