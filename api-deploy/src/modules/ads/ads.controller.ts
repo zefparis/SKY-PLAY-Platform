@@ -15,7 +15,6 @@ import { AdsService, AdType } from './ads.service';
 export class AdsController {
   constructor(private readonly adsService: AdsService) {}
 
-  @UseGuards(JwtDualGuard)
   @Get('display')
   getAd(
     @Request() req,
